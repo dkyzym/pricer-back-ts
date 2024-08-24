@@ -13,5 +13,8 @@
     "types": ["node"] // Указывает TypeScript использовать типы Node.js
   },
   "include": ["src/**/*.ts"], // Включаем все файлы TypeScript в директории src
-  "exclude": ["node_modules", "dist"] // Исключаем node_modules и dist из компиляции
+  "exclude": ["node_modules", "dist"], // Исключаем node_modules и dist из компиляции
+  "ts-node": {
+    "esm": true
+  }
 }
