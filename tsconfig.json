@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // Целевая версия ECMAScript
+    "module": "ESNext", // Модульная система ECMAScript
+    "moduleResolution": "node", // Определяет стратегию поиска модулей
+    "strict": true, // Включает строгий режим компиляции TypeScript
+    "esModuleInterop": true, // Включает поддержку ES-подобного экспорта/импорта
+    "skipLibCheck": true, // Пропускает проверку типов внутри модулей
+    "forceConsistentCasingInFileNames": true, // Убедитесь в согласованности регистра в именах файлов
+    "rootDir": "./src", // Корневая директория исходного кода
+    "outDir": "./dist", // Директория вывода скомпилированных файлов
+    "resolveJsonModule": true, // Позволяет импортировать JSON файлы
+    "types": ["node"] // Указывает TypeScript использовать типы Node.js
+  },
+  "include": ["src/**/*.ts"], // Включаем все файлы TypeScript в директории src
+  "exclude": ["node_modules", "dist"] // Исключаем node_modules и dist из компиляции
+}
