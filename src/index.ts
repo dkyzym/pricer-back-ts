@@ -7,6 +7,7 @@ import { Server } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
 import { error } from './middleware/errorsMiddleware';
+import authRoutes from './routes/authRoutes';
 import { RouteNotFoundError } from './utils/errors';
 
 dotenv.config();
@@ -26,7 +27,7 @@ app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// app.use('/', authRoutes);
+app.use('/', authRoutes);
 // app.use('/', dataRoutes);
 
 app.use(() => {

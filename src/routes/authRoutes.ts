@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { orionLoginController } from '../controllers/auth/orion/orionLoginController';
+import { ctrlWrapper } from '../middleware/ctrlWrapper';
 
 // import { loginTC, logoutTC } from '#controllers/auth/tcAuthController.js';
 // import { loginUG, logoutUG } from '#controllers/auth/ugAuthController.js';
@@ -17,7 +19,7 @@ const router = Router();
 // router.post('/login/tc', ctrlWrapper(loginTC));
 // router.post('/login/ug', ctrlWrapper(loginUG));
 // router.post('/login/pt', ctrlWrapper(loginPT));
-// router.post('/login/or', ctrlWrapper(loginOR));
+router.post('/login/or', ctrlWrapper(orionLoginController));
 // router.post('/login/ar', ctrlWrapper(loginAR));
 
 export default router;
