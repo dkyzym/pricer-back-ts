@@ -1,11 +1,11 @@
-import { Page } from 'puppeteer';
-import { checkIsLoggedIn } from '../../../utils/checkIsAuth';
-import { SUPPLIERS_DATA } from '../../../utils/data/constants';
+import { checkIsLoggedIn } from '@utils/checkIsAuth';
+import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,
   fillField,
   waitForPageNavigation,
-} from '../../../utils/pupHelpers/pageHelpers';
+} from '@utils/pupHelpers/pageHelpers';
+import { Page } from 'puppeteer';
 
 const { loginURL, credentials, dashboardURL } = SUPPLIERS_DATA['orion'];
 

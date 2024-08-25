@@ -10,7 +10,7 @@ export const saveSession = async (
   const sessionData = { cookies };
   const sessionPath = path.resolve(
     __dirname,
-    '../sessions',
+    '@sessions',
     `${sessionName}.json`
   );
   await fs.writeFile(sessionPath, JSON.stringify(sessionData, null, 2));
@@ -22,11 +22,9 @@ export const loadSession = async (
 ): Promise<void> => {
   const sessionPath = path.resolve(
     __dirname,
-    '../sessions',
+    '@sessions',
     `${sessionName}.json`
   );
-  const sessionData = JSON.parse(
-    await fs.readFile(sessionPath, 'utf-8')
-  );
+  const sessionData = JSON.parse(await fs.readFile(sessionPath, 'utf-8'));
   await page.setCookie(...sessionData.cookies);
 };

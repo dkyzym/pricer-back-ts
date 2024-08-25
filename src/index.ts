@@ -1,3 +1,6 @@
+import { error } from '@middleware/errorsMiddleware';
+import authRoutes from '@routes/authRoutes';
+import { RouteNotFoundError } from '@utils/errors';
 import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -6,9 +9,6 @@ import express from 'express';
 import { Server } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
-import { error } from './middleware/errorsMiddleware';
-import authRoutes from './routes/authRoutes';
-import { RouteNotFoundError } from './utils/errors';
 
 dotenv.config();
 

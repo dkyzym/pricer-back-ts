@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { orionLoginController } from '../controllers/auth/orion/orionLoginController';
-import { ctrlWrapper } from '../middleware/ctrlWrapper';
+// import { orionLoginController } from '../controllers/auth/orion/orionLoginController';
+import { orionLoginController } from '@controllers/auth/orion/orionLoginController';
+import { ctrlWrapper } from '@middleware/ctrlWrapper';
 
 // import { loginTC, logoutTC } from '#controllers/auth/tcAuthController.js';
 // import { loginUG, logoutUG } from '#controllers/auth/ugAuthController.js';

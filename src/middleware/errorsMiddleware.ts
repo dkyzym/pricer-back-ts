@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { NextFunction, Request, Response } from 'express';
-import { BaseError } from '../utils/errors';
+import { BaseError } from '@utils/errors';
 
 export const error = (
   error: BaseError | Error,
