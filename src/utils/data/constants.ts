@@ -1,15 +1,33 @@
-export const SUPPLIERS_DATA = {
+import { SuppliersData } from '../../types';
+
+export const SUPPLIERS_DATA: SuppliersData = {
   patriot: {
     credentials: 'Кизим',
     cookieName: 'ptCookies',
     loginURL: 'https://optautotorg.com/',
     logoutURL: 'https://optautotorg.com/?logout',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
+      emailUsernameField: '#email_auth',
+      passwordField: '#password_auth',
+      loginBtn: '.btn-login',
+      logoutBtn: '.account__leave-btn',
+    },
   },
   turboCars: {
     credentials: '32831',
     cookieName: 'turboCarsCookies',
     loginURL: 'https://turbo-cars.net/office/SECURE.asp',
     logoutURL: 'https://turbo-cars.net/office/login.asp?mode=new',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
+      emailUsernameField: '#email_auth',
+      passwordField: '#password_auth',
+      loginBtn: '.btn-login',
+      logoutBtn: '.account__leave-btn',
+    },
   },
   ug: {
     credentials: '9447854',
@@ -17,6 +35,14 @@ export const SUPPLIERS_DATA = {
     loginURL: 'https://ugautopart.ru/?FranchiseeId=3993538',
     logoutURL: 'https://ugautopart.ru/?FranchiseeId=3993538&logout',
     deepSearchURL: 'https://ugautopart.ru/search?pcode=',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
+      emailUsernameField: '#email_auth',
+      passwordField: '#password_auth',
+      loginBtn: '.btn-login',
+      logoutBtn: '.account__leave-btn',
+    },
   },
   orion: {
     credentials: 'аккаунт',
@@ -30,6 +56,7 @@ export const SUPPLIERS_DATA = {
       emailUsernameField: '#email_auth',
       passwordField: '#password_auth',
       loginBtn: '.btn-login',
+      logoutBtn: '.account__leave-btn',
     },
   },
   armtek: {
@@ -37,6 +64,14 @@ export const SUPPLIERS_DATA = {
     cookieName: 'arCookies',
     loginURL: 'https://etp.armtek.by/search',
     logoutURL: '',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
+      emailUsernameField: '#email_auth',
+      passwordField: '#password_auth',
+      loginBtn: '.btn-login',
+      logoutBtn: '.account__leave-btn',
+    },
   },
 };
 

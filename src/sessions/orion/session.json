@@ -1,0 +1,36 @@
+{
+  "cookies": [
+    {
+      "name": "laravel_session",
+      "value": "eyJpdiI6InFlcTVaUGRSOTlTenNUL01xS3VjZFE9PSIsInZhbHVlIjoidTZSd3hYamZYQnZISE1pVUhOUmNJckJ3d0J4QUhUb2RaR25USEhSL0Vhamo1bmhTbndzelB5QVN2WW9VNlk1NW50ZkoxRlFCa2FKY21tN0FhSHV6NXg1cG1jb3RDSUtmRkZJb2FHYW01YlhCZlNjNjFCYTNQT2grc1RSR0ovOUYiLCJtYWMiOiIyNDRhMGUxNTAyNWIxZWRlNWQ0MGJlYzI5Njk1OWJhMTAzZTgxMGMxNzZjYTZjYWRlMTZkY2UwZWM2YTMwOTk2IiwidGFnIjoiIn0%3D",
+      "domain": "x-orion.ru",
+      "path": "/",
+      "expires": 1729766155.330447,
+      "size": 357,
+      "httpOnly": true,
+      "secure": false,
+      "session": false,
+      "sameSite": "Lax",
+      "priority": "Medium",
+      "sameParty": false,
+      "sourceScheme": "Secure"
+    },
+    {
+      "name": "XSRF-TOKEN",
+      "value": "eyJpdiI6IjE2TEpLNkNEaHZFa3JibzdXUWoxdEE9PSIsInZhbHVlIjoiS3YvdFJ3RFI3UUtlWGlUVklaZlYzT1IvQUxUbzNnVmtWcU8zRXJqbnMwMTQ3SWdoa0c1WmZYSU80M3V0bjNRcVF2ZXpGcE5MaUJicVJ4eTlxNFpGL1V5Mnk4VkQwZXNOS0lQdWV6UzZxeHZ6N21sMTNFOGZiamxMWEordnJQSDkiLCJtYWMiOiIyNGRiYmRmNGZlZmY4MDI1ZTFkOTU4OGVjYzkzMjM3OTIwY2QyYWM0OGJiMmQ4ODZlNDM3ZTc1OTgzMWMwZGI5IiwidGFnIjoiIn0%3D",
+      "domain": "x-orion.ru",
+      "path": "/",
+      "expires": 1729766155.33033,
+      "size": 352,
+      "httpOnly": false,
+      "secure": false,
+      "session": false,
+      "sameSite": "Lax",
+      "priority": "Medium",
+      "sameParty": false,
+      "sourceScheme": "Secure"
+    }
+  ],
+  "localStorage": {},
+  "sessionStorage": {}
+}

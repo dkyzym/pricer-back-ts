@@ -4,10 +4,11 @@ import { Request, Response } from 'express';
 export const orionLoginController = async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  const { success, message } = await orionPageActionsService(
+  const { success, message } = await orionPageActionsService({
+    action: 'login',
     username,
-    password
-  );
+    password,
+  });
 
   res.json({ success, message });
 };

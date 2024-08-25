@@ -34,9 +34,11 @@ export const loginToOrionService = async (
 
   await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
 
-  return await checkElementTextForAuthorization(
+  const loggedIn = await checkElementTextForAuthorization(
     page,
     selectors.credentialsEl,
     credentials
   );
+
+  return loggedIn;
 };
