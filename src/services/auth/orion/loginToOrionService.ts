@@ -1,4 +1,4 @@
-import { checkIsLoggedIn } from '@utils/checkIsAuth';
+import { checkElementTextForAuthorization } from '@utils/checkIsAuth';
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,
@@ -7,30 +7,36 @@ import {
 } from '@utils/pupHelpers/pageHelpers';
 import { Page } from 'puppeteer';
 
-const { loginURL, credentials, dashboardURL } = SUPPLIERS_DATA['orion'];
+const { credentials, selectors } = SUPPLIERS_DATA['orion'];
 
 export const loginToOrionService = async (
   page: Page,
   username: string,
   password: string
 ): Promise<boolean> => {
-  await page.goto(loginURL, {
-    waitUntil: 'domcontentloaded',
-  });
+  const isLoggedIn = checkElementTextForAuthorization(
+    page,
+    selectors.credentialsEl,
+    credentials
+  );
 
-  await clickButton(page, 'a[data-bs-toggle="modal"]');
+  if (await isLoggedIn) {
+    return true;
+  }
 
-  await fillField(page, '#email_auth', username); // email
+  await clickButton(page, selectors.loginForm);
 
-  await fillField(page, '#password_auth', password); // password
+  await fillField(page, selectors.emailUsernameField, username);
 
-  await clickButton(page, '.btn-login');
+  await fillField(page, selectors.passwordField, password);
+
+  await clickButton(page, selectors.loginBtn);
 
   await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
 
-  const pageContent = await page.content();
-
-  const isLoggedIn = checkIsLoggedIn(pageContent, credentials);
-
-  return isLoggedIn;
+  return await checkElementTextForAuthorization(
+    page,
+    selectors.credentialsEl,
+    credentials
+  );
 };

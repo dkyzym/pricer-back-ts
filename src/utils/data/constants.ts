@@ -19,11 +19,18 @@ export const SUPPLIERS_DATA = {
     deepSearchURL: 'https://ugautopart.ru/search?pcode=',
   },
   orion: {
-    credentials: 'Кизим',
+    credentials: 'аккаунт',
     cookieName: 'orCookies',
     loginURL: 'https://x-orion.ru/login',
     logoutURL: 'https://x-orion.ru/logout',
     dashboardURL: 'https://x-orion.ru/lk',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
+      emailUsernameField: '#email_auth',
+      passwordField: '#password_auth',
+      loginBtn: '.btn-login',
+    },
   },
   armtek: {
     credentials: 'Кизим',

@@ -1,12 +1,15 @@
+import { SUPPLIERS_DATA } from '@utils/data/constants';
 import { isLoggedInResult } from '../../types';
 import { loginToOrionService } from '../auth/orion/loginToOrionService';
-import { createPage } from '../browserManager';
+import { getPage } from '../browserManager';
+
+const { loginURL, credentials, dashboardURL } = SUPPLIERS_DATA['orion'];
 
 export const orionPageActionsService = async (
   username: string,
   password: string
 ): Promise<isLoggedInResult> => {
-  const page = await createPage();
+  const page = await getPage(dashboardURL);
 
   let resultLoggedIn: isLoggedInResult = {
     success: false,
