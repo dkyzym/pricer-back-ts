@@ -5,19 +5,37 @@ import {
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
 import { Page } from 'puppeteer';
+import { isLoggedInResult } from '../../../types';
 
-export const logoutOrionService = async (page: Page) => {
+export const logoutOrionService = async (
+  page: Page
+): Promise<isLoggedInResult> => {
   const { selectors, credentials } = SUPPLIERS_DATA['orion'];
 
-  await clickButton(page, selectors.logoutBtn);
-  await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
-
-  const loggedIn = await checkElementTextForAuthorization(
+  const isLoggedIn = await checkElementTextForAuthorization(
     page,
     selectors.credentialsEl,
     credentials
   );
-  console.log('User has been logged out: ', !loggedIn);
 
-  return !loggedIn;
+  if (!isLoggedIn) {
+    return {
+      success: false,
+      message: 'Already logged out',
+    };
+  }
+
+  await clickButton(page, selectors.logoutBtn);
+  await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
+
+  const loggedOut = !(await checkElementTextForAuthorization(
+    page,
+    selectors.credentialsEl,
+    credentials
+  ));
+
+  return {
+    success: loggedOut,
+    message: loggedOut ? 'Logged out successfully' : 'Logout failed',
+  };
 };

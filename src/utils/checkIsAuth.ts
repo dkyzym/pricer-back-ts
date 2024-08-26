@@ -1,11 +1,12 @@
 import chalk from 'chalk';
 import { Page } from 'puppeteer';
+import { Selectors, SupplierData } from '../types';
 import { UnAuthorizedError } from './errors.js';
 
 export const checkElementTextForAuthorization = async (
   page: Page,
-  selector: string,
-  expectedText: string
+  selector: Selectors['credentialsEl'],
+  expectedText: SupplierData['credentials']
 ): Promise<boolean> => {
   try {
     // Извлекаем текст элемента по заданному селектору

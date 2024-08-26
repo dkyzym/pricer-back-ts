@@ -12,7 +12,7 @@ export interface Selectors {
   passwordField: string;
   loginBtn: string;
   logoutBtn: string;
-  [key: string]: string | undefined; // для добавления дополнительных селекторов
+  [key: string]: string | undefined;
 }
 
 interface SupplierData {

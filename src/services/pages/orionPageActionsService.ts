@@ -15,32 +15,24 @@ export const orionPageActionsService = async (
 ): Promise<isLoggedInResult> => {
   const page = await getPage(dashboardURL as string);
 
-  let resultLoggedIn: isLoggedInResult = {
-    success: false,
-    message: 'Failed to login to Orion',
-  };
-
   try {
     if (actionParams.action === 'login') {
       const { username, password } = actionParams;
 
-      const isLoggedIn = await loginOrionService(page, username, password);
-      if (isLoggedIn) {
-        return {
-          success: isLoggedIn,
-          message: 'Logged in to Orion',
-        };
-      }
+      return await loginOrionService(page, username, password);
     } else if (actionParams.action === 'logout') {
-      const isLoggedOut = await logoutOrionService(page);
-      resultLoggedIn = {
-        success: isLoggedOut,
-        message: 'Logged out from Orion',
-      };
+      return await logoutOrionService(page);
     }
   } catch (error) {
     console.error('Error performing action on Orion Page Auth Actions:', error);
+    return {
+      success: false,
+      message: 'An error occurred during the action',
+    };
   }
 
-  return resultLoggedIn;
+  return {
+    success: false,
+    message: 'Invalid action',
+  };
 };
