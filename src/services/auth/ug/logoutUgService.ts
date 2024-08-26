@@ -2,18 +2,15 @@ import { checkElementTextForAuthorization } from '@utils/checkIsAuth';
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,
-  fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
 import { Page } from 'puppeteer';
 import { isLoggedInResult } from '../../../types';
 
-export const loginOrionService = async (
-  page: Page,
-  username: string,
-  password: string
+export const logoutUgService = async (
+  page: Page
 ): Promise<isLoggedInResult> => {
-  const { credentials, selectors } = SUPPLIERS_DATA['orion'];
+  const { selectors, credentials } = SUPPLIERS_DATA['ug'];
 
   const isLoggedIn = await checkElementTextForAuthorization(
     page,
@@ -21,31 +18,24 @@ export const loginOrionService = async (
     credentials
   );
 
-  if (isLoggedIn) {
+  if (!isLoggedIn) {
     return {
-      success: true,
-      message: 'Already logged in',
+      success: false,
+      message: 'Already logged out',
     };
   }
 
-  await clickButton(page, selectors.loginForm);
-
-  await fillField(page, selectors.emailUsernameField, username);
-
-  await fillField(page, selectors.passwordField, password);
-
-  await clickButton(page, selectors.loginBtn);
-
+  await clickButton(page, selectors.logoutBtn);
   await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
 
-  const loggedIn = await checkElementTextForAuthorization(
+  const loggedOut = !(await checkElementTextForAuthorization(
     page,
     selectors.credentialsEl,
     credentials
-  );
+  ));
 
   return {
-    success: loggedIn,
-    message: loggedIn ? 'Logged in successfully' : 'Login failed',
+    success: loggedOut,
+    message: loggedOut ? 'Logged out successfully' : 'Logout failed',
   };
 };

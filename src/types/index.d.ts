@@ -34,3 +34,7 @@ export interface SessionData {
   localStorage: { [key: string]: string };
   sessionStorage: { [key: string]: string };
 }
+
+export type PageAction =
+  | { action: 'login'; username: string; password: string }
+  | { action: 'logout' };

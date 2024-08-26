@@ -8,12 +8,12 @@ import {
 import { Page } from 'puppeteer';
 import { isLoggedInResult } from '../../../types';
 
-export const loginOrionService = async (
+export const loginUgService = async (
   page: Page,
   username: string,
   password: string
 ): Promise<isLoggedInResult> => {
-  const { credentials, selectors } = SUPPLIERS_DATA['orion'];
+  const { credentials, selectors } = SUPPLIERS_DATA['ug'];
 
   const isLoggedIn = await checkElementTextForAuthorization(
     page,
@@ -27,8 +27,6 @@ export const loginOrionService = async (
       message: 'Already logged in',
     };
   }
-
-  await clickButton(page, selectors.loginForm);
 
   await fillField(page, selectors.emailUsernameField, username);
 

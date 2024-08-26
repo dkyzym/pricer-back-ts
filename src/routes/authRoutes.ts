@@ -1,7 +1,9 @@
 import { Router } from 'express';
-// import { orionLoginController } from '../controllers/auth/orion/orionLoginController';
+
 import { orionLoginController } from '@controllers/auth/orion/orionLoginController';
 import { orionLogoutController } from '@controllers/auth/orion/orionLogoutController';
+import { ugLoginController } from '@controllers/auth/ug/ugLoginController';
+import { ugLogoutController } from '@controllers/auth/ug/ugLogoutController';
 import { ctrlWrapper } from '@middleware/ctrlWrapper';
 
 // import { loginTC, logoutTC } from '#controllers/auth/tcAuthController.js';
@@ -12,16 +14,16 @@ import { ctrlWrapper } from '@middleware/ctrlWrapper';
 
 const router = Router();
 
-// router.get('/logout/tc', ctrlWrapper(logoutTC));
-// router.get('/logout/ug', ctrlWrapper(logoutUG));
-// router.get('/logout/pt', ctrlWrapper(logoutPT));
+router.get('/logout/ug', ctrlWrapper(ugLogoutController));
 router.get('/logout/or', ctrlWrapper(orionLogoutController));
+// router.get('/logout/tc', ctrlWrapper(logoutTC));
+// router.get('/logout/pt', ctrlWrapper(logoutPT));
 // router.get('/logout/ar', ctrlWrapper(logoutAR));
 
-// router.post('/login/tc', ctrlWrapper(loginTC));
-// router.post('/login/ug', ctrlWrapper(loginUG));
-// router.post('/login/pt', ctrlWrapper(loginPT));
+router.post('/login/ug', ctrlWrapper(ugLoginController));
 router.post('/login/or', ctrlWrapper(orionLoginController));
+// router.post('/login/tc', ctrlWrapper(loginTC));
+// router.post('/login/pt', ctrlWrapper(loginPT));
 // router.post('/login/ar', ctrlWrapper(loginAR));
 
 export default router;
