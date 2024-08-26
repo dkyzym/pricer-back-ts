@@ -1,12 +1,12 @@
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import { isLoggedInResult, PageAction } from '../../types';
-import { loginUgService } from '../auth/ug/loginUgService';
-import { logoutUgService } from '../auth/ug/logoutUgService';
+import { loginTcService } from '../auth/lugocar/loginTcService';
+import { logoutTcService } from '../auth/lugocar/logoutTcService';
 import { getPage } from '../browserManager';
 
-const { loginURL } = SUPPLIERS_DATA['ug'];
+const { loginURL } = SUPPLIERS_DATA['turboCars'];
 
-export const ugPageActionsService = async (
+export const tcPageActionsService = async (
   actionParams: PageAction
 ): Promise<isLoggedInResult> => {
   const page = await getPage(loginURL as string);
@@ -15,9 +15,9 @@ export const ugPageActionsService = async (
     if (actionParams.action === 'login') {
       const { username, password } = actionParams;
 
-      return await loginUgService(page, username, password);
+      return await loginTcService(page, username, password);
     } else if (actionParams.action === 'logout') {
-      return await logoutUgService(page);
+      return await logoutTcService(page);
     }
   } catch (error) {
     console.error('Error performing action on UG Page Auth Actions:', error);

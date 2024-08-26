@@ -1,6 +1,21 @@
 import { SuppliersData } from '../../types';
 
 export const SUPPLIERS_DATA: SuppliersData = {
+  turboCars: {
+    credentials: 'Кл.№',
+    cookieName: 'turboCarsCookies',
+    loginURL: 'https://turbo-cars.net/office/',
+    dashboardURL: 'https://turbo-cars.net/office/News.asp',
+    logoutURL: 'https://turbo-cars.net/office/login.asp?mode=new',
+    selectors: {
+      loginForm: 'a[data-bs-toggle="modal"]',
+      credentialsEl: '#t',
+      emailUsernameField: '#CODE',
+      passwordField: '#Password1',
+      loginBtn: 'input[type="submit"]',
+      logoutBtn: 'a[href="login.asp?mode=new"]',
+    },
+  },
   ug: {
     credentials: 'Кизим',
     cookieName: 'ugCookies',
@@ -38,20 +53,6 @@ export const SUPPLIERS_DATA: SuppliersData = {
     logoutURL: 'https://optautotorg.com/?logout',
     selectors: {
       loginForm: '#modalFormLogin',
-      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
-      emailUsernameField: '#email_auth',
-      passwordField: '#password_auth',
-      loginBtn: '.btn-login',
-      logoutBtn: '.account__leave-btn',
-    },
-  },
-  turboCars: {
-    credentials: '32831',
-    cookieName: 'turboCarsCookies',
-    loginURL: 'https://turbo-cars.net/office/SECURE.asp',
-    logoutURL: 'https://turbo-cars.net/office/login.asp?mode=new',
-    selectors: {
-      loginForm: 'a[data-bs-toggle="modal"]',
       credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
       emailUsernameField: '#email_auth',
       passwordField: '#password_auth',

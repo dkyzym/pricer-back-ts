@@ -1,4 +1,4 @@
-import { checkElementTextForAuthorization } from '@utils/checkIsAuth';
+import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,

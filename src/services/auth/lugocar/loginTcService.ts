@@ -1,4 +1,7 @@
-import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
+import {
+  checkElementTextForAuthorization,
+  checkTcAuth,
+} from '@utils/auth/checkIsAuth';
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,
@@ -8,27 +11,26 @@ import {
 import { Page } from 'puppeteer';
 import { isLoggedInResult } from '../../../types';
 
-export const loginOrionService = async (
+export const loginTcService = async (
   page: Page,
   username: string,
   password: string
 ): Promise<isLoggedInResult> => {
-  const { credentials, selectors } = SUPPLIERS_DATA['orion'];
+  const { credentials, selectors, dashboardURL } = SUPPLIERS_DATA['turboCars'];
 
-  const isLoggedIn = await checkElementTextForAuthorization(
+  const isLoggedIn = await checkTcAuth(
     page,
     selectors.credentialsEl,
     credentials
   );
-
+  console.log('isLoggedIn before if', isLoggedIn);
   if (isLoggedIn) {
+    console.log('inside isLoggedIn', isLoggedIn);
     return {
       success: true,
       message: 'Already logged in',
     };
   }
-
-  await clickButton(page, selectors.loginForm);
 
   await fillField(page, selectors.emailUsernameField, username);
 
@@ -36,7 +38,11 @@ export const loginOrionService = async (
 
   await clickButton(page, selectors.loginBtn);
 
-  await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
+  await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
+
+  await page.goto(dashboardURL as string, { waitUntil: 'networkidle2' });
+
+  // await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
   const loggedIn = await checkElementTextForAuthorization(
     page,

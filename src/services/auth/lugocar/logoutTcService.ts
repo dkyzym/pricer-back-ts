@@ -1,4 +1,4 @@
-import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
+import { checkTcAuth } from '@utils/auth/checkIsAuth';
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import {
   clickButton,
@@ -7,12 +7,12 @@ import {
 import { Page } from 'puppeteer';
 import { isLoggedInResult } from '../../../types';
 
-export const logoutOrionService = async (
+export const logoutTcService = async (
   page: Page
 ): Promise<isLoggedInResult> => {
-  const { selectors, credentials } = SUPPLIERS_DATA['orion'];
+  const { selectors, credentials } = SUPPLIERS_DATA['turboCars'];
 
-  const isLoggedIn = await checkElementTextForAuthorization(
+  const isLoggedIn = await checkTcAuth(
     page,
     selectors.credentialsEl,
     credentials
@@ -25,10 +25,11 @@ export const logoutOrionService = async (
     };
   }
 
+  await page.hover('#mnu4 > span');
   await clickButton(page, selectors.logoutBtn);
   await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
 
-  const loggedOut = !(await checkElementTextForAuthorization(
+  const loggedOut = !(await checkTcAuth(
     page,
     selectors.credentialsEl,
     credentials
