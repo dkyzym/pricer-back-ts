@@ -4,7 +4,7 @@ let browser: Browser | null = null;
 const pagesMap: Map<string, Page> = new Map();
 
 export const initBrowser = async (): Promise<Browser> => {
-  if (!browser || !browser.isConnected()) {
+  if (!browser || !browser.connected) {
     browser = await puppeteer.launch({
       headless: false,
       devtools: true,
