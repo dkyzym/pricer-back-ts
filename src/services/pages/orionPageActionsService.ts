@@ -1,7 +1,7 @@
 import { SUPPLIERS_DATA } from '@utils/data/constants';
 import { isLoggedInResult } from '../../types';
-import { loginToOrionService } from '../auth/orion/loginToOrionService';
-import { logoutFromOrionService } from '../auth/orion/logoutFromOrionService';
+import { loginOrionService } from '../auth/orion/loginOrionService';
+import { logoutOrionService } from '../auth/orion/logoutOrionService';
 import { getPage } from '../browserManager';
 
 const { dashboardURL } = SUPPLIERS_DATA['orion'];
@@ -24,13 +24,19 @@ export const orionPageActionsService = async (
     if (actionParams.action === 'login') {
       const { username, password } = actionParams;
 
-      const isLoggedIn = await loginToOrionService(page, username, password);
+      const isLoggedIn = await loginOrionService(page, username, password);
       if (isLoggedIn) {
-        return { success: isLoggedIn, message: 'Logged in to Orion' };
+        return {
+          success: isLoggedIn,
+          message: 'Logged in to Orion',
+        };
       }
     } else if (actionParams.action === 'logout') {
-      await logoutFromOrionService(page);
-      resultLoggedIn = { success: true, message: 'Logged out from Orion' };
+      const isLoggedOut = await logoutOrionService(page);
+      resultLoggedIn = {
+        success: isLoggedOut,
+        message: 'Logged out from Orion',
+      };
     }
   } catch (error) {
     console.error('Error performing action on Orion Page Auth Actions:', error);

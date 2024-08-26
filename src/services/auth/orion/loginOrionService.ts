@@ -9,7 +9,7 @@ import { Page } from 'puppeteer';
 
 const { credentials, selectors } = SUPPLIERS_DATA['orion'];
 
-export const loginToOrionService = async (
+export const loginOrionService = async (
   page: Page,
   username: string,
   password: string

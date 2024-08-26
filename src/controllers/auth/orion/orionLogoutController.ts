@@ -1,7 +1,7 @@
 import { orionPageActionsService } from '@services/pages/orionPageActionsService';
 import { Request, Response } from 'express';
 
-export const orionLogoutController = async (req: Request, res: Response) => {
+export const orionLogoutController = async (_req: Request, res: Response) => {
   const { success, message } = await orionPageActionsService({
     action: 'logout',
   });
