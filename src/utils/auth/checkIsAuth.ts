@@ -12,11 +12,7 @@ export const checkElementTextForAuthorization = async (
 ): Promise<boolean> => {
   try {
     // Извлекаем текст элемента по заданному селектору
-    console.log(
-      (await page.content())
-        .toLocaleLowerCase()
-        .includes('Кл.№'.toLocaleLowerCase())
-    );
+
     const elementText = await page.$eval(
       selector,
       (element) => element.textContent?.trim().toLowerCase() || ''
@@ -46,14 +42,13 @@ export const checkTcAuth = async (
   let url = page.url();
 
   const element = await page.$('#formLOGIN');
-  console.log(`element: ${element}`);
+
   if (element) {
     console.log('No form');
     return false;
   } else if (url === 'https://turbo-cars.net/office/login.asp?mode=new') {
     return true;
   } else {
-    console.log(url, 'before if');
     if (url !== dashboardURL) {
       await page.goto(dashboardURL as string);
 
@@ -66,7 +61,6 @@ export const checkTcAuth = async (
       expectedText
     );
 
-    console.log(result);
     return result;
   }
 };

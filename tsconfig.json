@@ -14,10 +14,10 @@
     "baseUrl": "./src",
     "paths": {
       "@config/*": ["config/*"],
+      "@services/*": ["services/*"],
       "@controllers/*": ["controllers/*"],
       "@middleware/*": ["middleware/*"],
       "@routes/*": ["routes/*"],
-      "@services/*": ["services/*"],
       "@sessions/*": ["sessions/*"],
       "@types/*": ["types/*"],
       "@utils/*": ["utils/*"]

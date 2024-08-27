@@ -1,6 +1,20 @@
 import { SuppliersData } from '../../types';
 
 export const SUPPLIERS_DATA: SuppliersData = {
+  patriot: {
+    credentials: 'Кизим',
+    cookieName: 'ptCookies',
+    loginURL: 'https://optautotorg.com/',
+    logoutURL: 'https://optautotorg.com/?logout',
+    selectors: {
+      loginForm: '#logInModal[href="#modalFormLogin"]',
+      credentialsEl: '.headAuth',
+      emailUsernameField: '#login_modal',
+      passwordField: '#pass_modal',
+      loginBtn: 'input[type="submit"].modalWindowSubmitBtn',
+      logoutBtn: 'a[href="/?logout"]',
+    },
+  },
   turboCars: {
     credentials: 'Кл.№',
     cookieName: 'turboCarsCookies',
@@ -39,20 +53,6 @@ export const SUPPLIERS_DATA: SuppliersData = {
     dashboardURL: 'https://x-orion.ru/lk',
     selectors: {
       loginForm: 'a[data-bs-toggle="modal"]',
-      credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
-      emailUsernameField: '#email_auth',
-      passwordField: '#password_auth',
-      loginBtn: '.btn-login',
-      logoutBtn: '.account__leave-btn',
-    },
-  },
-  patriot: {
-    credentials: 'Кизим',
-    cookieName: 'ptCookies',
-    loginURL: 'https://optautotorg.com/',
-    logoutURL: 'https://optautotorg.com/?logout',
-    selectors: {
-      loginForm: '#modalFormLogin',
       credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
       emailUsernameField: '#email_auth',
       passwordField: '#password_auth',
