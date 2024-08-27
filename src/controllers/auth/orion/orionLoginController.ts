@@ -8,6 +8,7 @@ export const orionLoginController = async (req: Request, res: Response) => {
     action: 'login',
     username,
     password,
+    supplier: 'orion',
   });
 
   res.json({ success, message });

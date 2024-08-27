@@ -1,38 +1,37 @@
-import { SUPPLIERS_DATA } from '@utils/data/constants';
-import { isLoggedInResult } from '../../types';
+import { getSupplierData } from '@utils/data/getSupplierData';
+import { isLoggedInResult, PageAction } from '../../types';
 import { loginOrionService } from '../auth/orion/loginOrionService';
 import { logoutOrionService } from '../auth/orion/logoutOrionService';
 import { getPage } from '../browserManager';
 
-const { dashboardURL } = SUPPLIERS_DATA['orion'];
-
-type OrionAction =
-  | { action: 'login'; username: string; password: string }
-  | { action: 'logout' };
-
 export const orionPageActionsService = async (
-  actionParams: OrionAction
+  actionParams: PageAction
 ): Promise<isLoggedInResult> => {
+  const { action, supplier } = actionParams;
+  const { dashboardURL } = getSupplierData(supplier);
   const page = await getPage(dashboardURL as string);
 
   try {
-    if (actionParams.action === 'login') {
+    if (action === 'login') {
       const { username, password } = actionParams;
 
-      return await loginOrionService(page, username, password);
-    } else if (actionParams.action === 'logout') {
-      return await logoutOrionService(page);
+      return await loginOrionService({ page, username, password, supplier });
+    } else if (action === 'logout') {
+      return await logoutOrionService(page, supplier);
     }
   } catch (error) {
-    console.error('Error performing action on Orion Page Auth Actions:', error);
+    console.error(
+      `${supplier}: Error performing action on Orion Page Auth Actions:`,
+      error
+    );
     return {
       success: false,
-      message: 'An error occurred during the action',
+      message: `${supplier}: An error occurred during the action`,
     };
   }
 
   return {
     success: false,
-    message: 'Invalid action',
+    message: `${supplier}: Invalid action`,
   };
 };

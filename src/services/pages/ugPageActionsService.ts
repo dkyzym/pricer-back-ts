@@ -1,34 +1,37 @@
-import { SUPPLIERS_DATA } from '@utils/data/constants';
+import { getSupplierData } from '@utils/data/getSupplierData';
 import { isLoggedInResult, PageAction } from '../../types';
 import { loginUgService } from '../auth/ug/loginUgService';
 import { logoutUgService } from '../auth/ug/logoutUgService';
 import { getPage } from '../browserManager';
 
-const { loginURL } = SUPPLIERS_DATA['ug'];
-
 export const ugPageActionsService = async (
   actionParams: PageAction
 ): Promise<isLoggedInResult> => {
+  const { action, supplier } = actionParams;
+  const { loginURL } = getSupplierData(supplier);
   const page = await getPage(loginURL as string);
 
   try {
-    if (actionParams.action === 'login') {
+    if (action === 'login') {
       const { username, password } = actionParams;
 
-      return await loginUgService(page, username, password);
-    } else if (actionParams.action === 'logout') {
-      return await logoutUgService(page);
+      return await loginUgService({ page, username, password, supplier });
+    } else if (action === 'logout') {
+      return await logoutUgService(page, supplier);
     }
   } catch (error) {
-    console.error('Error performing action on UG Page Auth Actions:', error);
+    console.error(
+      `${supplier}: Error performing action on Page Auth Actions:`,
+      error
+    );
     return {
       success: false,
-      message: 'An error occurred during the action',
+      message: `${supplier}: An error occurred during the action`,
     };
   }
 
   return {
     success: false,
-    message: 'Invalid action',
+    message: `${supplier}: Invalid action`,
   };
 };

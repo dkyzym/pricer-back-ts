@@ -8,6 +8,7 @@ export const ugLoginController = async (req: Request, res: Response) => {
     action: 'login',
     username,
     password,
+    supplier: 'ug',
   });
 
   res.json({ success, message });

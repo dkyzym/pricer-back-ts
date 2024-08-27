@@ -1,19 +1,19 @@
 import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
-import { SUPPLIERS_DATA } from '@utils/data/constants';
+import { getSupplierData } from '@utils/data/getSupplierData';
 import {
   clickButton,
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { Page } from 'puppeteer';
-import { isLoggedInResult } from '../../../types';
+import { isLoggedInResult, LoginServiceParams } from '../../../types';
 
-export const loginUgService = async (
-  page: Page,
-  username: string,
-  password: string
-): Promise<isLoggedInResult> => {
-  const { credentials, selectors } = SUPPLIERS_DATA['ug'];
+export const loginUgService = async ({
+  page,
+  username,
+  password,
+  supplier,
+}: LoginServiceParams): Promise<isLoggedInResult> => {
+  const { credentials, selectors } = getSupplierData(supplier);
 
   const isLoggedIn = await checkElementTextForAuthorization(
     page,
@@ -24,7 +24,7 @@ export const loginUgService = async (
   if (isLoggedIn) {
     return {
       success: true,
-      message: 'Already logged in',
+      message: `${supplier}: Already logged in`,
     };
   }
 
@@ -44,6 +44,8 @@ export const loginUgService = async (
 
   return {
     success: loggedIn,
-    message: loggedIn ? 'Logged in successfully' : 'Login failed',
+    message: loggedIn
+      ? `${supplier}: Logged in successfully`
+      : `${supplier}: Login failed`,
   };
 };

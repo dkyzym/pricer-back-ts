@@ -21,7 +21,7 @@ export const tcPageActionsService = async (
     }
   } catch (error) {
     console.error(
-      `${supplier}: Error performing action on UG Page Auth Actions: `,
+      `${supplier}: Error performing action on Page Auth Actions: `,
       error
     );
     return {
