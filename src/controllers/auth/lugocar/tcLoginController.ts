@@ -7,7 +7,7 @@ export const tcLoginController = async (req: Request, res: Response) => {
   const { success, message } = await tcPageActionsService({
     action: 'login',
     username,
-    password,
+    password,supplier:'turboCars'
   });
 
   res.json({ success, message });

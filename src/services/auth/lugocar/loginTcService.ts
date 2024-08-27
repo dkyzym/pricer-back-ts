@@ -2,33 +2,32 @@ import {
   checkElementTextForAuthorization,
   checkTcAuth,
 } from '@utils/auth/checkIsAuth';
-import { SUPPLIERS_DATA } from '@utils/data/constants';
+import { getSupplierData } from '@utils/data/getSupplierData';
 import {
   clickButton,
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { Page } from 'puppeteer';
-import { isLoggedInResult } from '../../../types';
+import { isLoggedInResult, LoginServiceParams } from '../../../types';
 
-export const loginTcService = async (
-  page: Page,
-  username: string,
-  password: string
-): Promise<isLoggedInResult> => {
-  const { credentials, selectors, dashboardURL } = SUPPLIERS_DATA['turboCars'];
+export const loginTcService = async ({
+  page,
+  username,
+  password,
+  supplier,
+}: LoginServiceParams): Promise<isLoggedInResult> => {
+  const { credentials, selectors, dashboardURL } = getSupplierData(supplier);
 
   const isLoggedIn = await checkTcAuth(
     page,
     selectors.credentialsEl,
     credentials
   );
-  console.log('isLoggedIn before if', isLoggedIn);
+
   if (isLoggedIn) {
-    console.log('inside isLoggedIn', isLoggedIn);
     return {
       success: true,
-      message: 'Already logged in',
+      message: `${supplier}: Already logged in`,
     };
   }
 
@@ -42,8 +41,6 @@ export const loginTcService = async (
 
   await page.goto(dashboardURL as string, { waitUntil: 'networkidle2' });
 
-  // await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
-
   const loggedIn = await checkElementTextForAuthorization(
     page,
     selectors.credentialsEl,
@@ -52,6 +49,8 @@ export const loginTcService = async (
 
   return {
     success: loggedIn,
-    message: loggedIn ? 'Logged in successfully' : 'Login failed',
+    message: loggedIn
+      ? `${supplier}: Logged in successfully`
+      : `${supplier}: Login failed`,
   };
 };
