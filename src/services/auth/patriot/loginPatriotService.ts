@@ -1,22 +1,20 @@
 import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
-import { SUPPLIERS_DATA } from '@utils/data/constants';
+import { getSupplierData } from '@utils/data/getSupplierData';
 import {
   clickButton,
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { Page } from 'puppeteer';
-import { isLoggedInResult, SupplierName } from '../../../types';
+import { isLoggedInResult, LoginServiceParams } from '../../../types';
 
-export const loginPatriotService = async (
-  page: Page,
-  username: string,
-  password: string
-): Promise<isLoggedInResult> => {
-  const supplier: SupplierName = 'patriot';
-  const upperCaseSupplier = supplier.toUpperCase();
-
-  const { credentials, selectors } = SUPPLIERS_DATA[supplier];
+export const loginPatriotService = async ({
+  page,
+  username,
+  password,
+  supplier,
+}: LoginServiceParams): Promise<isLoggedInResult> => {
+  console.log(supplier);
+  const { credentials, selectors } = getSupplierData(supplier);
 
   const isLoggedIn = await checkElementTextForAuthorization(
     page,
@@ -27,10 +25,10 @@ export const loginPatriotService = async (
   if (isLoggedIn) {
     return {
       success: true,
-      message: `${upperCaseSupplier} Already logged in`,
+      message: `${supplier}: Already logged in`,
     };
   }
-  console.log('before click');
+
   await clickButton(page, selectors.loginForm);
 
   await fillField(page, selectors.emailUsernameField, username);
@@ -50,7 +48,7 @@ export const loginPatriotService = async (
   return {
     success: loggedIn,
     message: loggedIn
-      ? `${upperCaseSupplier} Logged in successfully`
-      : `${upperCaseSupplier} Login failed`,
+      ? `${supplier}: Logged in successfully`
+      : `${supplier}: Login failed`,
   };
 };

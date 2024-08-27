@@ -11,8 +11,6 @@ export const checkElementTextForAuthorization = async (
   expectedText: SupplierData['credentials']
 ): Promise<boolean> => {
   try {
-    // Извлекаем текст элемента по заданному селектору
-
     const elementText = await page.$eval(
       selector,
       (element) => element.textContent?.trim().toLowerCase() || ''

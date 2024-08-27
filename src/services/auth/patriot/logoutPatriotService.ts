@@ -1,5 +1,5 @@
 import { checkElementTextForAuthorization } from '@utils/auth/checkIsAuth';
-import { SUPPLIERS_DATA } from '@utils/data/constants';
+import { getSupplierData } from '@utils/data/getSupplierData';
 import {
   clickButton,
   waitForPageNavigation,
@@ -8,12 +8,10 @@ import { Page } from 'puppeteer';
 import { isLoggedInResult, SupplierName } from '../../../types';
 
 export const logoutPatriotService = async (
-  page: Page
+  page: Page,
+  supplier: SupplierName
 ): Promise<isLoggedInResult> => {
-  const supplier: SupplierName = 'patriot';
-  const upperCaseSupplier = supplier.toUpperCase();
-
-  const { selectors, credentials } = SUPPLIERS_DATA[supplier];
+  const { selectors, credentials } = getSupplierData(supplier);
 
   const isLoggedIn = await checkElementTextForAuthorization(
     page,
@@ -24,7 +22,7 @@ export const logoutPatriotService = async (
   if (!isLoggedIn) {
     return {
       success: false,
-      message: `${upperCaseSupplier} Already logged out`,
+      message: `${supplier}: Already logged out`,
     };
   }
   await clickButton(page, selectors.loginForm);
@@ -42,7 +40,7 @@ export const logoutPatriotService = async (
   return {
     success: loggedOut,
     message: loggedOut
-      ? ` ${upperCaseSupplier} Logged out successfully`
-      : ` ${upperCaseSupplier} Logout failed`,
+      ? ` ${supplier}: Logged out successfully`
+      : ` ${supplier}: Logout failed`,
   };
 };

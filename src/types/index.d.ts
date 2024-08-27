@@ -36,5 +36,20 @@ export interface SessionData {
 }
 
 export type PageAction =
-  | { action: 'login'; username: string; password: string }
-  | { action: 'logout' };
+  | {
+      action: 'login';
+      username: string;
+      password: string;
+      supplier: SupplierName;
+    }
+  | {
+      action: 'logout';
+      supplier: SupplierName;
+    };
+
+interface LoginServiceParams {
+  page: Page;
+  username: string;
+  password: string;
+  supplier: SupplierName;
+}

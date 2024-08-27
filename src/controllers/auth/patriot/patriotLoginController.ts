@@ -8,6 +8,7 @@ export const patriotLoginController = async (req: Request, res: Response) => {
     action: 'login',
     username,
     password,
+    supplier: 'patriot',
   });
 
   res.json({ success, message });
