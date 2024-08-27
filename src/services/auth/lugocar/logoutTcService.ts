@@ -5,7 +5,7 @@ import {
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
 import { Page } from 'puppeteer';
-import { isLoggedInResult, SupplierName } from '../../../types';
+import { isLoggedInResult, SupplierName } from 'types';
 
 export const logoutTcService = async (
   page: Page,

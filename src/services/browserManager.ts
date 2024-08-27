@@ -18,18 +18,15 @@ export const getPage = async (url: string): Promise<Page> => {
   const existingPage = pagesMap.get(url);
 
   if (existingPage && !existingPage.isClosed()) {
-    // Если страница уже открыта и не закрыта, возвращаем её
     await existingPage.bringToFront();
     return existingPage;
   }
-
-  // Если страницы нет, создаем новую
 
   const newPage = await browser.newPage();
 
   await newPage.setViewport({ width: 1280, height: 1024 });
   await newPage.goto(url, { waitUntil: 'domcontentloaded' });
-  pagesMap.set(url, newPage); // Сохраняем страницу в Map
+  pagesMap.set(url, newPage);
 
   return newPage;
 };

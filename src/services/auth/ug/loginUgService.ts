@@ -5,7 +5,7 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { isLoggedInResult, LoginServiceParams } from '../../../types';
+import { isLoggedInResult, LoginServiceParams } from 'types';
 
 export const loginUgService = async ({
   page,

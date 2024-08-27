@@ -1,4 +1,4 @@
-import { SupplierName } from '../../types';
+import { SupplierName } from 'types';
 import { SUPPLIERS_DATA } from './constants';
 
 export const getSupplierData = (supplier: SupplierName) => {

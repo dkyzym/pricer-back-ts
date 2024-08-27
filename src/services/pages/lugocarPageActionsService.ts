@@ -1,4 +1,4 @@
-import { isLoggedInResult, PageAction } from '../../types';
+import { isLoggedInResult, PageAction } from 'types';
 import { getSupplierData } from '../../utils/data/getSupplierData';
 import { loginTcService } from '../auth/lugocar/loginTcService';
 import { logoutTcService } from '../auth/lugocar/logoutTcService';

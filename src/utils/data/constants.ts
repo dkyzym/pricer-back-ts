@@ -1,4 +1,4 @@
-import { SuppliersData } from '../../types';
+import { SuppliersData } from 'types';
 
 export const SUPPLIERS_DATA: SuppliersData = {
   patriot: {

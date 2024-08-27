@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
 import path, { dirname } from 'path';
 import { Page } from 'puppeteer';
+import { SessionData, SupplierName } from 'types';
 import { fileURLToPath } from 'url';
-import { SessionData, SupplierName } from '../types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

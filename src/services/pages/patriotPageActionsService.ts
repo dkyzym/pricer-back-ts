@@ -1,4 +1,4 @@
-import { isLoggedInResult, PageAction } from '../../types';
+import { isLoggedInResult, PageAction } from 'types';
 import { getSupplierData } from '../../utils/data/getSupplierData';
 import { loginPatriotService } from '../auth/patriot/loginPatriotService';
 import { logoutPatriotService } from '../auth/patriot/logoutPatriotService';

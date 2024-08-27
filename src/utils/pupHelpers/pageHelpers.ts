@@ -1,5 +1,5 @@
 import { HTTPResponse, Page, WaitForOptions } from 'puppeteer';
-import { Selectors } from '../../types';
+import { Selectors } from 'types';
 
 export const clickButton = async (page: Page, selector: keyof Selectors) => {
   await page.locator(selector as string).click();

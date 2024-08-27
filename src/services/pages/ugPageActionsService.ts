@@ -1,5 +1,5 @@
 import { getSupplierData } from '@utils/data/getSupplierData';
-import { isLoggedInResult, PageAction } from '../../types';
+import { isLoggedInResult, PageAction } from 'types';
 import { loginUgService } from '../auth/ug/loginUgService';
 import { logoutUgService } from '../auth/ug/logoutUgService';
 import { getPage } from '../browserManager';
