@@ -17,7 +17,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
     },
   },
   turboCars: {
-    credentials: 'Кл.№',
+    credentials: '32831',
     cookieName: 'turboCarsCookies',
     loginURL: 'https://turbo-cars.net/office/',
     dashboardURL: 'https://turbo-cars.net/office/News.asp',
