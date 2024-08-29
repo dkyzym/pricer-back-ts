@@ -1,8 +1,8 @@
 import { getSupplierData } from '@utils/data/getSupplierData';
 import { isLoggedInResult, PageAction } from 'types';
-import { loginOrionService } from '../auth/orion/loginOrionService';
-import { logoutOrionService } from '../auth/orion/logoutOrionService';
-import { getPage } from '../browserManager';
+import { loginOrionService } from '../orion/loginOrionService';
+import { logoutOrionService } from '../orion/logoutOrionService';
+import { getPage } from '../puppeteerShared/browserManager';
 
 export const orionPageActionsService = async (
   actionParams: PageAction

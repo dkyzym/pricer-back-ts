@@ -13,6 +13,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#pass_modal',
       loginBtn: 'input[type="submit"].modalWindowSubmitBtn',
       logoutBtn: 'a[href="/?logout"]',
+      input: '',
     },
   },
   turboCars: {
@@ -28,6 +29,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#Password1',
       loginBtn: 'input[type="submit"]',
       logoutBtn: 'a[href="login.asp?mode=new"]',
+      input: '',
     },
   },
   ug: {
@@ -43,6 +45,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#pass_modal',
       loginBtn: '.submitButton',
       logoutBtn: '.exit',
+      input: '.ui-autocomplete-input',
     },
   },
   orion: {
@@ -58,6 +61,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#password_auth',
       loginBtn: '.btn-login',
       logoutBtn: '.account__leave-btn',
+      input: '',
     },
   },
   armtek: {
@@ -72,6 +76,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#password_auth',
       loginBtn: '.btn-login',
       logoutBtn: '.account__leave-btn',
+      input: '',
     },
   },
 };

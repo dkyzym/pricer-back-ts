@@ -1,5 +1,6 @@
 import { error } from '@middleware/errorsMiddleware';
 import authRoutes from '@routes/authRoutes';
+import dataRoutes from '@routes/dataRoutes';
 import { RouteNotFoundError } from '@utils/errors';
 import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
@@ -28,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use('/', authRoutes);
-// app.use('/', dataRoutes);
+app.use('/', dataRoutes);
 
 app.use(() => {
   throw new RouteNotFoundError();

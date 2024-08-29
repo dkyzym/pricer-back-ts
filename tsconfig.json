@@ -23,7 +23,7 @@
       "@utils/*": ["utils/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/controllers/data/autocompleteController.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true

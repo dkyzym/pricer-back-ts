@@ -12,6 +12,7 @@ export interface Selectors {
   passwordField: string;
   loginBtn: string;
   logoutBtn: string;
+  input: string;
   [key: string]: string | undefined;
 }
 
@@ -45,6 +46,11 @@ export type PageAction =
   | {
       action: 'logout';
       supplier: SupplierName;
+    }
+  | {
+      action: 'autocomplete';
+      supplier: SupplierName;
+      query: string;
     };
 
 interface LoginServiceParams {
@@ -52,4 +58,11 @@ interface LoginServiceParams {
   username: string;
   password: string;
   supplier: SupplierName;
+}
+
+export interface SearchResult {
+  id: string;
+  brand: string;
+  article: string;
+  dataUrl: string;
 }

@@ -1,8 +1,8 @@
 import { isLoggedInResult, PageAction } from 'types';
 import { getSupplierData } from '../../utils/data/getSupplierData';
-import { loginPatriotService } from '../auth/patriot/loginPatriotService';
-import { logoutPatriotService } from '../auth/patriot/logoutPatriotService';
-import { getPage } from '../browserManager';
+import { loginPatriotService } from '../patriot/loginPatriotService';
+import { logoutPatriotService } from '../patriot/logoutPatriotService';
+import { getPage } from '../puppeteerShared/browserManager';
 
 export const patriotPageActionsService = async (
   actionParams: PageAction

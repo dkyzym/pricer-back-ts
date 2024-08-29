@@ -1,8 +1,8 @@
 import { isLoggedInResult, PageAction } from 'types';
 import { getSupplierData } from '../../utils/data/getSupplierData';
-import { loginTcService } from '../auth/lugocar/loginTcService';
-import { logoutTcService } from '../auth/lugocar/logoutTcService';
-import { getPage } from '../browserManager';
+import { loginTcService } from '../lugocar/loginTcService';
+import { logoutTcService } from '../lugocar/logoutTcService';
+import { getPage } from '../puppeteerShared/browserManager';
 
 export const tcPageActionsService = async (
   actionParams: PageAction
