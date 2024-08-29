@@ -1,8 +1,3 @@
-export interface isLoggedInResult {
-  success: boolean;
-  message: string;
-}
-
 export type SupplierName = 'patriot' | 'turboCars' | 'ug' | 'orion' | 'armtek';
 
 export interface Selectors {
@@ -65,4 +60,10 @@ export interface SearchResult {
   brand: string;
   article: string;
   dataUrl: string;
+}
+
+export interface pageActionsResult {
+  success: boolean;
+  message: string;
+  data?: SearchResult[];
 }

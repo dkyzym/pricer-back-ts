@@ -5,14 +5,14 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { isLoggedInResult, LoginServiceParams } from 'types';
+import { LoginServiceParams, pageActionsResult } from 'types';
 
 export const loginPatriotService = async ({
   page,
   username,
   password,
   supplier,
-}: LoginServiceParams): Promise<isLoggedInResult> => {
+}: LoginServiceParams): Promise<pageActionsResult> => {
   console.log(supplier);
   const { credentials, selectors } = getSupplierData(supplier);
 

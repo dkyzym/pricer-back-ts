@@ -1,4 +1,4 @@
-import { isLoggedInResult, PageAction } from 'types';
+import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { getPage } from '../puppeteerShared/browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
@@ -7,7 +7,7 @@ import { logoutUgService } from '../ug/logoutUgService';
 
 export const ugPageActionsService = async (
   actionParams: PageAction
-): Promise<isLoggedInResult> => {
+): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
   const page = await getPage(loginURL);
@@ -27,10 +27,13 @@ export const ugPageActionsService = async (
         return await logoutUgService(page, supplier);
       case 'autocomplete': {
         const { query } = actionParams;
-        await autocompleteUgService(page, query, supplier);
+        const data = await autocompleteUgService(page, query, supplier);
+        const hasData = Boolean(data.length);
+
         return {
-          success: true,
+          success: hasData,
           message: `${supplier}: Autocomplete successful`,
+          data,
         };
       }
       default:

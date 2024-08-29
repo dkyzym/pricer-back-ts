@@ -5,14 +5,14 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
-import { isLoggedInResult, LoginServiceParams } from 'types';
+import { LoginServiceParams, pageActionsResult } from 'types';
 
 export const loginUgService = async ({
   page,
   username,
   password,
   supplier,
-}: LoginServiceParams): Promise<isLoggedInResult> => {
+}: LoginServiceParams): Promise<pageActionsResult> => {
   const { credentials, selectors } = getSupplierData(supplier);
 
   const isLoggedIn = await checkElementTextForAuthorization(

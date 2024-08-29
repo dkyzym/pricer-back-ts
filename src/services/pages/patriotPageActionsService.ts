@@ -1,4 +1,4 @@
-import { isLoggedInResult, PageAction } from 'types';
+import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { loginPatriotService } from '../patriot/loginPatriotService';
 import { logoutPatriotService } from '../patriot/logoutPatriotService';
@@ -6,7 +6,7 @@ import { getPage } from '../puppeteerShared/browserManager';
 
 export const patriotPageActionsService = async (
   actionParams: PageAction
-): Promise<isLoggedInResult> => {
+): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
   const page = await getPage(loginURL);

@@ -5,12 +5,12 @@ import {
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
 import { Page } from 'puppeteer';
-import { isLoggedInResult, SupplierName } from 'types';
+import { pageActionsResult, SupplierName } from 'types';
 
 export const logoutPatriotService = async (
   page: Page,
   supplier: SupplierName
-): Promise<isLoggedInResult> => {
+): Promise<pageActionsResult> => {
   const { selectors, credentials } = getSupplierData(supplier);
 
   const isLoggedIn = await checkElementTextForAuthorization(

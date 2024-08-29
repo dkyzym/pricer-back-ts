@@ -1,4 +1,4 @@
-import { isLoggedInResult, PageAction } from 'types';
+import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { loginOrionService } from '../orion/loginOrionService';
 import { logoutOrionService } from '../orion/logoutOrionService';
@@ -6,7 +6,7 @@ import { getPage } from '../puppeteerShared/browserManager';
 
 export const orionPageActionsService = async (
   actionParams: PageAction
-): Promise<isLoggedInResult> => {
+): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { dashboardURL } = getSupplierData(supplier);
   const page = await getPage(dashboardURL as string);

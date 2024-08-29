@@ -13,7 +13,13 @@ export const autocompleteUgService = async (
 
   await fillField(page, selectors.input, query);
 
-  const result = await parseAutocompleteResults(page);
+  if (query.trim() === '') {
+    console.log('Empty query, returning empty result set');
+    return [];
+  }
 
+  const result = await parseAutocompleteResults(page);
   console.log(result);
+
+  return result;
 };
