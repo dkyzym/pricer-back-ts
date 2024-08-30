@@ -5,6 +5,7 @@ interface SearchResult {
   id: string;
   brand: string;
   article: string;
+  description: string;
   dataUrl: string;
 }
 
@@ -27,11 +28,18 @@ export const parseAutocompleteResults = async (
             'td.searchFormAutocompleteNumber strong'
           ) as HTMLElement
         )?.innerText || '';
+      const description =
+        (
+          item.querySelector(
+            'td.searchFormAutocompleteDescription'
+          ) as HTMLAreaElement
+        )?.innerText || '';
       const dataUrl = (item as HTMLElement).getAttribute('data-url') || '';
 
       return {
         brand,
         article,
+        description,
         dataUrl,
       };
     });
@@ -42,3 +50,5 @@ export const parseAutocompleteResults = async (
     ...result,
   }));
 };
+
+// <td class="searchFormAutocomplete searchFormAutocompleteDescription"><div>Фильтр масляный</div></td>
