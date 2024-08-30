@@ -1,5 +1,6 @@
 import { Mutex } from 'async-mutex';
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { HEADLESS_SETTINGS } from 'utils/data/constants';
 
 let browser: Browser | null = null;
 const pagesMap: Map<string, Page> = new Map();
@@ -8,9 +9,10 @@ const pageMutexMap: Map<string, Mutex> = new Map();
 
 export const initBrowser = async (): Promise<Browser> => {
   return await browserMutex.runExclusive(async () => {
-    if (!browser || !browser.isConnected()) {
+    if (!browser || !browser.connected) {
       browser = await puppeteer.launch({
         headless: false,
+
         devtools: true,
       });
     }
@@ -34,8 +36,18 @@ export const getPage = async (url: string): Promise<Page> => {
       await page.bringToFront();
     } else {
       page = await browser.newPage();
-      await page.setViewport({ width: 1280, height: 1024 });
-      await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+      await page.setUserAgent(HEADLESS_SETTINGS.userAgent);
+      await page.setExtraHTTPHeaders(HEADLESS_SETTINGS.language);
+
+      await page.setViewport({
+        width: 1280,
+        height: 1024,
+        deviceScaleFactor: 1,
+      });
+
+      await page.goto(url, { waitUntil: 'networkidle2' });
+
       pagesMap.set(url, page);
     }
 

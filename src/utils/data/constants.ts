@@ -82,3 +82,13 @@ export const SUPPLIERS_DATA: SuppliersData = {
 };
 
 Object.freeze(SUPPLIERS_DATA);
+
+export const HEADLESS_SETTINGS = {
+  userAgent:
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
+  language: {
+    'accept-language': 'ru-RU,ru;q=0.9',
+  },
+};
+
+Object.freeze(HEADLESS_SETTINGS);
