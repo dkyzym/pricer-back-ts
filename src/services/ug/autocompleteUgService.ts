@@ -19,7 +19,6 @@ export const autocompleteUgService = async (
   }
 
   const result = await parseAutocompleteResults(page, query);
-  // console.log(result);
 
   return result;
 };

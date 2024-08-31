@@ -18,15 +18,6 @@ export const parseAutocompleteResults = async (
   await page.waitForSelector('tbody.ui-menu tr.ui-menu-item');
   await page.waitForNetworkIdle({ idleTime: 300 });
 
-  const content = await page.evaluate(() => {
-    const item = document.querySelector(
-      '.ui-menu.ui-widget.ui-widget-content.ui-corner-all'
-    );
-    return item ? item.innerHTML : 'Element not found';
-  });
-
-  log(content, { color: chalk.bgBlue });
-
   const results = await page.evaluate(() => {
     const items = Array.from(
       document.querySelectorAll('tbody.ui-menu tr.ui-menu-item')

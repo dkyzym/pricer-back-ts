@@ -42,6 +42,11 @@ app.use(error);
 
 const start = async () => {
   try {
+    await ugPageActionsService({
+      action: 'init',
+      supplier: 'ug',
+    });
+
     const server: HTTPServer = app.listen(PORT, () => {
       console.log(
         chalk.cyan.italic(
@@ -68,7 +73,6 @@ const start = async () => {
             query,
             supplier: 'ug',
           });
-          // console.log('results', results);
           socket.emit('autocompleteResults', { query, results });
         } catch (error) {
           console.error('Autocomplete error:', error);

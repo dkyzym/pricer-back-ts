@@ -14,6 +14,9 @@ export const ugPageActionsService = async (
 
   try {
     switch (action) {
+      case 'init': {
+        return { success: true, message: `${supplier} page opened` };
+      }
       case 'login': {
         const { username, password } = actionParams;
         return await loginUgService({

@@ -33,6 +33,10 @@ export interface SessionData {
 
 export type PageAction =
   | {
+      action: 'init';
+      supplier: SupplierName;
+    }
+  | {
       action: 'login';
       username: string;
       password: string;
