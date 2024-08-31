@@ -1,18 +1,31 @@
+import chalk from 'chalk';
 import { Page } from 'puppeteer';
 import { v4 as uuidv4 } from 'uuid';
-
-interface SearchResult {
-  id: string;
-  brand: string;
-  article: string;
-  description: string;
-  dataUrl: string;
-}
+import { SearchResult } from '../../types';
+import { log } from '../log';
 
 export const parseAutocompleteResults = async (
-  page: Page
+  page: Page,
+  query: string
 ): Promise<SearchResult[]> => {
+  log(query + ' ' + query.length, { color: chalk.bgCyan });
+
+  if (query.length <= 3) {
+    log('Query too short, clearing results.', { color: chalk.bgRed });
+    return [];
+  }
+
   await page.waitForSelector('tbody.ui-menu tr.ui-menu-item');
+  await page.waitForNetworkIdle({ idleTime: 300 });
+
+  const content = await page.evaluate(() => {
+    const item = document.querySelector(
+      '.ui-menu.ui-widget.ui-widget-content.ui-corner-all'
+    );
+    return item ? item.innerHTML : 'Element not found';
+  });
+
+  log(content, { color: chalk.bgBlue });
 
   const results = await page.evaluate(() => {
     const items = Array.from(
@@ -22,18 +35,23 @@ export const parseAutocompleteResults = async (
       const brand =
         (item.querySelector('td.searchFormAutocompleteBrand') as HTMLElement)
           ?.innerText || '';
-      const article =
-        (
-          item.querySelector(
-            'td.searchFormAutocompleteNumber strong'
-          ) as HTMLElement
-        )?.innerText || '';
+
+      const articleElement = item.querySelector(
+        'td.searchFormAutocompleteNumber'
+      ) as HTMLElement;
+      const article = articleElement
+        ? Array.from(articleElement.childNodes)
+            .map((node) => node.textContent)
+            .join('')
+        : '';
+
       const description =
         (
           item.querySelector(
             'td.searchFormAutocompleteDescription'
           ) as HTMLAreaElement
         )?.innerText || '';
+
       const dataUrl = (item as HTMLElement).getAttribute('data-url') || '';
 
       return {
@@ -50,5 +68,3 @@ export const parseAutocompleteResults = async (
     ...result,
   }));
 };
-
-// <td class="searchFormAutocomplete searchFormAutocompleteDescription"><div>Фильтр масляный</div></td>

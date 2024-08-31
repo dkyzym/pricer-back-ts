@@ -59,6 +59,7 @@ export interface SearchResult {
   id: string;
   brand: string;
   article: string;
+  description: string;
   dataUrl: string;
 }
 

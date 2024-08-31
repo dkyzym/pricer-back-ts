@@ -7,9 +7,12 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import { Server } from 'http';
+import { Server as HTTPServer } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
+import { Server as SocketIOServer } from 'socket.io';
+import { ugPageActionsService } from './services/pages/ugPageActionsService';
+import { log } from './utils/log';
 
 dotenv.config();
 
@@ -39,12 +42,43 @@ app.use(error);
 
 const start = async () => {
   try {
-    const server: Server = app.listen(PORT, () => {
+    const server: HTTPServer = app.listen(PORT, () => {
       console.log(
         chalk.cyan.italic(
           `Server is running. Use port: ${(server.address() as AddressInfo).port}`
         )
       );
+    });
+
+    const io = new SocketIOServer(server, {
+      cors: {
+        origin: CLIENT_URL,
+        methods: ['GET', 'POST'],
+      },
+    });
+
+    io.on('connection', (socket) => {
+      console.log(`New client connected: ${socket.id}`);
+
+      socket.on('autocomplete', async (query: string) => {
+        try {
+          log('in index  ' + query, { color: chalk.bgBlue });
+          const results = await ugPageActionsService({
+            action: 'autocomplete',
+            query,
+            supplier: 'ug',
+          });
+          // console.log('results', results);
+          socket.emit('autocompleteResults', { query, results });
+        } catch (error) {
+          console.error('Autocomplete error:', error);
+          socket.emit('autocompleteError', { query, message: error });
+        }
+      });
+
+      socket.on('disconnect', () => {
+        console.log(`Client disconnected: ${socket.id}`);
+      });
     });
   } catch (e) {
     console.log((e as Error).message);
