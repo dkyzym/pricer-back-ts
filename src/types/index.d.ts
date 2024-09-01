@@ -50,6 +50,11 @@ export type PageAction =
       action: 'autocomplete';
       supplier: SupplierName;
       query: string;
+    }
+  | {
+      action: 'pick';
+      supplier: SupplierName;
+      item: SearchResult;
     };
 
 interface LoginServiceParams {

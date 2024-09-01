@@ -12,7 +12,6 @@ import morgan from 'morgan';
 import { AddressInfo } from 'net';
 import { Server as SocketIOServer } from 'socket.io';
 import { ugPageActionsService } from './services/pages/ugPageActionsService';
-import { log } from './utils/log';
 
 dotenv.config();
 
@@ -67,7 +66,6 @@ const start = async () => {
 
       socket.on('autocomplete', async (query: string) => {
         try {
-          log('in index  ' + query, { color: chalk.bgBlue });
           const results = await ugPageActionsService({
             action: 'autocomplete',
             query,
@@ -77,6 +75,19 @@ const start = async () => {
         } catch (error) {
           console.error('Autocomplete error:', error);
           socket.emit('autocompleteError', { query, message: error });
+        }
+      });
+
+      socket.on('getItemResults', async (item) => {
+        try {
+          const ugSearchResult = await ugPageActionsService({
+            action: 'pick',
+            item,
+            supplier: 'ug',
+          });
+          console.log(ugSearchResult);
+        } catch (error) {
+          console.log(error);
         }
       });
 

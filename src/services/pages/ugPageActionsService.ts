@@ -2,6 +2,7 @@ import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { getPage } from '../puppeteerShared/browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
+import { itemDataUgService } from '../ug/itemDataUgService';
 import { loginUgService } from '../ug/loginUgService';
 import { logoutUgService } from '../ug/logoutUgService';
 
@@ -37,6 +38,15 @@ export const ugPageActionsService = async (
           success: hasData,
           message: `${supplier}: Autocomplete successful`,
           data,
+        };
+      }
+      case 'pick': {
+        const { item, supplier, action } = actionParams;
+        const result = await itemDataUgService(page, item);
+
+        return {
+          success: true,
+          message: `${supplier}: ${action} successful`,
         };
       }
       default:

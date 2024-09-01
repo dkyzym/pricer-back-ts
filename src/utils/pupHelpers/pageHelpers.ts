@@ -5,6 +5,10 @@ export const clickButton = async (page: Page, selector: keyof Selectors) => {
   await page.locator(selector as string).click();
 };
 
+export const clickItem = async (page: Page, selector: string) => {
+  await page.locator(selector as string).click();
+};
+
 export const fillField = async (
   page: Page,
   selector: keyof Selectors,

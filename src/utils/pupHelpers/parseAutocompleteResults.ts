@@ -3,6 +3,7 @@ import { Page } from 'puppeteer';
 import { v4 as uuidv4 } from 'uuid';
 import { SearchResult } from '../../types';
 import { log } from '../log';
+import { clickItem } from './pageHelpers';
 
 export const parseAutocompleteResults = async (
   page: Page,
@@ -14,6 +15,8 @@ export const parseAutocompleteResults = async (
     log('Query too short, clearing results.', { color: chalk.bgRed });
     return [];
   }
+
+  query.length === 0 && (await clickItem(page, '.searchFormTitleBlock'));
 
   await page.waitForSelector('tbody.ui-menu tr.ui-menu-item');
   await page.waitForNetworkIdle({ idleTime: 300 });
