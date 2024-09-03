@@ -1,17 +1,16 @@
 import { Page } from 'puppeteer';
 import { SearchResult, SearchResultsWithRestUg, SupplierName } from 'types';
-import { v4 as uuidv4 } from 'uuid';
 import { filterEqualResults } from '../data/filterEqualResults';
 
 export const parseData = async (
   page: Page
-): Promise<Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[]> => {
+): Promise<Omit<SearchResultsWithRestUg, 'supplier'>[]> => {
   return await page.evaluate(() => {
     const rows = document.querySelectorAll('[class^="resultTr2"]');
-    const data: Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[] = [];
+    const data: Omit<SearchResultsWithRestUg, 'supplier'>[] = [];
 
     rows.forEach((row) => {
-      const product: Omit<SearchResultsWithRestUg, 'id' | 'supplier'> = {
+      const product: Omit<SearchResultsWithRestUg, 'supplier'> = {
         article:
           (
             row.querySelector('.resultPartCode a') as HTMLElement
@@ -22,7 +21,7 @@ export const parseData = async (
           )?.innerText.trim() || '',
         description:
           (
-            row.querySelector('.resultDescription a') as HTMLElement
+            row.querySelector('.resultDescription') as HTMLElement
           )?.innerText.trim() || '',
         availability:
           parseInt(row.getAttribute('data-availability') || '0', 10) || 0,
@@ -43,6 +42,10 @@ export const parseData = async (
               ?.textContent?.replace('%', '')
               .trim() || '0'
           ) || '',
+        id:
+          row
+            .querySelector('input.quantityInputFake')
+            ?.getAttribute('searchresultuniqueid') || '',
       };
 
       data.push(product);
@@ -52,47 +55,92 @@ export const parseData = async (
   });
 };
 
+// export const parsePickedUgResults = async (
+//   page: Page,
+//   item: SearchResult,
+//   supplier: SupplierName
+// ): Promise<SearchResultsWithRestUg[]> => {
+//   const allResults: SearchResultsWithRestUg[] = [];
+//   let allDataCollected = false;
+
+//   while (!allDataCollected) {
+//     const currentData = await parseData(page);
+
+//     const newData = currentData.filter(
+//       (current) =>
+//         !allResults.some(
+//           (prev) =>
+//             prev.article === current.article && prev.brand === current.brand
+//         )
+//     );
+
+//     if (newData.length > 0) {
+//       const resultsWithIdAndSupplier = newData.map((product) => ({
+//         ...product,
+
+//         supplier: supplier,
+//       }));
+
+//       const filteredResults = filterEqualResults(
+//         resultsWithIdAndSupplier,
+//         item
+//       );
+
+//       allResults.push(...filteredResults);
+//     }
+
+//     allDataCollected = await page.evaluate(() => {
+//       const progressBar = document.getElementById('searchInProgress');
+//       return !progressBar;
+//     });
+
+//     if (allDataCollected) {
+//       await new Promise((resolve) => setTimeout(resolve, 2000));
+//       // allDataCollected = await page.evaluate(() => {
+//       //   const progressBar = document.getElementById('searchInProgress');
+//       //   return !progressBar;
+//       // });
+//     }
+
+//     await new Promise((resolve) => setTimeout(resolve, 1500));
+//   }
+
+//   return allResults;
+// };
+
 export const parsePickedUgResults = async (
   page: Page,
   item: SearchResult,
   supplier: SupplierName
 ): Promise<SearchResultsWithRestUg[]> => {
   const allResults: SearchResultsWithRestUg[] = [];
-  let allDataCollected = false;
 
-  while (!allDataCollected) {
-    const currentData = await parseData(page);
+  await page.waitForNetworkIdle({ idleTime: 1750, timeout: 60000 });
 
-    const newData = currentData.filter(
-      (current) =>
-        !allResults.some(
-          (prev) =>
-            prev.article === current.article && prev.brand === current.brand
-        )
-    );
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (newData.length > 0) {
-      const resultsWithIdAndSupplier = newData.map((product) => ({
-        ...product,
-        id: uuidv4(),
-        supplier: supplier,
-      }));
+  const currentData = await parseData(page);
 
-      const filteredResults = filterEqualResults(
-        resultsWithIdAndSupplier,
-        item
-      );
+  const newData = currentData.filter(
+    (current) =>
+      !allResults.some(
+        (prev) =>
+          prev.article === current.article && prev.brand === current.brand
+      )
+  );
 
-      allResults.push(...filteredResults);
-    }
+  if (newData.length > 0) {
+    const resultsWithIdAndSupplier = newData.map((product) => ({
+      ...product,
+      supplier: supplier,
+    }));
 
-    allDataCollected = await page.evaluate(() => {
-      const progressBar = document.getElementById('searchInProgress');
-      return !progressBar;
-    });
+    const filteredResults = filterEqualResults(resultsWithIdAndSupplier, item);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    allResults.push(...filteredResults);
   }
 
   return allResults;
 };
+
+// https://ugautopart.ru/search/MANN-FILTER/W81180?action=getAsyncSearchResults&searchBrand=MANN-FILTER&searchNumber=W81180&resellerId=3993538&customerIdForSearch=9447854&customerIdForPrice=9447854&enc=&selectLinkName=price&selectSortDirection=0&withOutAnalogs=0&asyncKey=zgtSvAn%2F9lSM1Jfzr3ZpG9NzU1%2B6uLX40NY37grJXKXksONJpfz%2BV4igpFm5KrtQjWNcfo47T5mTmWWuG%2FfUg9LtplKVlTFv%2BzYxY1WzuFAeZJ4x129%2FPMu97%2F800pyoVh9oIXya4UXhfJjKTu3UtTyKmIyTe7Wbp3ujbNQdsmIlzUl1psSm5h1ZUgCLg85tH7sqK%2FlwnpoxHr1HGdbD5A%3D%3D&currentUrl=%2Fsearch%2FMANN-FILTER%2FW81180

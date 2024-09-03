@@ -18,14 +18,11 @@ export const itemDataUgService = async (
     `tr.resultTr2[data-current-brand-number^="${item.article.toUpperCase()}"] td.resultDescription a`
   );
 
-  // Собираем все результаты сразу
   const allResults = await parsePickedUgResults(page, item, supplier);
 
-  // Логируем количество найденных результатов
   log(`Найдено результатов перед возвратом: ${allResults.length}`, {
     color: chalk.bgMagenta,
   });
 
-  // Возвращаем все результаты
   return allResults;
 };
