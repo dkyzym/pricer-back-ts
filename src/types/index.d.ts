@@ -77,11 +77,12 @@ export interface SearchResultsWithRestUg {
   article: string;
   brand: string;
   description: string;
-  availability: number;
+  availability: number | string;
   price: number;
   warehouse: string;
   imageUrl: string;
-  deadline: string | number;
+  deadline: number;
+  deadLineMax: number;
   supplier: SupplierName;
 }
 

@@ -1,35 +1,41 @@
 import { Page } from 'puppeteer';
+import { SearchResult, SearchResultsWithRestUg, SupplierName } from 'types';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  SearchResult,
-  SearchResultsWithRestUg,
-  SupplierName,
-} from '../../types';
 import { filterEqualResults } from '../data/filterEqualResults';
 
 export const parseData = async (
-  page: Page,
-  supplier: SupplierName
+  page: Page
 ): Promise<Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[]> => {
   return await page.evaluate(() => {
     const rows = document.querySelectorAll('.resultTr2');
     const data: Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[] = [];
 
     rows.forEach((row) => {
-      const cells = row.querySelectorAll('td');
       const product: Omit<SearchResultsWithRestUg, 'id' | 'supplier'> = {
-        article: cells[3]?.innerText.trim() || '',
-        brand: cells[2]?.querySelector('a')?.innerText.trim() || '',
-        description: cells[4]?.innerText.trim() || '',
-        availability: parseInt(
-          row.getAttribute('data-availability') || '0',
-          10
-        ),
-        price: parseFloat(row.getAttribute('data-output-price') || '0'),
-        warehouse: cells[7]?.innerText.trim() || '',
+        article:
+          (
+            row.querySelector('.resultPartCode a') as HTMLElement
+          )?.innerText.trim() || '',
+        brand:
+          (
+            row.querySelector('.resultBrand a') as HTMLElement
+          )?.innerText.trim() || '',
+        description:
+          (
+            row.querySelector('.resultDescription a') as HTMLElement
+          )?.innerText.trim() || '',
+        availability:
+          parseInt(row.getAttribute('data-availability') || '0', 10) || 0,
+        price: parseFloat(row.getAttribute('data-output-price') || '0') || 0,
+        warehouse:
+          (
+            row.querySelector('.resultWarehouse') as HTMLElement
+          )?.innerText.trim() || '',
         imageUrl:
           row.querySelector('.resultImage img')?.getAttribute('src') || '',
-        deadline: cells[8]?.innerText.trim() || '',
+        deadline: parseInt(row.getAttribute('data-deadline') || '0') || 0,
+        deadLineMax:
+          parseInt(row.getAttribute('data-deadline-max') || '0') || 0,
       };
 
       data.push(product);
@@ -48,7 +54,7 @@ export const parsePickedUgResults = async (
   let allDataCollected = false;
 
   while (!allDataCollected) {
-    const currentData = await parseData(page, supplier);
+    const currentData = await parseData(page);
 
     const newData = currentData.filter(
       (current) =>
@@ -70,17 +76,14 @@ export const parsePickedUgResults = async (
         item
       );
 
-      // Добавляем новые результаты в общую коллекцию
       allResults.push(...filteredResults);
     }
 
-    // Проверяем, закончилась ли загрузка данных
     allDataCollected = await page.evaluate(() => {
       const progressBar = document.getElementById('searchInProgress');
-      return !progressBar; // Если элемент индикатора отсутствует, загрузка завершена
+      return !progressBar;
     });
 
-    // Даем паузу перед следующей проверкой
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 

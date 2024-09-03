@@ -43,7 +43,7 @@ export const ugPageActionsService = async (
       case 'pick': {
         const { item, supplier, action } = actionParams;
         const result = await itemDataUgService(page, item, supplier);
-
+        console.log(result[0]);
         return {
           success: true,
           message: `${supplier}: ${action} successful`,
