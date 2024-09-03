@@ -84,6 +84,7 @@ export interface SearchResultsWithRestUg {
   deadline: number;
   deadLineMax: number;
   supplier: SupplierName;
+  probability: number | '';
 }
 
 export interface pageActionsResult {

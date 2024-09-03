@@ -7,7 +7,7 @@ export const parseData = async (
   page: Page
 ): Promise<Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[]> => {
   return await page.evaluate(() => {
-    const rows = document.querySelectorAll('.resultTr2');
+    const rows = document.querySelectorAll('[class^="resultTr2"]');
     const data: Omit<SearchResultsWithRestUg, 'id' | 'supplier'>[] = [];
 
     rows.forEach((row) => {
@@ -36,6 +36,13 @@ export const parseData = async (
         deadline: parseInt(row.getAttribute('data-deadline') || '0') || 0,
         deadLineMax:
           parseInt(row.getAttribute('data-deadline-max') || '0') || 0,
+        probability:
+          parseFloat(
+            row
+              .querySelector('.resultProbability')
+              ?.textContent?.replace('%', '')
+              .trim() || '0'
+          ) || '',
       };
 
       data.push(product);
