@@ -85,7 +85,8 @@ const start = async () => {
             item,
             supplier: 'ug',
           });
-          console.log(ugSearchResult);
+          socket.emit('getItemResultsData', { ugSearchResult });
+          // console.log(ugSearchResult);
         } catch (error) {
           console.log(error);
         }

@@ -72,8 +72,21 @@ export interface SearchResult {
   dataUrl: string;
 }
 
+export interface SearchResultsWithRestUg {
+  id: string;
+  article: string;
+  brand: string;
+  description: string;
+  availability: number;
+  price: number;
+  warehouse: string;
+  imageUrl: string;
+  deadline: string | number;
+  supplier: SupplierName;
+}
+
 export interface pageActionsResult {
   success: boolean;
   message: string;
-  data?: SearchResult[];
+  data?: SearchResult[] | SearchResultsWithRestUg[];
 }
