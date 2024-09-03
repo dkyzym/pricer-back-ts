@@ -80,15 +80,20 @@ const start = async () => {
 
       socket.on('getItemResults', async (item) => {
         try {
+          socket.emit('startLoading');
+
           const ugSearchResult = await ugPageActionsService({
             action: 'pick',
             item,
             supplier: 'ug',
           });
+
           socket.emit('getItemResultsData', { ugSearchResult });
-          // console.log(ugSearchResult);
         } catch (error) {
           console.log(error);
+          socket.emit('autocompleteError', {
+            message: 'Error occurred while fetching item results',
+          });
         }
       });
 
