@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer';
 import { SupplierName } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
-import { fillField } from 'utils/pupHelpers/pageHelpers';
+import { clickOutsideInput, fillField } from 'utils/pupHelpers/pageHelpers';
 import { parseAutocompleteResults } from 'utils/pupHelpers/parseAutocompleteResults';
 
 export const autocompleteUgService = async (
@@ -13,8 +13,10 @@ export const autocompleteUgService = async (
 
   await fillField(page, selectors.input, query);
 
-  if (query.trim() === '') {
-    console.log('Empty query, returning empty result set');
+  await clickOutsideInput(query, page);
+
+  if (query.trim() === '' || query.trim().length < 3) {
+    console.log('Need 3 symbols at least, returning empty result set');
     return [];
   }
 

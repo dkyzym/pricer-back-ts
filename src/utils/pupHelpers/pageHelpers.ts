@@ -23,3 +23,7 @@ export const waitForPageNavigation = async (
 ): Promise<HTTPResponse | null> => {
   return await page.waitForNavigation(options);
 };
+
+export const clickOutsideInput = async (query: string, page: Page) => {
+  return query.length === 0 && (await clickItem(page, '.searchFormTitleBlock'));
+};

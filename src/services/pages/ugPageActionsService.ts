@@ -31,6 +31,7 @@ export const ugPageActionsService = async (
         return await logoutUgService(page, supplier);
       case 'autocomplete': {
         const { query } = actionParams;
+
         const data = await autocompleteUgService(page, query, supplier);
         const hasData = Boolean(data.length);
 
