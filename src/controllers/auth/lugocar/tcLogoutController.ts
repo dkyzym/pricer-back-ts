@@ -1,8 +1,8 @@
-import { tcPageActionsService } from '@services/pages/lugocarPageActionsService';
+import { turboCarsPageActionsService } from '@services/pages/turboCarsPageActionsService';
 import { Request, Response } from 'express';
 
 export const tcLogoutController = async (_req: Request, res: Response) => {
-  const { success, message } = await tcPageActionsService({
+  const { success, message } = await turboCarsPageActionsService({
     action: 'logout',
     supplier: 'turboCars',
   });

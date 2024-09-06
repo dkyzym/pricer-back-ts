@@ -1,10 +1,10 @@
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
-import { loginTcService } from '../lugocar/loginTcService';
-import { logoutTcService } from '../lugocar/logoutTcService';
+import { loginTurboCars } from '../lugocar/loginTurboCarsService';
+import { logoutTurboCarsService } from '../lugocar/logoutTurboCarsService';
 import { getPage } from '../puppeteerShared/browserManager';
 
-export const tcPageActionsService = async (
+export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
@@ -15,7 +15,7 @@ export const tcPageActionsService = async (
     switch (action) {
       case 'login': {
         const { username, password } = actionParams;
-        return await loginTcService({
+        return await loginTurboCars({
           page,
           username,
           password,
@@ -23,7 +23,7 @@ export const tcPageActionsService = async (
         });
       }
       case 'logout':
-        return await logoutTcService(page, supplier);
+        return await logoutTurboCarsService(page, supplier);
       default:
         return {
           success: false,

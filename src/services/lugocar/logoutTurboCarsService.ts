@@ -7,7 +7,7 @@ import {
 import { Page } from 'puppeteer';
 import { pageActionsResult, SupplierName } from 'types';
 
-export const logoutTcService = async (
+export const logoutTurboCarsService = async (
   page: Page,
   supplier: SupplierName
 ): Promise<pageActionsResult> => {

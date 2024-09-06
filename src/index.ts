@@ -11,7 +11,11 @@ import { Server as HTTPServer } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
 import { Server as SocketIOServer } from 'socket.io';
+import { orionPageActionsService } from './services/pages/orionPageActionsService';
+import { patriotPageActionsService } from './services/pages/patriotPageActionsService';
+import { turboCarsPageActionsService } from './services/pages/turboCarsPageActionsService';
 import { ugPageActionsService } from './services/pages/ugPageActionsService';
+import { PageAction, pageActionsResult, SupplierName } from './types';
 
 dotenv.config();
 
@@ -78,21 +82,44 @@ const start = async () => {
         }
       });
 
+      const supplierServices: {
+        [key in SupplierName]: (
+          actionParams: PageAction
+        ) => Promise<pageActionsResult>;
+      } = {
+        ug: ugPageActionsService,
+        patriot: patriotPageActionsService,
+        turboCars: turboCarsPageActionsService,
+        orion: orionPageActionsService,
+        armtek: orionPageActionsService,
+      };
+
       socket.on('getItemResults', async (item) => {
         try {
           socket.emit('startLoading');
 
-          const ugSearchResult = await ugPageActionsService({
-            action: 'pick',
-            item,
-            supplier: 'ug',
-          });
+          const suppliers: SupplierName[] = ['ug'];
 
-          socket.emit('getItemResultsData', { ugSearchResult });
+          suppliers.forEach((supplier) => {
+            supplierServices[supplier]({
+              action: 'pick',
+              item,
+              supplier,
+            })
+              .then((result) => {
+                socket.emit('getItemResultsData', { supplier, result });
+              })
+              .catch((error) => {
+                console.log(`Error fetching from ${supplier}:`, error);
+                socket.emit('autocompleteError', {
+                  message: `Error occurred while fetching item results from ${supplier}`,
+                });
+              });
+          });
         } catch (error) {
           console.log(error);
           socket.emit('autocompleteError', {
-            message: 'Error occurred while fetching item results',
+            message: 'General error occurred while fetching item results',
           });
         }
       });

@@ -10,7 +10,7 @@ import {
 } from '@utils/pupHelpers/pageHelpers';
 import { LoginServiceParams, pageActionsResult } from 'types';
 
-export const loginTcService = async ({
+export const loginTurboCars = async ({
   page,
   username,
   password,
