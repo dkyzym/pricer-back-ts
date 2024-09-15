@@ -11,8 +11,6 @@ import { Server as HTTPServer } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
 import { Server as SocketIOServer } from 'socket.io';
-import { orionPageActionsService } from './services/pages/orionPageActionsService';
-import { patriotPageActionsService } from './services/pages/patriotPageActionsService';
 import { turboCarsPageActionsService } from './services/pages/turboCarsPageActionsService';
 import { ugPageActionsService } from './services/pages/ugPageActionsService';
 import { PageAction, pageActionsResult, SupplierName } from './types';
@@ -88,33 +86,39 @@ const start = async () => {
         ) => Promise<pageActionsResult>;
       } = {
         ug: ugPageActionsService,
-        patriot: patriotPageActionsService,
         turboCars: turboCarsPageActionsService,
-        orion: orionPageActionsService,
-        armtek: orionPageActionsService,
       };
 
       socket.on('getItemResults', async (item) => {
         try {
           socket.emit('startLoading');
 
-          const suppliers: SupplierName[] = ['ug'];
+          const suppliers: SupplierName[] = ['ug', 'turboCars'];
 
-          suppliers.forEach((supplier) => {
-            supplierServices[supplier]({
-              action: 'pick',
-              item,
-              supplier,
-            })
-              .then((result) => {
-                socket.emit('getItemResultsData', { supplier, result });
-              })
-              .catch((error) => {
+          // Используем Promise.all для параллельного выполнения запросов
+          const results = await Promise.all(
+            suppliers.map(async (supplier) => {
+              try {
+                const result = await supplierServices[supplier]({
+                  action: 'pick',
+                  item,
+                  supplier,
+                });
+                return { supplier, result }; // Возвращаем результат для каждого поставщика
+              } catch (error) {
                 console.log(`Error fetching from ${supplier}:`, error);
                 socket.emit('autocompleteError', {
                   message: `Error occurred while fetching item results from ${supplier}`,
                 });
-              });
+                return { supplier, result: null }; // Возвращаем null, если произошла ошибка
+              }
+            })
+          );
+
+          results.forEach(({ supplier, result }) => {
+            if (result) {
+              socket.emit('getItemResultsData', { supplier, result });
+            }
           });
         } catch (error) {
           console.log(error);
