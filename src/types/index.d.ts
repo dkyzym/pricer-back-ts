@@ -1,4 +1,3 @@
-// export type SupplierName = 'patriot' | 'turboCars' | 'ug' | 'orion' | 'armtek';
 export type SupplierName = 'turboCars' | 'ug';
 
 export interface Selectors {
