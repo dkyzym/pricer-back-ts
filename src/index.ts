@@ -95,7 +95,6 @@ const start = async () => {
 
           const suppliers: SupplierName[] = ['ug', 'turboCars'];
 
-          // Используем Promise.all для параллельного выполнения запросов
           const results = await Promise.all(
             suppliers.map(async (supplier) => {
               try {
@@ -104,13 +103,13 @@ const start = async () => {
                   item,
                   supplier,
                 });
-                return { supplier, result }; // Возвращаем результат для каждого поставщика
+                return { supplier, result };
               } catch (error) {
                 console.log(`Error fetching from ${supplier}:`, error);
                 socket.emit('autocompleteError', {
                   message: `Error occurred while fetching item results from ${supplier}`,
                 });
-                return { supplier, result: null }; // Возвращаем null, если произошла ошибка
+                return { supplier, result: null };
               }
             })
           );

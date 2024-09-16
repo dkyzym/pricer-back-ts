@@ -1,15 +1,15 @@
 export class BaseError extends Error {
-  public success = false; // Было приватное свойство, стало публичное
-  public code: number; // Изменили модификатор доступа на public
+  public success = false;
+  public code: number;
 
   constructor(message = 'Unknown error') {
     super(message);
-    this.code = 500; // Устанавливаем код по умолчанию
+    this.code = 500;
   }
 }
 
 export class ValidationError extends BaseError {
-  #errors: any; // Определяем тип для ошибок
+  #errors: any;
 
   constructor(message = 'Validation error', errors: any = null) {
     super(message);
