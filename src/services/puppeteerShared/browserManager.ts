@@ -29,6 +29,10 @@ export const getPage = async (
   if (page && !page.isClosed()) {
     console.log(`Reusing existing page for supplier: ${supplier}`);
     await page.bringToFront();
+
+    await page.waitForFunction(() => document.readyState === 'complete', {
+      timeout: 0,
+    });
   } else {
     console.log(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
@@ -40,18 +44,21 @@ export const getPage = async (
       page = await browser.newPage();
     }
 
-    // await page.setUserAgent('your-user-agent');
-    // await page.setExtraHTTPHeaders({ 'Accept-Language': 'ru' });
     await page.setViewport({
       width: 1280,
       height: 1024,
       deviceScaleFactor: 1,
     });
-    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    await page.goto(url, { waitUntil: 'networkidle0' });
+
+    await page.waitForFunction(() => document.readyState === 'complete', {
+      timeout: 0,
+    });
+
     pages.set(supplier, page);
     console.log(inspect(pages, { showHidden: true, depth: 2, colors: true }));
   }
-  2;
 
   return page;
 };

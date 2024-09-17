@@ -93,8 +93,7 @@ const start = async () => {
         try {
           socket.emit(chalk.bgBlue('startLoading'));
 
-          // const suppliers: SupplierName[] = ['ug', 'turboCars'];
-          const suppliers: SupplierName[] = ['ug'];
+          const suppliers: SupplierName[] = ['ug', 'turboCars'];
 
           const results = await Promise.all(
             suppliers.map(async (supplier) => {
