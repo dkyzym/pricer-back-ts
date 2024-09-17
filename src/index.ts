@@ -91,9 +91,10 @@ const start = async () => {
 
       socket.on('getItemResults', async (item) => {
         try {
-          socket.emit('startLoading');
+          socket.emit(chalk.bgBlue('startLoading'));
 
-          const suppliers: SupplierName[] = ['ug', 'turboCars'];
+          // const suppliers: SupplierName[] = ['ug', 'turboCars'];
+          const suppliers: SupplierName[] = ['ug'];
 
           const results = await Promise.all(
             suppliers.map(async (supplier) => {
@@ -105,7 +106,9 @@ const start = async () => {
                 });
                 return { supplier, result };
               } catch (error) {
-                console.log(`Error fetching from ${supplier}:`, error);
+                console.log(
+                  chalk.red(`Error fetching from ${supplier}:`, error)
+                );
                 socket.emit('autocompleteError', {
                   message: `Error occurred while fetching item results from ${supplier}`,
                 });
@@ -115,12 +118,21 @@ const start = async () => {
           );
 
           results.forEach(({ supplier, result }) => {
-            if (result) {
+            if (result && result.success) {
               socket.emit('getItemResultsData', { supplier, result });
+            } else {
+              console.log(
+                chalk.red(
+                  `Ошибка при получении данных от ${supplier}: ${result?.message}`
+                )
+              );
+              socket.emit('autocompleteError', {
+                message: `Ошибка при получении данных от ${supplier}: ${result?.message}`,
+              });
             }
           });
         } catch (error) {
-          console.log(error);
+          console.log(chalk.bgRed((error as Error).message));
           socket.emit('autocompleteError', {
             message: 'General error occurred while fetching item results',
           });

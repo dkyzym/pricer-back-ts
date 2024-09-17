@@ -1,4 +1,6 @@
+import chalk from 'chalk';
 import { PageAction, pageActionsResult } from 'types';
+import { inspect } from 'util';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { getPage } from '../puppeteerShared/browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
@@ -11,7 +13,17 @@ export const ugPageActionsService = async (
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
-  const page = await getPage(loginURL);
+  console.log(`[${supplier}] Выполнение действия: ${action}`);
+
+  const page = await getPage(supplier, loginURL);
+
+  console.log(
+    inspect(`cookies in ugPageActionsService  ${await page.cookies()}`, {
+      showHidden: true,
+      depth: 5,
+      colors: true,
+    })
+  );
 
   try {
     switch (action) {
@@ -43,8 +55,10 @@ export const ugPageActionsService = async (
       }
       case 'pick': {
         const { item, supplier, action } = actionParams;
+        console.log(chalk.bgYellow(`cookies in pick` + (await page.cookies())));
+
         const result = await itemDataUgService(page, item, supplier);
-        console.log(result[0]);
+
         return {
           success: true,
           message: `${supplier}: ${action} successful`,

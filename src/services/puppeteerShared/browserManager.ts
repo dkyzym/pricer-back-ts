@@ -1,65 +1,57 @@
-import { Mutex } from 'async-mutex';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { HEADLESS_SETTINGS } from 'utils/data/constants';
+import { SupplierName } from 'types';
+import { inspect } from 'util';
 
-let browser: Browser | null = null;
-const pagesMap: Map<string, Page> = new Map();
-const browserMutex = new Mutex();
-const pageMutexMap: Map<string, Mutex> = new Map();
+const browsers: Map<SupplierName, Browser> = new Map();
+const pages: Map<SupplierName, Page> = new Map();
 
-export const initBrowser = async (): Promise<Browser> => {
-  return await browserMutex.runExclusive(async () => {
-    if (!browser || !browser.connected) {
-      browser = await puppeteer.launch({
-        headless: false,
-
-        devtools: true,
-      });
-    }
-    return browser;
-  });
+export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
+  let browser = browsers.get(supplier);
+  if (!browser || !browser.connected) {
+    console.log(`Launching new browser for supplier: ${supplier}`);
+    browser = await puppeteer.launch({
+      headless: false,
+      devtools: true,
+    });
+    browsers.set(supplier, browser);
+    console.log(inspect(browsers, { colors: true, depth: Infinity }));
+  }
+  return browser;
 };
 
-export const getPage = async (url: string): Promise<Page> => {
-  const browser = await initBrowser();
+export const getPage = async (
+  supplier: SupplierName,
+  url: string
+): Promise<Page> => {
+  const browser = await initBrowser(supplier);
 
-  let pageMutex = pageMutexMap.get(url);
-  if (!pageMutex) {
-    pageMutex = new Mutex();
-    pageMutexMap.set(url, pageMutex);
-  }
+  let page = pages.get(supplier);
+  if (page && !page.isClosed()) {
+    console.log(`Reusing existing page for supplier: ${supplier}`);
+    await page.bringToFront();
+  } else {
+    console.log(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
-  return await pageMutex.runExclusive(async () => {
-    let page = pagesMap.get(url);
+    const pagesArray = await browser.pages();
 
-    if (page && !page.isClosed()) {
-      await page.bringToFront();
+    if (pagesArray.length > 0) {
+      page = pagesArray[0];
     } else {
       page = await browser.newPage();
-
-      await page.setUserAgent(HEADLESS_SETTINGS.userAgent);
-      await page.setExtraHTTPHeaders(HEADLESS_SETTINGS.language);
-
-      await page.setViewport({
-        width: 1280,
-        height: 1024,
-        deviceScaleFactor: 1,
-      });
-
-      await page.goto(url, { waitUntil: 'networkidle2' });
-
-      pagesMap.set(url, page);
     }
 
-    return page;
-  });
-};
+    // await page.setUserAgent('your-user-agent');
+    // await page.setExtraHTTPHeaders({ 'Accept-Language': 'ru' });
+    await page.setViewport({
+      width: 1280,
+      height: 1024,
+      deviceScaleFactor: 1,
+    });
+    await page.goto(url, { waitUntil: 'networkidle2' });
+    pages.set(supplier, page);
+    console.log(inspect(pages, { showHidden: true, depth: 2, colors: true }));
+  }
+  2;
 
-export const closeBrowser = async (): Promise<void> => {
-  await browserMutex.runExclusive(async () => {
-    if (browser) {
-      await browser.close();
-      browser = null;
-    }
-  });
+  return page;
 };

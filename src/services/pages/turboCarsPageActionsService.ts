@@ -9,9 +9,12 @@ export const turboCarsPageActionsService = async (
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
-  const page = await getPage(loginURL as string);
+
+  const page = await getPage(supplier, loginURL);
 
   try {
+    console.log(`[${supplier}] Выполнение действия: ${action}`);
+
     switch (action) {
       case 'login': {
         const { username, password } = actionParams;
@@ -22,8 +25,33 @@ export const turboCarsPageActionsService = async (
           supplier,
         });
       }
+
       case 'logout':
         return await logoutTurboCarsService(page, supplier);
+
+      case 'pick': {
+        return {
+          success: true,
+          message: `${supplier}: ${action} successful`,
+          data: [
+            {
+              article: 'OC 90',
+              brand: 'Mahle/Knecht',
+              description: 'Фильтр масляный...',
+              availability: 9999,
+              price: 9999,
+              warehouse: 'Краснодар',
+              imageUrl: 'https://example.com/image.jpg',
+              deadline: 0,
+              deadLineMax: 0,
+              probability: '',
+              id: 'mock',
+              supplier: 'turboCars',
+            },
+          ],
+        };
+      }
+
       default:
         return {
           success: false,
