@@ -14,7 +14,7 @@ export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
       devtools: true,
     });
     browsers.set(supplier, browser);
-    console.log(inspect(browsers, { colors: true, depth: Infinity }));
+    console.log(inspect(browsers, { colors: true, depth: 2 }));
   }
   return browser;
 };

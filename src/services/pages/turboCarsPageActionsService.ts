@@ -1,8 +1,9 @@
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
-import { loginTurboCars } from '../lugocar/loginTurboCarsService';
-import { logoutTurboCarsService } from '../lugocar/logoutTurboCarsService';
 import { getPage } from '../puppeteerShared/browserManager';
+import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
+import { loginTurboCars } from '../turboCars/loginTurboCarsService';
+import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
 
 export const turboCarsPageActionsService = async (
   actionParams: PageAction
@@ -30,25 +31,14 @@ export const turboCarsPageActionsService = async (
         return await logoutTurboCarsService(page, supplier);
 
       case 'pick': {
+        const { item, supplier, action } = actionParams;
+
+        const result = await itemDataTurboCarsService({ page, item, supplier });
+
         return {
           success: true,
           message: `${supplier}: ${action} successful`,
-          data: [
-            {
-              article: 'OC 90',
-              brand: 'Mahle/Knecht',
-              description: 'Фильтр масляный...',
-              availability: 9999,
-              price: 9999,
-              warehouse: 'Краснодар',
-              imageUrl: 'https://example.com/image.jpg',
-              deadline: 0,
-              deadLineMax: 0,
-              probability: '',
-              id: 'mock',
-              supplier: 'turboCars',
-            },
-          ],
+          data: result,
         };
       }
 

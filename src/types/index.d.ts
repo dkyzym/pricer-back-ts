@@ -54,7 +54,7 @@ export type PageAction =
   | {
       action: 'pick';
       supplier: SupplierName;
-      item: SearchResult;
+      item: ItemToParallelSearch;
     };
 
 interface LoginServiceParams {
@@ -64,12 +64,18 @@ interface LoginServiceParams {
   supplier: SupplierName;
 }
 
-export interface SearchResult {
+export interface ItemToParallelSearch {
   id: string;
   brand: string;
   article: string;
   description: string;
   dataUrl: string;
+}
+
+interface ParallelSearchParams {
+  page: Page;
+  item: ItemToParallelSearch;
+  supplier: SupplierName;
 }
 
 export interface SearchResultsWithRestUg {
@@ -90,5 +96,5 @@ export interface SearchResultsWithRestUg {
 export interface pageActionsResult {
   success: boolean;
   message: string;
-  data?: SearchResult[] | SearchResultsWithRestUg[];
+  data?: ItemToParallelSearch[] | SearchResultsWithRestUg[];
 }

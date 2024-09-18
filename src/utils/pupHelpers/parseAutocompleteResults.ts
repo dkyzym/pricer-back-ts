@@ -1,14 +1,14 @@
 import chalk from 'chalk';
 import { Page } from 'puppeteer';
 import { v4 as uuidv4 } from 'uuid';
-import { SearchResult } from 'types';
+import { ItemToParallelSearch } from 'types';
 import { log } from '../log';
 import { clickOutsideInput } from './pageHelpers';
 
 export const parseAutocompleteResults = async (
   page: Page,
   query: string
-): Promise<SearchResult[]> => {
+): Promise<ItemToParallelSearch[]> => {
   log(query + ' ' + query.length, { color: chalk.bgCyan });
 
   if (query.length <= 3) {

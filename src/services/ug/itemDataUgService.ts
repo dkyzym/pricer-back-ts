@@ -1,19 +1,18 @@
 import chalk from 'chalk';
-import { Page } from 'puppeteer';
-import { SearchResult, SearchResultsWithRestUg, SupplierName } from 'types';
+import { ParallelSearchParams, SearchResultsWithRestUg } from 'types';
 import { inspect } from 'util';
-import { waitForPageNavigation } from '../../utils/pupHelpers/pageHelpers';
-import { parsePickedUgResults } from '../../utils/pupHelpers/parsePickedUgResults';
+import { waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
+import { parsePickedUgResults } from 'utils/pupHelpers/parsePickedUgResults';
 
-export const itemDataUgService = async (
-  page: Page,
-  item: SearchResult,
-  supplier: SupplierName
-): Promise<SearchResultsWithRestUg[]> => {
-  console.log(inspect({ page, item, supplier }, { colors: true, depth: 4 }));
+export const itemDataUgService = async ({
+  page,
+  item,
+  supplier,
+}: ParallelSearchParams): Promise<SearchResultsWithRestUg[]> => {
+  console.log(inspect({ page, item, supplier }, { colors: true, depth: 2 }));
   console.log(`itemDataUgService ${item.dataUrl}`);
   console.log(
-    inspect(page.url(), { colors: true, showHidden: true, depth: 5 })
+    inspect(page.url(), { colors: true, showHidden: true, depth: 2 })
   );
 
   const element = page.locator(`tr[data-url="${item.dataUrl}"]`);
@@ -22,11 +21,11 @@ export const itemDataUgService = async (
 
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
-  const allResults = await parsePickedUgResults(page, item, supplier);
+  const allResults = await parsePickedUgResults({ page, item, supplier });
 
   console.log(
     chalk.bgYellowBright(
-      `Найдено результатов перед возвратом: ${allResults.length}`
+      `Найдено результатов перед возвратом ${supplier} :  ${allResults.length}`
     )
   );
 

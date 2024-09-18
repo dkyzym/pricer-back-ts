@@ -1,9 +1,9 @@
-import { SearchResult, SearchResultsWithRestUg } from '../../types';
+import { ItemToParallelSearch, SearchResultsWithRestUg } from '../../types';
 import { formatText } from './formatText';
 
 export const filterEqualResults = (
   results: SearchResultsWithRestUg[],
-  item: SearchResult
+  item: ItemToParallelSearch
 ) => {
   return results.filter((result) => {
     const sameArticle = formatText(result.article) === formatText(item.article);
