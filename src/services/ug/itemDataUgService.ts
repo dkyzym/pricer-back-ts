@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { ParallelSearchParams, SearchResultsWithRestUg } from 'types';
+import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { inspect } from 'util';
 import { waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
 import { parsePickedUgResults } from 'utils/pupHelpers/parsePickedUgResults';
@@ -8,7 +8,7 @@ export const itemDataUgService = async ({
   page,
   item,
   supplier,
-}: ParallelSearchParams): Promise<SearchResultsWithRestUg[]> => {
+}: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   console.log(inspect({ page, item, supplier }, { colors: true, depth: 2 }));
   console.log(`itemDataUgService ${item.dataUrl}`);
   console.log(

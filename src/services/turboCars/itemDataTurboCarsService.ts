@@ -3,6 +3,10 @@ import { ParallelSearchParams } from 'types';
 import { inspect } from 'util';
 import { SUPPLIERS_DATA } from 'utils/data/constants';
 import { fillField, waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
+import {
+  isInStock,
+  parsePickedTurboCarsResults,
+} from 'utils/pupHelpers/parsePickerTurboCarsResults';
 
 export const itemDataTurboCarsService = async ({
   page,
@@ -10,7 +14,6 @@ export const itemDataTurboCarsService = async ({
   supplier,
 }: ParallelSearchParams): Promise<any> => {
   const { selectors } = SUPPLIERS_DATA[supplier];
-  console.log(inspect({ page, item, supplier }, { colors: true, depth: 2 }));
 
   console.log(
     inspect(page.url(), { colors: true, showHidden: true, depth: 5 })
@@ -22,53 +25,26 @@ export const itemDataTurboCarsService = async ({
 
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
-  // сервис для парсинга
+  const hasResults = await isInStock(page, item);
 
-  /**
-   *  нулевой элемент списка, # block0
-   *  берем текс контент  #block0 a
-   *  убираем префикс - оставляем все после тире,
-   *  сравниваем с артикулом item.article.toLowerCase()
-   * если строка есть
-   *       кликаем по ней
-   *      ждем перехода на другую страницу
-   * если строки нет
-   *      возвращаем пустой массив
-   *
-   */
+  if (!hasResults) {
+    return [];
+  }
 
-  // const element = page.locator(`tr[data-url="${item.dataUrl}"]`);
-  // await element.hover();
-  // await element.click();
+  await page.click(selectors.firstRowWrapper as string);
 
-  // const allResults = await parsePickedUgResults(page, item, supplier);
-
-  // console.log(
-  //   chalk.bgYellowBright(
-  //     `Найдено результатов перед возвратом: ${allResults.length}`
-  //   )
-  // );
+  console.log('before parsing' + item.article + item.brand);
+  const allResults = await parsePickedTurboCarsResults({
+    page,
+    item,
+    supplier,
+  });
 
   console.log(
     chalk.bgYellowBright(
-      `Найдено результатов перед возвратом ${supplier} :  ${'allResults'.length}`
+      `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
     )
   );
 
-  return [
-    {
-      article: 'OC 90',
-      brand: 'Mahle/Knecht',
-      description: 'Фильтр масляный...',
-      availability: 9999,
-      price: 9999,
-      warehouse: 'Краснодар',
-      imageUrl: 'https://example.com/image.jpg',
-      deadline: 0,
-      deadLineMax: 0,
-      probability: '',
-      id: 'mock',
-      supplier: 'turboCars',
-    },
-  ];
+  return allResults;
 };

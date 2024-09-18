@@ -1,16 +1,16 @@
 import { Page } from 'puppeteer';
-import { ParallelSearchParams, SearchResultsWithRestUg } from 'types';
+import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { filterEqualResults } from '../data/filterEqualResults';
 
 export const parseData = async (
   page: Page
-): Promise<Omit<SearchResultsWithRestUg, 'supplier'>[]> => {
+): Promise<Omit<SearchResultsParsed, 'supplier'>[]> => {
   return await page.evaluate(() => {
     const rows = document.querySelectorAll('[class^="resultTr2"]');
-    const data: Omit<SearchResultsWithRestUg, 'supplier'>[] = [];
+    const data: Omit<SearchResultsParsed, 'supplier'>[] = [];
 
     rows.forEach((row) => {
-      const product: Omit<SearchResultsWithRestUg, 'supplier'> = {
+      const product: Omit<SearchResultsParsed, 'supplier'> = {
         article:
           (
             row.querySelector('.resultPartCode a') as HTMLElement
@@ -59,8 +59,8 @@ export const parsePickedUgResults = async ({
   page,
   item,
   supplier,
-}: ParallelSearchParams): Promise<SearchResultsWithRestUg[]> => {
-  const allResults: SearchResultsWithRestUg[] = [];
+}: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
+  const allResults: SearchResultsParsed[] = [];
 
   await page.waitForSelector('#searchInProgress', {
     hidden: true,

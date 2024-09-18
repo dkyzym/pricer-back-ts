@@ -15,6 +15,7 @@ export const SUPPLIERS_DATA: SuppliersData = {
       loginBtn: 'input[type="submit"]',
       logoutBtn: 'a[href="login.asp?mode=new"]',
       input: '#searchcode',
+      firstRowWrapper: '#block0',
     },
   },
   ug: {

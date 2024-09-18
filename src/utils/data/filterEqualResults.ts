@@ -1,8 +1,8 @@
-import { ItemToParallelSearch, SearchResultsWithRestUg } from '../../types';
+import { ItemToParallelSearch, SearchResultsParsed } from '../../types';
 import { formatText } from './formatText';
 
 export const filterEqualResults = (
-  results: SearchResultsWithRestUg[],
+  results: SearchResultsParsed[],
   item: ItemToParallelSearch
 ) => {
   return results.filter((result) => {

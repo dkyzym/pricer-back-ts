@@ -78,7 +78,7 @@ interface ParallelSearchParams {
   supplier: SupplierName;
 }
 
-export interface SearchResultsWithRestUg {
+export interface SearchResultsParsed {
   id: string;
   article: string;
   brand: string;
@@ -91,10 +91,11 @@ export interface SearchResultsWithRestUg {
   deadLineMax: number;
   supplier: SupplierName;
   probability: number | '';
+  needToCheckBrand?: boolean;
 }
 
 export interface pageActionsResult {
   success: boolean;
   message: string;
-  data?: ItemToParallelSearch[] | SearchResultsWithRestUg[];
+  data?: ItemToParallelSearch[] | SearchResultsParsed[];
 }
