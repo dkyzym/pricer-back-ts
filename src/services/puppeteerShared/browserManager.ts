@@ -1,6 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { SupplierName } from 'types';
-import { inspect } from 'util';
 
 const browsers: Map<SupplierName, Browser> = new Map();
 const pages: Map<SupplierName, Page> = new Map();
@@ -14,7 +13,7 @@ export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
       devtools: true,
     });
     browsers.set(supplier, browser);
-    console.log(inspect(browsers, { colors: true, depth: 2 }));
+    // console.log(inspect(browsers, { colors: true, depth: 2 }));
   }
   return browser;
 };
@@ -57,7 +56,7 @@ export const getPage = async (
     });
 
     pages.set(supplier, page);
-    console.log(inspect(pages, { showHidden: true, depth: 2, colors: true }));
+    // console.log(inspect(pages, { showHidden: true, depth: 2, colors: true }));
   }
 
   return page;

@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import { ParallelSearchParams } from 'types';
-import { inspect } from 'util';
 import { SUPPLIERS_DATA } from 'utils/data/constants';
 import { fillField, waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
 import {
@@ -15,9 +14,9 @@ export const itemDataTurboCarsService = async ({
 }: ParallelSearchParams): Promise<any> => {
   const { selectors } = SUPPLIERS_DATA[supplier];
 
-  console.log(
-    inspect(page.url(), { colors: true, showHidden: true, depth: 5 })
-  );
+  // console.log(
+  //   inspect(page.url(), { colors: true, showHidden: true, depth: 5 })
+  // );
 
   await fillField(page, selectors.input, item.article);
 
