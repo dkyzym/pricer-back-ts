@@ -1,4 +1,5 @@
-export type SupplierName = 'turboCars' | 'ug';
+export type SupplierName = 'turboCars' | 'ug' | 'patriot';
+// export type SupplierName = 'patriot' | 'turboCars' | 'ug' | 'orion' | 'armtek';
 
 export interface Selectors {
   loginForm: string;

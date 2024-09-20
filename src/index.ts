@@ -11,6 +11,7 @@ import { Server as HTTPServer } from 'http';
 import morgan from 'morgan';
 import { AddressInfo } from 'net';
 import { Server as SocketIOServer } from 'socket.io';
+import { patriotPageActionsService } from './services/pages/patriotPageActionsService';
 import { turboCarsPageActionsService } from './services/pages/turboCarsPageActionsService';
 import { ugPageActionsService } from './services/pages/ugPageActionsService';
 import { PageAction, pageActionsResult, SupplierName } from './types';
@@ -87,6 +88,7 @@ const start = async () => {
       } = {
         ug: ugPageActionsService,
         turboCars: turboCarsPageActionsService,
+        patriot: patriotPageActionsService,
       };
 
       socket.on('getItemResults', async (item) => {
