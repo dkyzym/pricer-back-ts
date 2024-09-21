@@ -30,7 +30,7 @@ export const getPage = async (
     await page.bringToFront();
 
     await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: 0,
+      timeout: 20000,
     });
   } else {
     console.log(`Opening page for supplier: ${supplier}, URL: ${url}`);
@@ -52,7 +52,7 @@ export const getPage = async (
     await page.goto(url, { waitUntil: 'networkidle0' });
 
     await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: 0,
+      timeout: 20000,
     });
 
     pages.set(supplier, page);

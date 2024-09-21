@@ -1,3 +1,4 @@
+import { parsePickedPatriotResults } from '@utils/pupHelpers/parsePickerPatriotResults';
 import chalk from 'chalk';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { SUPPLIERS_DATA } from 'utils/data/constants';
@@ -7,7 +8,6 @@ import {
   pressEnter,
   waitForPageNavigation,
 } from 'utils/pupHelpers/pageHelpers';
-import { isInStockPatriot } from 'utils/pupHelpers/parsePickerPatriotResults';
 
 export const itemDataPatriotService = async ({
   page,
@@ -22,13 +22,18 @@ export const itemDataPatriotService = async ({
 
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
-  const hasResults = await isInStockPatriot(page, item);
-  console.log(chalk.bgWhiteBright(`hasResults ${supplier}: ${hasResults} `));
-  if (!hasResults) {
+  const itemRowSelector = `.startSearching[data-link="/search/${item.brand.toUpperCase()}/${item.article.toUpperCase()}"]`;
+
+  const isInStock = !!(await page.$(itemRowSelector));
+
+  console.log(chalk.bgWhiteBright(`inStock ${supplier}: ${isInStock} `));
+  if (!isInStock) {
     return [];
   }
 
-  await clickItem(page, selectors.firstRowWrapper as string);
+  await clickItem(page, itemRowSelector as string);
 
-  return [];
+  const result = await parsePickedPatriotResults({ page, item, supplier });
+
+  return result;
 };
