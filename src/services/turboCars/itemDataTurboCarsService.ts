@@ -1,7 +1,11 @@
 import chalk from 'chalk';
 import { ParallelSearchParams } from 'types';
 import { SUPPLIERS_DATA } from 'utils/data/constants';
-import { fillField, waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
+import {
+  fillField,
+  pressEnter,
+  waitForPageNavigation,
+} from 'utils/pupHelpers/pageHelpers';
 import {
   isInStock,
   parsePickedTurboCarsResults,
@@ -20,7 +24,7 @@ export const itemDataTurboCarsService = async ({
 
   await fillField(page, selectors.input, item.article);
 
-  await page.keyboard.press('Enter');
+  await pressEnter(page);
 
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
@@ -32,7 +36,6 @@ export const itemDataTurboCarsService = async ({
 
   await page.click(selectors.firstRowWrapper as string);
 
-  console.log('before parsing' + item.article + item.brand);
   const allResults = await parsePickedTurboCarsResults({
     page,
     item,

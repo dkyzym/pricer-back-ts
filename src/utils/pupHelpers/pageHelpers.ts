@@ -28,3 +28,7 @@ export const waitForPageNavigation = async (
 export const clickOutsideInput = async (query: string, page: Page) => {
   return query.length === 0 && (await clickItem(page, '.searchFormTitleBlock'));
 };
+
+export const pressEnter = async (page: Page) => {
+  return await page.keyboard.press('Enter');
+};

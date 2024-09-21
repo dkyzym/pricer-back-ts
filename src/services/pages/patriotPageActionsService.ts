@@ -1,5 +1,6 @@
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
+import { itemDataPatriotService } from '../patriot/itemDataPatriotService';
 import { loginPatriotService } from '../patriot/loginPatriotService';
 import { logoutPatriotService } from '../patriot/logoutPatriotService';
 import { getPage } from '../puppeteerShared/browserManager';
@@ -10,6 +11,7 @@ export const patriotPageActionsService = async (
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
   const page = await getPage(supplier, loginURL);
+  console.log(`[${supplier}] Выполнение действия: ${action}`);
 
   try {
     switch (action) {
@@ -29,6 +31,20 @@ export const patriotPageActionsService = async (
           success: false,
           message: `${supplier}: Invalid action`,
         };
+      case 'pick': {
+        const { item, supplier, action } = actionParams;
+        const result = await itemDataPatriotService({
+          page,
+          item,
+          supplier,
+        });
+
+        return {
+          success: true,
+          message: `${supplier}: ${action} successful`,
+          data: result,
+        };
+      }
     }
   } catch (error) {
     console.error(

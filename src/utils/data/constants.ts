@@ -46,7 +46,8 @@ export const SUPPLIERS_DATA: SuppliersData = {
       passwordField: '#pass_modal',
       loginBtn: 'input[type="submit"].modalWindowSubmitBtn',
       logoutBtn: 'a[href="/?logout"]',
-      input: '',
+      input: '#pcode',
+      firstRowWrapper: 'tbody > tr:nth-child(1)',
     },
   },
   // orion: {
