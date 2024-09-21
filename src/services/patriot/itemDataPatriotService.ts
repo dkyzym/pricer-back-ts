@@ -22,7 +22,7 @@ export const itemDataPatriotService = async ({
 
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
-  const itemRowSelector = `.startSearching[data-link="/search/${item.brand.toUpperCase()}/${item.article.toUpperCase()}"]`;
+  const itemRowSelector = `.startSearching[data-link="/search/${item.brand}/${item.article}" i]`;
 
   const isInStock = !!(await page.$(itemRowSelector));
 

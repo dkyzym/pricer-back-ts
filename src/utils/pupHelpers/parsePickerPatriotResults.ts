@@ -14,7 +14,7 @@ export const parsePickedPatriotResults = async ({
     return await page.evaluate((item: ItemToParallelSearch) => {
       console.log('item:', item.article);
       const firstRow = document.querySelector(
-        `.resultTr2GroupFirst[data-current-brand-number*="${item.article.toUpperCase()}"]`
+        `[data-current-brand-number*="${item.article.toUpperCase()}"]`
       );
       console.log(firstRow);
 
