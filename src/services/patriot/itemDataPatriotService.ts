@@ -33,7 +33,17 @@ export const itemDataPatriotService = async ({
 
   await clickItem(page, itemRowSelector as string);
 
-  const result = await parsePickedPatriotResults({ page, item, supplier });
+  const allResults = await parsePickedPatriotResults({
+    page,
+    item,
+    supplier,
+  });
 
-  return result;
+  console.log(
+    chalk.bgYellowBright(
+      `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
+    )
+  );
+
+  return allResults;
 };

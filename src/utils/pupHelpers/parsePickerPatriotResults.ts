@@ -2,6 +2,7 @@ import {
   ItemToParallelSearch,
   ParallelSearchParams,
   SearchResultsParsed,
+  SupplierName,
 } from 'types';
 
 export const parsePickedPatriotResults = async ({
@@ -11,69 +12,77 @@ export const parsePickedPatriotResults = async ({
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   try {
     await page.waitForNetworkIdle();
-    return await page.evaluate((item: ItemToParallelSearch) => {
-      console.log('item:', item.article);
-      const firstRow = document.querySelector(
-        `[data-current-brand-number*="${item.article.toUpperCase()}"]`
-      );
-      console.log(firstRow);
+    return await page.evaluate(
+      (item: ItemToParallelSearch, supplier: SupplierName) => {
+        const itemRowSelector = `tr[ data-current-brand-number="${item.article}_${item.brand}" i]`;
+        const itemRows = document.querySelectorAll(itemRowSelector);
 
-      if (!firstRow) {
-        return [];
-      }
+        if (itemRows.length === 0) {
+          return [];
+        }
 
-      // Парсинг данных
-      return [];
-    }, item);
+        const closestWarehouseItemRow = Array.from(itemRows).filter((row) => {
+          const textContent = row.textContent?.trim();
+
+          return textContent?.includes('Луганск');
+        });
+
+        if (closestWarehouseItemRow.length < 1) {
+          return;
+        }
+
+        const data: SearchResultsParsed[] = [];
+
+        closestWarehouseItemRow.forEach((row) => {
+          const fakeInputElement = row.querySelector(
+            'input.addToBasketLinkFake'
+          );
+
+          const descriptionElement = row.querySelector(
+            '.resultDescription'
+          ) as HTMLElement;
+
+          const warehouseElement = row.querySelector(
+            '.resultWarehouse'
+          ) as HTMLElement;
+
+          const imageElement = row.querySelector('img.searchResultImg');
+
+          const product: SearchResultsParsed = {
+            article: fakeInputElement?.getAttribute('number') || '',
+            availability:
+              parseInt(
+                fakeInputElement?.getAttribute('availability') || '0',
+                10
+              ) || 0,
+            brand: fakeInputElement?.getAttribute('brand') || '',
+            deadline:
+              parseInt(
+                fakeInputElement?.getAttribute('data-deadline') || '0'
+              ) || 0,
+            deadLineMax:
+              parseInt(
+                fakeInputElement?.getAttribute('data-deadline-max') || '0'
+              ) || 0,
+            description: descriptionElement?.innerText.trim() || '',
+            id: fakeInputElement?.getAttribute('searchresultuniqueid') || '',
+            imageUrl: imageElement?.getAttribute('src') || '',
+            price:
+              parseFloat(row.getAttribute('data-output-price') || '0') || 0,
+            probability: 99,
+            supplier,
+            warehouse: warehouseElement?.innerText.trim() || '',
+          };
+          data.push(product);
+        });
+
+        return data;
+      },
+      item,
+      supplier
+    );
   } catch (error) {
     console.error(`Error in parsePickedPatriotResults: ${error}`);
     return [];
   }
 };
-
-// const rows = document.querySelectorAll('[class^="resultTr2"]');
-// const data: Omit<SearchResultsParsed, 'supplier'>[] = [];
-
-// rows.forEach((row) => {
-//   const product: Omit<SearchResultsParsed, 'supplier'> = {
-//     article:
-//       (
-//         row.querySelector('.resultPartCode a') as HTMLElement
-//       )?.innerText.trim() || '',
-//     brand:
-//       (
-//         row.querySelector('.resultBrand a') as HTMLElement
-//       )?.innerText.trim() || '',
-//     description:
-//       (
-//         row.querySelector('.resultDescription') as HTMLElement
-//       )?.innerText.trim() || '',
-//     availability:
-//       parseInt(row.getAttribute('data-availability') || '0', 10) || 0,
-//     price: parseFloat(row.getAttribute('data-output-price') || '0') || 0,
-//     warehouse:
-//       (
-//         row.querySelector('.resultWarehouse') as HTMLElement
-//       )?.innerText.trim() || '',
-//     imageUrl:
-//       row.querySelector('.resultImage img')?.getAttribute('src') || '',
-//     deadline: parseInt(row.getAttribute('data-deadline') || '0') || 0,
-//     deadLineMax:
-//       parseInt(row.getAttribute('data-deadline-max') || '0') || 0,
-//     probability:
-//       parseFloat(
-//         row
-//           .querySelector('.resultProbability')
-//           ?.textContent?.replace('%', '')
-//           .trim() || '0'
-//       ) || '',
-//     id:
-//       row
-//         .querySelector('input.quantityInputFake')
-//         ?.getAttribute('searchresultuniqueid') || '',
-//   };
-
-//   data.push(product);
-// });
-
-// return [data];
