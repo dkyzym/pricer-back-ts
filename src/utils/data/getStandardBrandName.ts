@@ -1,4 +1,4 @@
-import { brandGroups } from './brandGroups';
+import { brandGroups } from 'constants/brandGroups';
 import { normalizeBrandName } from './normalizeBrandName';
 
 export const getStandardBrandName = (brand: string): string | null => {

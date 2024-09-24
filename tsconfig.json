@@ -20,7 +20,8 @@
       "@routes/*": ["routes/*"],
       "@sessions/*": ["sessions/*"],
       "@types/*": ["types/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@constants/*": ["constants/*"]
     }
   },
   "include": ["src/**/*.ts", "src/controllers/data/autocompleteController.ts"],

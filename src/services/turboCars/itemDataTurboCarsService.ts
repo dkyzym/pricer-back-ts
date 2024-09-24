@@ -1,6 +1,6 @@
 import chalk from 'chalk';
+import { SUPPLIERS_DATA } from 'constants/constants';
 import { ParallelSearchParams } from 'types';
-import { SUPPLIERS_DATA } from 'utils/data/constants';
 import {
   fillField,
   pressEnter,

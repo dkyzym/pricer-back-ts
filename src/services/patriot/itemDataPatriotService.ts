@@ -1,7 +1,7 @@
 import { parsePickedPatriotResults } from '@utils/pupHelpers/parsePickerPatriotResults';
 import chalk from 'chalk';
+import { SUPPLIERS_DATA } from 'constants/constants';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
-import { SUPPLIERS_DATA } from 'utils/data/constants';
 import {
   clickItem,
   fillField,
