@@ -100,3 +100,50 @@ export interface pageActionsResult {
   message: string;
   data?: ItemToParallelSearch[] | SearchResultsParsed[];
 }
+
+export interface itemProfit {
+  article: string;
+  brand: string;
+}
+
+export type itemsGroupProfit = itemProfit[];
+
+interface Product {
+  donkey: string;
+  warehouse_id: string;
+  brand_id: number;
+  brand: string;
+  article: string;
+  product_code: string;
+  multi: number;
+  quantity: string;
+  price: number;
+  returnable: number;
+  description: string;
+  article_id: string;
+  return_days: number;
+  brand_info: boolean;
+  brand_warranty: boolean;
+  original: boolean;
+  waitings: number;
+  custom_warehouse_name: string;
+  show_date: string;
+  delivery_time: number;
+  allow_return: string;
+  delivery_date: string;
+  delivery_probability: number;
+  imageUrl?: string;
+  supplier?: SupplierName;
+}
+
+export interface ApiResponseItem {
+  id: string;
+  article: string;
+  description: string;
+  brand: string;
+  original: string;
+  brand_warranty: string;
+  products: {
+    [key: string]: Product;
+  };
+}
