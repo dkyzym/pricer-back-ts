@@ -6,6 +6,7 @@ import {
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
 import { formatText } from '../data/formatText';
+import { needToCheckBrand } from '../data/needToCheckBrand';
 import { removePrefix } from '../data/removePrefix';
 
 const parseFirstRow = async (page: Page) => {
@@ -139,8 +140,7 @@ export const parsePickedTurboCarsResults = async ({
 
   const allResults: SearchResultsParsed[] = results.map(
     (result: SearchResultsParsed) => {
-      const needToCheckBrand =
-        formatText(item.brand) !== formatText(result.brand);
+      const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
 
       return {
         ...result,
@@ -148,7 +148,7 @@ export const parsePickedTurboCarsResults = async ({
         article: item.article,
         supplier,
         description,
-        needToCheckBrand,
+        needToCheckBrand: needToCheckBrandResult,
       };
     }
   );

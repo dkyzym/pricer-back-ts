@@ -50,6 +50,22 @@ export const SUPPLIERS_DATA: SuppliersData = {
       firstRowWrapper: 'tbody > tr:nth-child(1)',
     },
   },
+  profit: {
+    credentials: '',
+    cookieName: '',
+    loginURL: '',
+    logoutURL: '',
+    selectors: {
+      loginForm: '',
+      credentialsEl: '',
+      emailUsernameField: '',
+      passwordField: '',
+      loginBtn: '',
+      logoutBtn: '',
+      input: '',
+      firstRowWrapper: '',
+    },
+  },
   // orion: {
   //   credentials: 'аккаунт',
   //   cookieName: 'orCookies',

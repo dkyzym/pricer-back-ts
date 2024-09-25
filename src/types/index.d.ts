@@ -1,4 +1,4 @@
-export type SupplierName = 'turboCars' | 'ug' | 'patriot';
+export type SupplierName = 'turboCars' | 'ug' | 'patriot' | 'profit';
 // export type SupplierName = 'patriot' | 'turboCars' | 'ug' | 'orion' | 'armtek';
 
 export interface Selectors {
@@ -93,6 +93,7 @@ export interface SearchResultsParsed {
   supplier: SupplierName;
   probability: number | '';
   needToCheckBrand?: boolean;
+  innerId?: string;
 }
 
 export interface pageActionsResult {
@@ -108,7 +109,7 @@ export interface itemProfit {
 
 export type itemsGroupProfit = itemProfit[];
 
-interface Product {
+interface ProductProfit {
   donkey: string;
   warehouse_id: string;
   brand_id: number;

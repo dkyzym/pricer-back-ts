@@ -89,6 +89,7 @@ const start = async () => {
         ug: ugPageActionsService,
         turboCars: turboCarsPageActionsService,
         patriot: patriotPageActionsService,
+        profit: patriotPageActionsService, // need to fix
       };
 
       socket.on('getItemResults', async (item) => {
