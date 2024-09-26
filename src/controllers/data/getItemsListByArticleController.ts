@@ -9,7 +9,7 @@ export const getItemsListByArticleController = async (
   res: Response
 ) => {
   const { article } = req.query;
-  const brand = 'gazpromneft';
+  const brand = 'sangsin';
   //sp1165
   //2389901318
 
