@@ -102,12 +102,12 @@ export interface pageActionsResult {
   data?: ItemToParallelSearch[] | SearchResultsParsed[];
 }
 
-export interface itemProfit {
+export interface itemI {
   article: string;
   brand: string;
 }
 
-export type itemsGroupProfit = itemProfit[];
+export type itemsGroupProfit = itemI[];
 
 interface ProductProfit {
   donkey: string;
@@ -147,4 +147,9 @@ export interface ApiResponseItem {
   products: {
     [key: string]: Product;
   };
+}
+
+export interface SearchResult {
+  supplier: SupplierName;
+  result: pageActionsResult | null;
 }
