@@ -5,41 +5,19 @@ import {
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
-import { formatText } from '../data/formatText';
 import { needToCheckBrand } from '../data/needToCheckBrand';
-import { removePrefix } from '../data/removePrefix';
-
-const parseFirstRow = async (page: Page) => {
-  return page.evaluate(() => {
-    const firstRow = document.querySelector('#block0');
-
-    const link = firstRow?.querySelector('a[href^="galleyp.asp?"]');
-
-    if (!link) {
-      return null;
-    }
-
-    const linkText = link.textContent?.trim();
-
-    if (!linkText) {
-      return null;
-    }
-
-    return linkText;
-  });
-};
 
 export const isInStock = async (page: Page, item: ItemToParallelSearch) => {
-  const linkText = await parseFirstRow(page);
+  const height: number = await page.evaluate(() => {
+    const el = document.querySelector('#block0');
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      return rect.height;
+    }
+    return 0;
+  });
 
-  if (!linkText) {
-    return false;
-  }
-
-  const formattedLinkText = formatText(removePrefix(linkText));
-  const formattedItemArticle = formatText(item.article);
-
-  return formattedLinkText === formattedItemArticle;
+  return !!height;
 };
 
 export const parsePickedTurboCarsResults = async ({

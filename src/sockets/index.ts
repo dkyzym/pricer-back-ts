@@ -11,26 +11,31 @@ import {
   ItemToParallelSearch,
   PageAction,
   pageActionsResult,
-  SearchResult,
-  SupplierName,
+  PuppeteerSupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseApiResponse } from 'utils/data/profit/parseApiResponse';
+import { logWithRandomBackground } from 'utils/log';
+
+/**
+ * TODO
+ * fix brand names search
+ *
+ * fix profit time to delivery
+ * https://turbo-cars.net/office/SECURE.asp secure?
+ */
 
 const supplierServices: {
-  [key in SupplierName]: (
+  [key in PuppeteerSupplierName]: (
     actionParams: PageAction
   ) => Promise<pageActionsResult>;
 } = {
   ug: ugPageActionsService,
   turboCars: turboCarsPageActionsService,
   patriot: patriotPageActionsService,
-  profit: patriotPageActionsService, // need to fix
 };
-// TODO brand names
-// allSettled
 
-export const initializeSocket = async (server: HTTPServer) => {
+export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
     cors: {
       origin: CLIENT_URL,
@@ -56,95 +61,65 @@ export const initializeSocket = async (server: HTTPServer) => {
     });
 
     socket.on('getItemResults', async (item: ItemToParallelSearch) => {
-      try {
-        let results: SearchResult[] = [];
+      const fetchProfitData = async () => {
+        try {
+          const data = await getItemsListByArticleService(item.article);
+          const itemsWithRest = await getItemsWithRest(data);
+          const relevantItems = itemsWithRest.filter(({ brand }: any) =>
+            isBrandMatch(item.brand, brand)
+          );
+          const profitParsedData = parseApiResponse(relevantItems, item.brand);
 
-        const fetchProfitData = async () => {
-          try {
-            const data = await getItemsListByArticleService(item.article);
-            const itemsWithRest = await getItemsWithRest(data);
-            const relevantItems = itemsWithRest.filter(({ brand }: any) => {
-              return isBrandMatch(item.brand, brand);
-            });
-            const profitParsedData = parseApiResponse(
-              relevantItems,
-              item.brand
-            );
+          logWithRandomBackground(
+            `Найдено результатов перед возвратом ${'profit'}:  ${profitParsedData.length}`
+          );
 
-            if (profitParsedData.length > 0) {
-              console.log(
-                chalk.bgYellowBright(
-                  `Найдено результатов перед возвратом ${'Profit'}:  ${profitParsedData?.length}`
-                )
-              );
-            } else {
-              console.log(chalk.bgYellowBright('No profit data found.'));
-            }
+          const profitResult: pageActionsResult = {
+            success: profitParsedData.length > 0,
+            message: `Profit data fetched: ${profitParsedData.length > 0}`,
+            data: profitParsedData,
+          };
 
-            const profitResult: pageActionsResult = {
-              success: profitParsedData.length > 0,
-              message: `Profit data fetched: ${profitParsedData.length > 0}`,
-              data: profitParsedData,
-            };
-
-            results.push({ supplier: 'profit', result: profitResult });
-          } catch (error) {
-            console.error('Profit error:', error);
-
-            socket.emit('autocompleteError', {
-              message: `Error occurred while fetching item results from profit: ${(error as Error).message}`,
-            });
-          }
-        };
-
-        const fetchSuppliersData = async () => {
-          const suppliers: SupplierName[] = ['patriot'];
-
-          const supplierPromises = suppliers.map(async (supplier) => {
-            try {
-              const result = await supplierServices[supplier]({
-                action: 'pick',
-                item,
-                supplier,
-              });
-              return { supplier, result };
-            } catch (error) {
-              console.error(
-                chalk.red(`Error fetching from ${supplier}:`, error)
-              );
-              socket.emit('autocompleteError', {
-                message: `Error occurred while fetching item results from ${supplier}: ${(error as Error).message}`,
-              });
-              return { supplier, result: null };
-            }
+          socket.emit('getItemResultsData', {
+            supplier: 'profit',
+            result: profitResult,
           });
+        } catch (error) {
+          console.error('Profit error:', error);
+          socket.emit('autocompleteError', {
+            message: `Error fetching data from profit: ${(error as Error).message}`,
+          });
+        }
+      };
 
-          const suppliersResults = await Promise.all(supplierPromises);
-          results.push(...suppliersResults);
-        };
+      const fetchSuppliersData = async () => {
+        const suppliers: PuppeteerSupplierName[] = [
+          'ug',
+          'turboCars',
+          // 'patriot',
+        ];
 
-        await Promise.all([fetchProfitData(), fetchSuppliersData()]);
-
-        results.forEach(({ supplier, result }) => {
-          if (result && result.success) {
+        const supplierPromises = suppliers.map(async (supplier) => {
+          try {
+            const result = await supplierServices[supplier]({
+              action: 'pick',
+              item,
+              supplier,
+            });
             socket.emit('getItemResultsData', { supplier, result });
-          } else {
-            console.log(
-              chalk.red(
-                `Ошибка при получении данных от ${supplier}: ${result?.message}`
-              )
-            );
+          } catch (error) {
+            console.error(chalk.red(`Error fetching from ${supplier}:`, error));
             socket.emit('autocompleteError', {
-              message: `Ошибка при получении данных от ${supplier}: ${result?.message}`,
+              message: `Error fetching data from ${supplier}: ${(error as Error).message}`,
             });
           }
         });
-      } catch (error) {
-        console.error(chalk.bgRed((error as Error).message));
-        socket.emit('autocompleteError', {
-          message: 'General error occurred while fetching item results',
-        });
-      }
+
+        await Promise.allSettled(supplierPromises);
+      };
+
+      fetchProfitData();
+      fetchSuppliersData();
     });
 
     socket.on('disconnect', () => {

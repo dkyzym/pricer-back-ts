@@ -1,6 +1,6 @@
-import chalk from 'chalk';
 import { SUPPLIERS_DATA } from 'constants/constants';
 import { ParallelSearchParams } from 'types';
+import { logWithRandomBackground } from 'utils/log';
 import {
   fillField,
   pressEnter,
@@ -18,10 +18,6 @@ export const itemDataTurboCarsService = async ({
 }: ParallelSearchParams): Promise<any> => {
   const { selectors } = SUPPLIERS_DATA[supplier];
 
-  // console.log(
-  //   inspect(page.url(), { colors: true, showHidden: true, depth: 5 })
-  // );
-
   await fillField(page, selectors.input, item.article);
 
   await pressEnter(page);
@@ -31,7 +27,8 @@ export const itemDataTurboCarsService = async ({
   const hasResults = await isInStock(page, item);
 
   if (!hasResults) {
-    return [];
+    logWithRandomBackground(`Нет результатов от ${supplier}`);
+    return null;
   }
 
   await page.click(selectors.firstRowWrapper as string);
@@ -42,10 +39,8 @@ export const itemDataTurboCarsService = async ({
     supplier,
   });
 
-  console.log(
-    chalk.bgYellowBright(
-      `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
-    )
+  logWithRandomBackground(
+    `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
   );
 
   return allResults;

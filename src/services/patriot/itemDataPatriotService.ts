@@ -2,6 +2,7 @@ import { parsePickedPatriotResults } from '@utils/pupHelpers/parsePickerPatriotR
 import chalk from 'chalk';
 import { SUPPLIERS_DATA } from 'constants/constants';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
+import { logWithRandomBackground } from 'utils/log';
 import {
   clickItem,
   fillField,
@@ -39,10 +40,8 @@ export const itemDataPatriotService = async ({
     supplier,
   });
 
-  console.log(
-    chalk.bgYellowBright(
-      `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
-    )
+  logWithRandomBackground(
+    `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
   );
 
   return allResults;

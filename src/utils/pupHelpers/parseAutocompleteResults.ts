@@ -1,18 +1,18 @@
 import chalk from 'chalk';
 import { Page } from 'puppeteer';
-import { v4 as uuidv4 } from 'uuid';
 import { ItemToParallelSearch } from 'types';
-import { log } from '../log';
+import { v4 as uuidv4 } from 'uuid';
+
 import { clickOutsideInput } from './pageHelpers';
 
 export const parseAutocompleteResults = async (
   page: Page,
   query: string
 ): Promise<ItemToParallelSearch[]> => {
-  log(query + ' ' + query.length, { color: chalk.bgCyan });
+  console.log(chalk.bgCyan(query + ' ' + query.length));
 
   if (query.length <= 3) {
-    log('Query too short, clearing results.', { color: chalk.bgRed });
+    console.log(chalk.bgRed('Query too short, clearing results.'));
     return [];
   }
 

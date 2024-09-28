@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
-import { SUPPLIERS_DATA } from '../../constants/constants';
+import { SUPPLIERS_DATA } from 'constants/constants';
 import { UnAuthorizedError } from '../errors.js';
 import { waitForPageNavigation } from '../pupHelpers/pageHelpers';
 

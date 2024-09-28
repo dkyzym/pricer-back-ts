@@ -8,12 +8,6 @@ export const itemDataUgService = async ({
   item,
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  // console.log(inspect({ page, item, supplier }, { colors: true, depth: 2 }));
-  // console.log(`itemDataUgService ${item.dataUrl}`);
-  // console.log(
-  //   inspect(page.url(), { colors: true, showHidden: true, depth: 2 })
-  // );
-
   const element = page.locator(`tr[data-url="${item.dataUrl}"]`);
   await element.hover();
   await element.click();
