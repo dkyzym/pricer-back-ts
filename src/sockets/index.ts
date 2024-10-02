@@ -19,7 +19,6 @@ import { logWithRandomBackground } from 'utils/log';
 
 /**
  * TODO
- * deep search ug
  * fix brand names search
  * fix profit time to delivery
  * https://turbo-cars.net/office/SECURE.asp secure?
