@@ -56,6 +56,11 @@ export type PageAction =
       query: string;
     }
   | {
+      action: 'clarifyBrand';
+      supplier: SupplierName;
+      query: string;
+    }
+  | {
       action: 'pick';
       supplier: SupplierName;
       item: ItemToParallelSearch;

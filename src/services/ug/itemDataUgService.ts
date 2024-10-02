@@ -8,7 +8,18 @@ export const itemDataUgService = async ({
   item,
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  const element = page.locator(`tr[data-url="${item.dataUrl}"]`);
+  let element = null;
+  const pageUrl = page.url().toLowerCase();
+
+  const searchPcodeUrl =
+    `https://ugautopart.ru/search?pcode=${item.article}`.toLowerCase();
+
+  if (pageUrl === searchPcodeUrl) {
+    element = page.locator(`a[href="${item.dataUrl}" i]`);
+  } else {
+    element = page.locator(`tr[data-url="${item.dataUrl}" i]`);
+  }
+
   await element.hover();
   await element.click();
 

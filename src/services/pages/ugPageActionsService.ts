@@ -2,6 +2,7 @@ import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { getPage } from '../puppeteerShared/browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
+import { clarifyBrandService } from '../ug/clarifyBrandService';
 import { itemDataUgService } from '../ug/itemDataUgService';
 import { loginUgService } from '../ug/loginUgService';
 import { logoutUgService } from '../ug/logoutUgService';
@@ -41,6 +42,19 @@ export const ugPageActionsService = async (
           success: hasData,
           message: `${supplier}: Autocomplete successful`,
           data,
+        };
+      }
+      case 'clarifyBrand': {
+        const { query } = actionParams;
+
+        const possibleBrands = await clarifyBrandService(page, query);
+
+        const hasData = Boolean(possibleBrands.length);
+
+        return {
+          success: hasData,
+          message: `${supplier}: Brand clarification successful`,
+          data: possibleBrands,
         };
       }
       case 'pick': {

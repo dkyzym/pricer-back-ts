@@ -19,8 +19,8 @@ import { logWithRandomBackground } from 'utils/log';
 
 /**
  * TODO
+ * deep search ug
  * fix brand names search
- *
  * fix profit time to delivery
  * https://turbo-cars.net/office/SECURE.asp secure?
  */
@@ -57,6 +57,31 @@ export const initializeSocket = (server: HTTPServer) => {
       } catch (error) {
         console.error('Autocomplete error:', error);
         socket.emit('autocompleteError', { query, message: error });
+      }
+    });
+
+    socket.on('getBrandClarification', async (query: string) => {
+      try {
+        const result = await ugPageActionsService({
+          action: 'clarifyBrand',
+          query,
+          supplier: 'ug',
+        });
+
+        if (result.success && result.data) {
+          socket.emit('brandClarificationResults', {
+            brands: result.data,
+          });
+        } else {
+          socket.emit('brandClarificationError', {
+            message: result.message,
+          });
+        }
+      } catch (error) {
+        console.error('Brand Clarification error:', error);
+        socket.emit('brandClarificationError', {
+          message: `Error clarifying brand: ${(error as Error).message}`,
+        });
       }
     });
 
