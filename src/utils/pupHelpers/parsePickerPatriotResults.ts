@@ -14,7 +14,10 @@ export const parsePickedPatriotResults = async ({
     await page.waitForNetworkIdle();
     return await page.evaluate(
       (item: ItemToParallelSearch, supplier: SupplierName) => {
-        const itemRowSelector = `tr[ data-current-brand-number="${item.article}_${item.brand}" i]`;
+        const brandWithoutGaps = item.brand.split(' ').join('');
+
+        const dataContent = `${encodeURIComponent(item.article)}_${encodeURIComponent(brandWithoutGaps)}`;
+        const itemRowSelector = `tr[data-current-brand-number="${dataContent}" i]`;
         const itemRows = document.querySelectorAll(itemRowSelector);
 
         if (itemRows.length === 0) {
