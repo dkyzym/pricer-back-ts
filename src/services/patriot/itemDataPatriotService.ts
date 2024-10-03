@@ -18,23 +18,26 @@ export const itemDataPatriotService = async ({
   const { selectors } = SUPPLIERS_DATA['patriot'];
 
   await fillField(page, selectors.input, item.article);
-
   await pressEnter(page);
-
   await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
 
   const dataLingContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
-
   const itemRowSelector = `.startSearching[data-link="/search/${dataLingContent}" i]`;
 
-  const isInStock = !!(await page.$(itemRowSelector));
+  console.log(chalk.underline('Проверка необходимости клика'));
 
-  console.log(chalk.bgWhiteBright(`inStock ${supplier}: ${isInStock} `));
-  if (!isInStock) {
-    return [];
+  const elementExists = await page.$(itemRowSelector);
+
+  if (elementExists) {
+    console.log('Элемент существует, выполняем клик.');
+    await clickItem(page, itemRowSelector);
+    // await page.waitForNetworkIdle(); // Ждем загрузки после клика
+  } else {
+    console.log(`Элемент ${itemRowSelector} не найден. Продолжаем без клика.`);
+    // Здесь можно добавить дополнительную логику, если необходимо
   }
 
-  await clickItem(page, itemRowSelector as string);
+  console.log(chalk.underline('После условного клика или пропуска'));
 
   const allResults = await parsePickedPatriotResults({
     page,
@@ -43,7 +46,7 @@ export const itemDataPatriotService = async ({
   });
 
   logWithRandomBackground(
-    `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
+    `Найдено результатов перед возвратом ${supplier}: ${allResults ? allResults.length : 0}`
   );
 
   return allResults;
