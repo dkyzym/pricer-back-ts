@@ -19,7 +19,7 @@ import { logWithRandomBackground } from 'utils/log';
 
 /**
  * TODO
- * fix brand names search
+ *
  * indication for each supplier
  *
  * https://turbo-cars.net/office/SECURE.asp secure?
