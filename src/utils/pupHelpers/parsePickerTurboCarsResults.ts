@@ -1,23 +1,110 @@
-import { Page } from 'puppeteer';
+import { ElementHandle, Page } from 'puppeteer';
 import {
   ItemToParallelSearch,
   ParallelSearchParams,
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
+import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
-export const isInStock = async (page: Page, item: ItemToParallelSearch) => {
-  const height: number = await page.evaluate(() => {
-    const el = document.querySelector('#block0');
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      return rect.height;
-    }
-    return 0;
-  });
+// Helper function to check element visibility
+const isElementVisible = async (
+  page: Page,
+  element: ElementHandle<Element>
+): Promise<boolean> => {
+  return await page.evaluate((el) => {
+    const style = window.getComputedStyle(el);
+    return (
+      style &&
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      (el as HTMLElement).offsetHeight > 0 &&
+      (el as HTMLElement).offsetWidth > 0
+    );
+  }, element);
+};
 
-  return !!height;
+// Helper function to normalize brand names and handle variations like parentheses
+const normalizeBrandNameExtended = (brand: string): string[] => {
+  const normalized = brand.replace(/\s+/g, '').toLowerCase();
+  const parts = normalized
+    .split(/[()]/)
+    .filter(Boolean)
+    .map((part) => part.trim());
+  return parts.length > 1 ? [normalized, ...parts] : [normalized];
+};
+
+export const isInStock = async (
+  page: Page,
+  item: ItemToParallelSearch
+): Promise<boolean> => {
+  const firstRowSelector = '#block0';
+
+  // Decode and normalize the brand name
+  const brandVariants = normalizeBrandNameExtended(
+    decodeURIComponent(item.brand)
+  );
+
+  // Find the parent element and check if it's visible
+  const parentElementHandle = await page.$(firstRowSelector);
+  if (
+    !parentElementHandle ||
+    !(await isElementVisible(page, parentElementHandle))
+  ) {
+    console.log(`Parent element not found or not visible: ${firstRowSelector}`);
+    return false;
+  }
+
+  // Find all <tr> elements inside the parent element
+  const trHandles = await parentElementHandle.$$(':scope > tr');
+
+  for (const trHandle of trHandles) {
+    // Check if the class list or text content contains the brand name
+    const { classList, textContent } = await page.evaluate(
+      (el) => ({
+        classList: Array.from(el.classList),
+        textContent: el.textContent || '',
+      }),
+      trHandle
+    );
+
+    const normalizedClassList = classList.map((cls) =>
+      cls.replace(/\s+/g, '').toLowerCase()
+    );
+
+    // Use the brand matching function to verify if the brand matches
+    const hasMatchingClass = normalizedClassList.some((cls) =>
+      brandVariants.some((variant) => isBrandMatch(variant, cls))
+    );
+
+    // Extend the text content check to include matches for partial brand names (like SANGSIN and HI-Q)
+    const textParts = textContent
+      .toLowerCase()
+      .split(/[()]/)
+      .filter(Boolean)
+      .map((part) => part.trim());
+    const hasMatchingTextContent = textParts.some((part) =>
+      brandVariants.some((variant) => isBrandMatch(variant, part))
+    );
+
+    if (
+      (hasMatchingClass || hasMatchingTextContent) &&
+      (await isElementVisible(page, trHandle))
+    ) {
+      console.log(`Found visible <tr> element with matching brand name.`);
+      return true;
+    }
+
+    // Dispose the handle to prevent memory leaks
+    await trHandle.dispose();
+  }
+
+  // Dispose the parent element handle
+  await parentElementHandle.dispose();
+
+  console.log('No matching <tr> element found.');
+  return false;
 };
 
 export const parsePickedTurboCarsResults = async ({
@@ -133,9 +220,3 @@ export const parsePickedTurboCarsResults = async ({
 
   return allResults;
 };
-
-//   page.on('console', (msg) => {    // так можно логировать данные внутри eval
-//     if (msg.type() === 'log') {
-//       console.log(`Лог из браузера: ${msg.text()}`);
-//     }
-//   });
