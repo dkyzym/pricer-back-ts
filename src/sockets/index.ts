@@ -39,6 +39,11 @@ export const initializeSocket = (server: HTTPServer) => {
     console.log(`New client connected: ${socket.id}`);
 
     socket.on('autocomplete', async (query: string) => {
+      if (!query || query.trim() === '') {
+        socket.emit('autocompleteResults', { query: '', results: [] });
+        return;
+      }
+
       try {
         const results = await ugPageActionsService({
           action: 'autocomplete',

@@ -31,10 +31,8 @@ export const itemDataPatriotService = async ({
   if (elementExists) {
     console.log('Элемент существует, выполняем клик.');
     await clickItem(page, itemRowSelector);
-    // await page.waitForNetworkIdle(); // Ждем загрузки после клика
   } else {
     console.log(`Элемент ${itemRowSelector} не найден. Продолжаем без клика.`);
-    // Здесь можно добавить дополнительную логику, если необходимо
   }
 
   console.log(chalk.underline('После условного клика или пропуска'));
