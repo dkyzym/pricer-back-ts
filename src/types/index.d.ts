@@ -1,8 +1,6 @@
 export type SupplierName = 'turboCars' | 'ug' | 'patriot' | 'profit';
-// src/types/index.d.ts
-export type PuppeteerSupplierName = Exclude<SupplierName, 'profit'>;
 
-// export type SupplierName = 'patriot' | 'turboCars' | 'ug' | 'orion' | 'armtek';
+export type PuppeteerSupplierName = Exclude<SupplierName, 'profit'>;
 
 export interface Selectors {
   loginForm: string;

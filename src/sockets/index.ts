@@ -80,6 +80,7 @@ export const initializeSocket = (server: HTTPServer) => {
     socket.on('getItemResults', async (item: ItemToParallelSearch) => {
       const fetchProfitData = async () => {
         try {
+          socket.emit('supplierDataFetchStarted', { supplier: 'profit' });
           const data = await getItemsListByArticleService(item.article);
           const itemsWithRest = await getItemsWithRest(data);
           const relevantItems = itemsWithRest.filter(({ brand }: any) =>
@@ -97,14 +98,15 @@ export const initializeSocket = (server: HTTPServer) => {
             data: profitParsedData,
           };
 
-          socket.emit('getItemResultsData', {
+          socket.emit('supplierDataFetchSuccess', {
             supplier: 'profit',
             result: profitResult,
           });
         } catch (error) {
           console.error('Profit error:', error);
-          socket.emit('autocompleteError', {
-            message: `Error fetching data from profit: ${(error as Error).message}`,
+          socket.emit('supplierDataFetchError', {
+            supplier: 'profit',
+            error: (error as Error).message,
           });
         }
       };
@@ -118,16 +120,18 @@ export const initializeSocket = (server: HTTPServer) => {
 
         const supplierPromises = suppliers.map(async (supplier) => {
           try {
+            socket.emit('supplierDataFetchStarted', { supplier });
             const result = await supplierServices[supplier]({
               action: 'pick',
               item,
               supplier,
             });
-            socket.emit('getItemResultsData', { supplier, result });
+            socket.emit('supplierDataFetchSuccess', { supplier, result });
           } catch (error) {
             console.error(chalk.red(`Error fetching from ${supplier}:`, error));
-            socket.emit('autocompleteError', {
-              message: `Error fetching data from ${supplier}: ${(error as Error).message}`,
+            socket.emit('supplierDataFetchError', {
+              supplier,
+              error: (error as Error).message,
             });
           }
         });
