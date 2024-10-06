@@ -17,14 +17,6 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseApiResponse } from 'utils/data/profit/parseApiResponse';
 import { logWithRandomBackground } from 'utils/log';
 
-/**
- * TODO
- *
- * indication for each supplier
- *
- * https://turbo-cars.net/office/SECURE.asp secure?
- */
-
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
     actionParams: PageAction
@@ -119,9 +111,9 @@ export const initializeSocket = (server: HTTPServer) => {
 
       const fetchSuppliersData = async () => {
         const suppliers: PuppeteerSupplierName[] = [
-          // 'ug',
+          'ug',
           'turboCars',
-          // 'patriot',
+          'patriot',
         ];
 
         const supplierPromises = suppliers.map(async (supplier) => {
