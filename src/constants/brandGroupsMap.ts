@@ -1,10 +1,11 @@
-export const brandGroups = [
+export const brandGroupsMap = [
   ['SANGSIN', 'HI-Q', 'SANGSIN BRAKE'],
   ['GAZPROMNEFT', 'G-ENERGY', 'GAZPROM', 'ГАЗПРОМНЕФТЬ'],
   ['hans-pries', 'topran'],
   ['KNECHT', 'MAHLE', 'mahle/knecht', 'mahle original'],
   ['Белебей', 'БЗАК'],
   ['змз', 'дайдо металл русь', 'дайдо метал'],
+  ['lada', 'ваз', 'вис', 'оат'],
 ];
 
 // 2389901318
