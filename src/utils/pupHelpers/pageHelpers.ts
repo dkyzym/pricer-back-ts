@@ -6,7 +6,7 @@ export const clickButton = async (page: Page, selector: keyof Selectors) => {
 };
 
 export const clickItem = async (page: Page, selector: string) => {
-  const element = await page.locator(selector as string);
+  const element = page.locator(selector as string);
   await element.click();
 };
 

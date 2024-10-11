@@ -4,6 +4,7 @@ export const brandGroups = [
   ['hans-pries', 'topran'],
   ['KNECHT', 'MAHLE', 'mahle/knecht', 'mahle original'],
   ['Белебей', 'БЗАК'],
+  ['змз', 'дайдо металл русь', 'дайдо метал'],
 ];
 
 // 2389901318

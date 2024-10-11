@@ -8,6 +8,7 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
+import { Dialog } from 'puppeteer';
 import { LoginServiceParams, pageActionsResult } from 'types';
 
 export const loginTurboCars = async ({
@@ -17,6 +18,11 @@ export const loginTurboCars = async ({
   supplier,
 }: LoginServiceParams): Promise<pageActionsResult> => {
   const { credentials, selectors, dashboardURL } = getSupplierData(supplier);
+
+  page.on('dialog', async (dialog: Dialog) => {
+    console.log('Dialog message:', dialog.message());
+    await dialog.accept();
+  });
 
   const isLoggedIn = await checkTcAuth(
     page,
@@ -32,12 +38,33 @@ export const loginTurboCars = async ({
   }
 
   await fillField(page, selectors.emailUsernameField, username);
-
   await fillField(page, selectors.passwordField, password);
 
   await clickButton(page, selectors.loginBtn);
 
-  await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
+  await waitForPageNavigation(page, {
+    waitUntil: 'domcontentloaded',
+  });
+
+  const okButtonFound = await page.evaluate(() => {
+    const elements = Array.from(document.querySelectorAll('*'));
+    for (const element of elements) {
+      if (element.textContent && element.textContent.trim() === 'OK') {
+        (element as HTMLElement).click();
+        return true;
+      }
+    }
+    return false;
+  });
+
+  if (okButtonFound) {
+    console.log('Found and clicked OK button');
+    // await page.waitForTimeout(1000);
+  } else {
+    console.log('OK button not found');
+  }
+
+  // Переходим на страницу dashboard
 
   await page.goto(dashboardURL as string, { waitUntil: 'networkidle2' });
 
