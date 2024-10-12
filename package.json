@@ -28,6 +28,8 @@
     "express": "^4.19.2",
     "morgan": "^1.10.0",
     "puppeteer": "^23.1.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "socket.io": "^4.7.5",
     "string-similarity": "^4.0.4",
     "transliteration": "^2.3.5",

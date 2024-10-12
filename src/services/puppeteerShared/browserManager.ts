@@ -1,5 +1,9 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Browser, Page } from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { SupplierName } from 'types';
+
+puppeteer.use(StealthPlugin());
 
 const browsers: Map<SupplierName, Browser> = new Map();
 const pages: Map<SupplierName, Page> = new Map();
@@ -9,11 +13,22 @@ export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
   if (!browser || !browser.connected) {
     console.log(`Launching new browser for supplier: ${supplier}`);
     browser = await puppeteer.launch({
-      headless: false,
-      devtools: true,
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--window-size=1280,1024',
+        '--disable-blink-features=AutomationControlled',
+        '--lang=ru-RU,ru',
+      ],
+      defaultViewport: null,
     });
     browsers.set(supplier, browser);
-    // console.log(inspect(browsers, { colors: true, depth: 2 }));
+
+    const pagesArray = await browser.pages();
+    if (pagesArray.length > 0) {
+      await pagesArray[0].close();
+    }
   }
   return browser;
 };
@@ -23,25 +38,48 @@ export const getPage = async (
   url: string
 ): Promise<Page> => {
   const browser = await initBrowser(supplier);
+  const waitTimeOutPeriod = 120_000;
 
   let page = pages.get(supplier);
   if (page && !page.isClosed()) {
     console.log(`Reusing existing page for supplier: ${supplier}`);
+
     await page.bringToFront();
 
     await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: 20000,
+      timeout: waitTimeOutPeriod,
     });
   } else {
     console.log(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
-    const pagesArray = await browser.pages();
+    const context = await browser.createBrowserContext();
+    page = await context.newPage();
 
-    if (pagesArray.length > 0) {
-      page = pagesArray[0];
-    } else {
-      page = await browser.newPage();
-    }
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+    );
+
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'ru-RU,ru;q=0.9',
+    });
+
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => false,
+      });
+
+      (window as any).chrome = {
+        runtime: {},
+      };
+
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['ru-RU', 'ru'],
+      });
+
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5],
+      });
+    });
 
     await page.setViewport({
       width: 1280,
@@ -49,15 +87,40 @@ export const getPage = async (
       deviceScaleFactor: 1,
     });
 
-    await page.goto(url, { waitUntil: 'networkidle0' });
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const headers = {
+        ...request.headers(),
+        'Accept-Language': 'ru-RU,ru;q=0.9',
+      };
+      request.continue({ headers });
+    });
+
+    page.on('pageerror', (err) => {
+      console.log(`Page error: ${err.toString()}`);
+    });
+
+    page.on('error', (err) => {
+      console.error(`Page crashed: ${err.toString()}`);
+    });
+
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: waitTimeOutPeriod,
+    });
 
     await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: 20000,
+      timeout: waitTimeOutPeriod,
     });
 
     pages.set(supplier, page);
-    // console.log(inspect(pages, { showHidden: true, depth: 2, colors: true }));
   }
 
   return page;
 };
+
+declare global {
+  interface Window {
+    chrome: any;
+  }
+}

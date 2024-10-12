@@ -9,8 +9,6 @@ export const parseAutocompleteResults = async (
   page: Page,
   query: string
 ): Promise<ItemToParallelSearch[]> => {
-  console.log(chalk.bgCyan(query + ' ' + query.length));
-
   if (query.length <= 3) {
     console.log(chalk.bgRed('Query too short, clearing results.'));
     return [];
