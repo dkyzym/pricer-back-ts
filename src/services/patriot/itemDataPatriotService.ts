@@ -35,7 +35,6 @@ export const itemDataPatriotService = async ({
     console.log('Элемент существует, выполняем клик.');
     await clickItem(page, itemRowSelector);
   } else {
-    return [];
     console.log(`Элемент ${itemRowSelector} не найден. Продолжаем без клика.`);
   }
 

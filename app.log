@@ -1,3 +1,10 @@
-[2024-10-14T15:00:27.815Z] [ERROR]: Request failed: https://optautotorg.com/ajax/modules2/search.tips/get?term=OC90&locale=ru_RU net::ERR_ABORTED
-[2024-10-14T15:01:59.802Z] [ERROR]: patriot Error in parsePickedPatriotResults: TimeoutError: Timed out after waiting 60000ms
-[2024-10-14T15:04:17.323Z] [ERROR]: Request failed: https://optautotorg.com/ajax/modules2/search.tips/get?term=SM105&locale=ru_RU net::ERR_ABORTED
+[2024-10-14T15:17:51.038Z] [INFO]: parsePickedPatriotResults
+[2024-10-14T15:18:00.271Z] [INFO]: after parsePickedPatriotResults
+[2024-10-14T15:18:31.643Z] [INFO]: parsePickedPatriotResults
+[2024-10-14T15:18:43.428Z] [INFO]: after parsePickedPatriotResults
+[2024-10-14T15:19:21.322Z] [INFO]: parsePickedPatriotResults
+[2024-10-14T15:20:21.328Z] [ERROR]: patriot Error in parsePickedPatriotResults: TimeoutError: Timed out after waiting 60000ms
+[2024-10-14T15:24:30.228Z] [INFO]: parsePickedPatriotResults
+[2024-10-14T15:24:31.913Z] [INFO]: after parsePickedPatriotResults
+[2024-10-14T15:24:57.773Z] [INFO]: parsePickedPatriotResults
+[2024-10-14T15:25:00.543Z] [INFO]: after parsePickedPatriotResults
