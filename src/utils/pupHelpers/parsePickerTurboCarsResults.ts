@@ -1,3 +1,4 @@
+import { logger } from 'config/winston';
 import { ElementHandle, Page } from 'puppeteer';
 import {
   ItemToParallelSearch,
@@ -5,7 +6,6 @@ import {
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../../config/winston';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 

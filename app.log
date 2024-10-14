@@ -1,24 +1,3 @@
-[2024-10-14T14:36:54.804Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:12.971Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:22.101Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:22.894Z] [ERROR]: GetGeoComment is not defined
-[2024-10-14T14:37:23.062Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:23.244Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:38.571Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:39.233Z] [ERROR]: Invalid regular expression: missing /
-[2024-10-14T14:37:39.287Z] [ERROR]: Invalid regular expression: missing /
-[2024-10-14T14:37:41.551Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:41.553Z] [ERROR]: Invalid regular expression: missing /
-[2024-10-14T14:37:41.555Z] [ERROR]: Invalid regular expression: missing /
-[2024-10-14T14:37:58.680Z] [ERROR]: __name is not defined
-[2024-10-14T14:37:59.011Z] [ERROR]: __name is not defined
-[2024-10-14T14:38:00.328Z] [ERROR]: __name is not defined
-[2024-10-14T14:38:01.351Z] [ERROR]: __name is not defined
-[2024-10-14T14:38:02.567Z] [ERROR]: Cannot set properties of null (setting 'href')
-[2024-10-14T14:38:08.763Z] [ERROR]: __name is not defined
-[2024-10-14T14:43:03.667Z] [ERROR]: __name is not defined
-[2024-10-14T14:43:03.737Z] [ERROR]: __name is not defined
-[2024-10-14T14:43:05.157Z] [ERROR]: __name is not defined
-[2024-10-14T14:43:06.690Z] [ERROR]: Cannot set properties of null (setting 'href')
-[2024-10-14T14:43:09.043Z] [ERROR]: __name is not defined
-[2024-10-14T14:44:15.652Z] [ERROR]: __name is not defined
+[2024-10-14T15:00:27.815Z] [ERROR]: Request failed: https://optautotorg.com/ajax/modules2/search.tips/get?term=OC90&locale=ru_RU net::ERR_ABORTED
+[2024-10-14T15:01:59.802Z] [ERROR]: patriot Error in parsePickedPatriotResults: TimeoutError: Timed out after waiting 60000ms
+[2024-10-14T15:04:17.323Z] [ERROR]: Request failed: https://optautotorg.com/ajax/modules2/search.tips/get?term=SM105&locale=ru_RU net::ERR_ABORTED

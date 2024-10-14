@@ -1,4 +1,3 @@
-import { logger } from 'config/winston';
 import { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -103,7 +102,7 @@ export const getPage = async (
     });
 
     page.on('pageerror', (err) => {
-      logger.error(err);
+      // logger.error(err);
       console.log(`Page error: ${err.toString()}`);
     });
 
