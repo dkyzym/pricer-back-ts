@@ -66,7 +66,10 @@ export const loginTurboCars = async ({
 
   // Переходим на страницу dashboard
 
-  await page.goto(dashboardURL as string, { waitUntil: 'networkidle2' });
+  await page.goto(dashboardURL as string, {
+    waitUntil: 'networkidle2',
+    timeout: 60_000,
+  });
 
   const loggedIn = await checkElementTextForAuthorization(
     page,

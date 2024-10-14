@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { Page } from 'puppeteer';
 import { ItemToParallelSearch } from 'types';
 import { waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
@@ -13,7 +12,10 @@ export const clarifyBrandService = async (
   const element = page.locator(selector);
   await element.click();
 
-  await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
+  await waitForPageNavigation(page, {
+    waitUntil: 'networkidle2',
+    timeout: 60_000,
+  });
 
   const results = await page.evaluate(() => {
     const items = Array.from(document.querySelectorAll('.startSearching'));

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
+import { SUPPLIERS_DATA } from 'constants/constants';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
-import { SUPPLIERS_DATA } from 'constants/constants';
 import { UnAuthorizedError } from '../errors.js';
 import { waitForPageNavigation } from '../pupHelpers/pageHelpers';
 
@@ -48,9 +48,15 @@ export const checkTcAuth = async (
     return true;
   } else {
     if (url !== dashboardURL) {
-      await page.goto(dashboardURL as string);
+      await page.goto(dashboardURL as string, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
+      });
 
-      await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
+      await waitForPageNavigation(page, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
+      });
     }
 
     const result = await checkElementTextForAuthorization(

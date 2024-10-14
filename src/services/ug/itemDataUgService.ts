@@ -23,7 +23,10 @@ export const itemDataUgService = async ({
   await element.hover();
   await element.click();
 
-  await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
+  await waitForPageNavigation(page, {
+    waitUntil: 'networkidle2',
+    timeout: 60_000,
+  });
 
   const allResults = await parsePickedUgResults({ page, item, supplier });
 

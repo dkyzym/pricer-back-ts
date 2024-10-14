@@ -12,7 +12,7 @@ export const parsePickedPatriotResults = async ({
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   try {
     // Убедимся, что страница полностью загрузилась
-    await page.waitForNetworkIdle();
+    await page.waitForNetworkIdle({ timeout: 60000 });
 
     // Настраиваем перехват console.log из контекста страницы
     page.on('console', (msg: any) => {

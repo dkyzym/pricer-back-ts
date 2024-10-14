@@ -22,7 +22,10 @@ export const itemDataTurboCarsService = async ({
 
   await pressEnter(page);
 
-  await waitForPageNavigation(page, { waitUntil: 'networkidle2' });
+  await waitForPageNavigation(page, {
+    waitUntil: 'networkidle2',
+    timeout: 60_000,
+  });
 
   const hasResults = await isInStock(page, item);
 

@@ -38,7 +38,7 @@ export const getPage = async (
   url: string
 ): Promise<Page> => {
   const browser = await initBrowser(supplier);
-  const waitTimeOutPeriod = 120_000;
+  const waitTimeOutPeriod = 60_000;
 
   let page = pages.get(supplier);
   if (page && !page.isClosed()) {
@@ -56,8 +56,13 @@ export const getPage = async (
     page = await context.newPage();
 
     await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     );
+
+    // const userAgent = await browser.userAgent();
+    // await page.setUserAgent(
+    //   userAgent.replace(/HeadlessChrome\/[\d.]+/, 'Chrome/113.0.0.0')
+    // );
 
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'ru-RU,ru;q=0.9',
