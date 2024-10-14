@@ -44,6 +44,7 @@ export const loginTurboCars = async ({
 
   await waitForPageNavigation(page, {
     waitUntil: 'domcontentloaded',
+    timeout: 60_000,
   });
 
   const okButtonFound = await page.evaluate(() => {

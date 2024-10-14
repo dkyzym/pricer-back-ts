@@ -1,3 +1,4 @@
+import { logger } from 'config/winston';
 import { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -70,7 +71,7 @@ export const getPage = async (
 
     await page.evaluateOnNewDocument(() => {
       Object.defineProperty(navigator, 'webdriver', {
-        get: () => false,
+        get: () => undefined,
       });
 
       (window as any).chrome = {
@@ -102,12 +103,27 @@ export const getPage = async (
     });
 
     page.on('pageerror', (err) => {
+      logger.error(err);
       console.log(`Page error: ${err.toString()}`);
     });
 
     page.on('error', (err) => {
       console.error(`Page crashed: ${err.toString()}`);
     });
+
+    // page.on('requestfailed', (request) => {
+    //   logger.error(
+    //     `Request failed: ${request.url()} ${request.failure()?.errorText}`
+    //   );
+    // });
+
+    // page.on('response', (response) => {
+    //   if (!response.ok()) {
+    //     logger.warn(
+    //       `Response error: ${response.url()} Status: ${response.status()}`
+    //     );
+    //   }
+    // });
 
     await page.goto(url, {
       waitUntil: 'networkidle2',

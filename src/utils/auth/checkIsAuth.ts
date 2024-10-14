@@ -42,7 +42,7 @@ export const checkTcAuth = async (
   const element = await page.$('#formLOGIN');
 
   if (element) {
-    console.log('No form');
+    // console.log('turboCars Not auth ');
     return false;
   } else if (url === 'https://turbo-cars.net/office/login.asp?mode=new') {
     return true;

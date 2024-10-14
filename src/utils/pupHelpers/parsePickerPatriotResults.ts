@@ -4,6 +4,7 @@ import {
   SearchResultsParsed,
   SupplierName,
 } from 'types';
+import { logger } from '../../config/winston';
 
 export const parsePickedPatriotResults = async ({
   page,
@@ -20,8 +21,10 @@ export const parsePickedPatriotResults = async ({
       const text = msg.text();
       if (type === 'log') {
         console.log(`PAGE LOG: ${text}`);
+        logger.info(`PAGE LOG ${supplier}: ${text}`);
       } else if (type === 'error') {
         console.error(`PAGE ERROR: ${text}`);
+        logger.error(`PAGE ERROR ${supplier}: ${text}`);
       }
     });
 
@@ -32,27 +35,28 @@ export const parsePickedPatriotResults = async ({
           // Проверяем валидность данных item
           if (!item || !item.brand || !item.article) {
             console.error('Invalid item data:', item);
+            logger.error('Invalid item data:', item);
             return [];
           }
 
           // Удаляем не буквенные символы из бренда
           const brandWithoutGaps = item.brand.replace(/[^\p{L}]/gu, '');
-          console.log('Brand without gaps:', brandWithoutGaps);
 
           // Формируем dataContent и селектор строки
           const dataContent = `${encodeURIComponent(item.article)}_${encodeURIComponent(brandWithoutGaps)}`;
-          console.log('Data Content:', dataContent);
 
           const itemRowSelector = `tr[data-current-brand-number="${dataContent}" i]`;
-          console.log('Item Row Selector:', itemRowSelector);
 
           // Ищем строки с товарами
           const itemRows =
             document.querySelectorAll<HTMLTableRowElement>(itemRowSelector);
-          console.log('Number of item rows found:', itemRows.length);
+          // console.log('Number of item rows found:', itemRows.length);
 
           if (itemRows.length === 0) {
             console.warn('No item rows found with the given selector.');
+            console.info(
+              ` ${supplier} No item rows found with the given selector.`
+            );
             return [];
           }
 
@@ -63,13 +67,13 @@ export const parsePickedPatriotResults = async ({
               return textContent?.includes('Луганск');
             }
           );
-          console.log(
-            'Number of closest warehouse item rows:',
-            closestWarehouseItemRows.length
-          );
+          // console.log(
+          //   'Number of closest warehouse item rows:',
+          //   closestWarehouseItemRows.length
+          // );
 
           if (closestWarehouseItemRows.length === 0) {
-            console.warn('No rows found containing "Луганск".');
+            // console.warn('No rows found containing "Луганск".');
             return [];
           }
 
@@ -90,6 +94,9 @@ export const parsePickedPatriotResults = async ({
 
               if (!fakeInputElement) {
                 console.warn(`Row ${index}: fakeInputElement not found.`);
+                logger.info(
+                  `${supplier} Row ${index}: fakeInputElement not found.`
+                );
                 return null; // Пропускаем строку, если элемент не найден
               }
 
@@ -118,15 +125,16 @@ export const parsePickedPatriotResults = async ({
                 warehouse: warehouseElement?.innerText.trim() || '',
               };
 
-              console.log(`Row ${index}: Parsed product data:`, product);
+              // console.log(`Row ${index}: Parsed product data:`, product);
 
               return product;
             })
             .filter((product) => product !== null) as SearchResultsParsed[];
 
-          console.log('Total products parsed:', data.length);
+          // console.log('Total products parsed:', data.length);
           return data;
         } catch (evalError) {
+          logger.error(`${supplier} Error inside page.evaluate: ${evalError}`);
           console.error('Error inside page.evaluate:', evalError);
           return [];
         }
@@ -137,6 +145,7 @@ export const parsePickedPatriotResults = async ({
 
     return results;
   } catch (error) {
+    logger.error(`${supplier} Error in parsePickedPatriotResults: ${error}`);
     console.error(`Error in parsePickedPatriotResults: ${error}`);
     return [];
   }

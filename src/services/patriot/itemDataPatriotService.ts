@@ -1,5 +1,4 @@
 import { parsePickedPatriotResults } from '@utils/pupHelpers/parsePickerPatriotResults';
-import chalk from 'chalk';
 import { SUPPLIERS_DATA } from 'constants/constants';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { logWithRandomBackground } from 'utils/log';
@@ -27,18 +26,18 @@ export const itemDataPatriotService = async ({
   const dataLingContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
   const itemRowSelector = `.startSearching[data-link="/search/${dataLingContent}" i]`;
 
-  console.log(chalk.underline('Проверка необходимости клика'));
+  // console.log(chalk.underline('Проверка необходимости клика'));
 
   const elementExists = await page.$(itemRowSelector);
 
   if (elementExists) {
-    console.log('Элемент существует, выполняем клик.');
+    // console.log('Элемент существует, выполняем клик.');
     await clickItem(page, itemRowSelector);
   } else {
-    console.log(`Элемент ${itemRowSelector} не найден. Продолжаем без клика.`);
+    // console.log(`Элемент ${itemRowSelector} не найден. Продолжаем без клика.`);
   }
 
-  console.log(chalk.underline('После условного клика или пропуска'));
+  // console.log(chalk.underline('После условного клика или пропуска'));
 
   const allResults = await parsePickedPatriotResults({
     page,

@@ -28,7 +28,10 @@ export const logoutTurboCarsService = async (
 
   await page.hover('#mnu4 > span');
   await clickButton(page, selectors.logoutBtn);
-  await waitForPageNavigation(page, { waitUntil: 'domcontentloaded' });
+  await waitForPageNavigation(page, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60_000,
+  });
 
   const loggedOut = !(await checkTcAuth(
     page,
