@@ -1,3 +1,4 @@
+import { logger } from 'config/logger';
 import { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -42,7 +43,7 @@ export const getPage = async (
 
   let page = pages.get(supplier);
   if (page && !page.isClosed()) {
-    console.log(`Reusing existing page for supplier: ${supplier}`);
+    logger.info(`Reusing existing page for supplier: ${supplier}`);
 
     await page.bringToFront();
 
@@ -50,19 +51,15 @@ export const getPage = async (
       timeout: waitTimeOutPeriod,
     });
   } else {
-    console.log(`Opening page for supplier: ${supplier}, URL: ${url}`);
+    logger.info(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
     const context = await browser.createBrowserContext();
     page = await context.newPage();
 
+    await browser.userAgent();
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     );
-
-    // const userAgent = await browser.userAgent();
-    // await page.setUserAgent(
-    //   userAgent.replace(/HeadlessChrome\/[\d.]+/, 'Chrome/113.0.0.0')
-    // );
 
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'ru-RU,ru;q=0.9',
@@ -102,12 +99,12 @@ export const getPage = async (
     });
 
     page.on('pageerror', (err) => {
-      // logger.error(err);
-      console.log(`Page error: ${err.toString()}`);
+      logger.error(err);
+      // console.log(`Page error: ${err.toString()}`);
     });
 
     page.on('error', (err) => {
-      console.error(`Page crashed: ${err.toString()}`);
+      logger.error(`Page crashed: ${err}`);
     });
 
     // page.on('requestfailed', (request) => {

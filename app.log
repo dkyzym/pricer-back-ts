@@ -1,10 +1,13 @@
-[2024-10-14T15:17:51.038Z] [INFO]: parsePickedPatriotResults
-[2024-10-14T15:18:00.271Z] [INFO]: after parsePickedPatriotResults
-[2024-10-14T15:18:31.643Z] [INFO]: parsePickedPatriotResults
-[2024-10-14T15:18:43.428Z] [INFO]: after parsePickedPatriotResults
-[2024-10-14T15:19:21.322Z] [INFO]: parsePickedPatriotResults
-[2024-10-14T15:20:21.328Z] [ERROR]: patriot Error in parsePickedPatriotResults: TimeoutError: Timed out after waiting 60000ms
-[2024-10-14T15:24:30.228Z] [INFO]: parsePickedPatriotResults
-[2024-10-14T15:24:31.913Z] [INFO]: after parsePickedPatriotResults
-[2024-10-14T15:24:57.773Z] [INFO]: parsePickedPatriotResults
-[2024-10-14T15:25:00.543Z] [INFO]: after parsePickedPatriotResults
+[2024-10-15 16:45:17] [[32minfo[39m]: [32mOpening page for supplier: ug, URL: https://ugautopart.ru/[39m
+[2024-10-15 16:45:23] [[32minfo[39m]: [32m[36m[3mServer is running. Use port: 3000[23m[32m[39m
+[2024-10-15 16:46:05] [[32minfo[39m]: [32mOpening page for supplier: ug, URL: https://ugautopart.ru/[39m
+[2024-10-15 16:46:13] [[32minfo[39m]: [32mOpening page for supplier: ug, URL: https://ugautopart.ru/[39m
+[2024-10-15 16:46:18] [[32minfo[39m]: [32m[36m[3mServer is running. Use port: 3000[23m[32m[39m
+[2024-10-15 16:46:41] [[32minfo[39m]: [32mOpening page for supplier: ug, URL: https://ugautopart.ru/[39m
+[2024-10-15 16:46:47] [[32minfo[39m]: [32m[36m[3mServer is running. Use port: 3000[23m[32m[39m
+[2024-10-15 16:52:10] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-15 16:52:15] [info]: [36m[3mServer is running. Use port: 3000[23m[39m
+[2024-10-15 16:52:39] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-15 16:52:45] [info]: [36m[3mServer is running. Use port: 3000[23m[39m
+[2024-10-15 16:53:56] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-15 16:54:02] [info]: [36m[3mServer is running. Use port: 3000[23m[39m

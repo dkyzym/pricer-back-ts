@@ -1,4 +1,4 @@
-import { logger } from 'config/winston';
+import { logger } from 'config/logger';
 import { ElementHandle, Page } from 'puppeteer';
 import {
   ItemToParallelSearch,

@@ -1,10 +1,11 @@
+// import { logger } from 'logger';
+import { logger } from 'config/logger';
 import {
   ItemToParallelSearch,
   ParallelSearchParams,
   SearchResultsParsed,
   SupplierName,
 } from 'types';
-import { logger } from '../../config/winston';
 
 export const parsePickedPatriotResults = async ({
   page,
@@ -12,27 +13,22 @@ export const parsePickedPatriotResults = async ({
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   try {
-    // Убедимся, что страница полностью загрузилась
-    logger.info('parsePickedPatriotResults');
-    // await page.waitForNetworkIdle({ timeout: 60000 });
     await page.waitForSelector('.searchResultsTableWrapper', {
       timeout: 30000,
     });
-    logger.info('after parsePickedPatriotResults');
-    // Настраиваем перехват console.log из контекста страницы
-    page.on('console', (msg: any) => {
-      const type = msg.type();
-      const text = msg.text();
-      if (type === 'log') {
-        console.log(`PAGE LOG: ${text}`);
-        logger.info(`PAGE LOG ${supplier}: ${text}`);
-      } else if (type === 'error') {
-        console.error(`PAGE ERROR: ${text}`);
-        logger.error(`PAGE ERROR ${supplier}: ${text}`);
-      }
-    });
 
-    // Выполняем код в контексте страницы
+    // page.on('console', (msg: any) => {
+    //   const type = msg.type();
+    //   const text = msg.text();
+    //   if (type === 'log') {
+    //     console.log(`PAGE LOG: ${text}`);
+    //     logger.info(`PAGE LOG ${supplier}: ${text}`);
+    //   } else if (type === 'error') {
+    //     console.error(`PAGE ERROR: ${text}`);
+    //     logger.error(`PAGE ERROR ${supplier}: ${text}`);
+    //   }
+    // });
+
     const results = await page.evaluate(
       (item: ItemToParallelSearch, supplier: SupplierName) => {
         try {

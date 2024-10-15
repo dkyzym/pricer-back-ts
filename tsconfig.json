@@ -24,7 +24,11 @@
       "@constants/*": ["constants/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/controllers/data/autocompleteController.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/controllers/data/autocompleteController.ts",
+    "logger/logger.ts"
+  ],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true

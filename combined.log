@@ -1,0 +1,12 @@
+[2024-10-15 16:57:11] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-15 16:57:17] [info]: [36m[3mServer is running. Use port: 3000[23m[39m
+[2024-10-15 16:57:30] [info]: Reusing existing page for supplier: ug
+[2024-10-15 16:57:42] [info]: Reusing existing page for supplier: ug
+[2024-10-15 16:57:45] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-15 16:57:46] [error]: GetGeoComment is not defined
+[2024-10-15 16:57:52] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-15 16:57:54] [error]: Invalid regular expression: missing /
+[2024-10-15 16:57:54] [error]: Invalid regular expression: missing /
+[2024-10-15 16:57:56] [error]: Invalid regular expression: missing /
+[2024-10-15 16:57:56] [error]: Invalid regular expression: missing /
+[2024-10-15 17:02:29] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/

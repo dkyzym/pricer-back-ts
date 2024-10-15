@@ -1,10 +1,12 @@
 import chalk from 'chalk';
+import { PORT } from 'config';
 import type { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
-import { PORT } from 'config';
 import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { initializeSocket } from 'sockets';
+import { logger } from '../config/logger';
+// import { logger } from '../logger';
 
 export const startServer = async (app: Application) => {
   try {
@@ -14,15 +16,15 @@ export const startServer = async (app: Application) => {
     });
 
     const server: HTTPServer = app.listen(PORT, () => {
-      console.log(
+      logger.info(
         chalk.cyan.italic(
           `Server is running. Use port: ${(server.address() as AddressInfo).port}`
         )
       );
     });
 
-    await initializeSocket(server);
+    initializeSocket(server);
   } catch (e) {
-    console.log((e as Error).message);
+    logger.error((e as Error).message);
   }
 };
