@@ -19,6 +19,8 @@ const customLevels = {
   },
 };
 
+type LogLevel = keyof typeof customLevels.levels;
+
 addColors(customLevels.colors);
 
 const logFilesFormat = combine(
@@ -28,6 +30,12 @@ const logFilesFormat = combine(
   }),
   printf((info) => `[${info.timestamp}] [${info.level}]: ${info.message}`)
 );
+
+const filterOnly = (level: LogLevel) => {
+  return format((info) => {
+    return info.level === level ? info : false;
+  })();
+};
 
 export const logger = createLogger({
   levels: customLevels.levels,
@@ -43,31 +51,27 @@ export const logger = createLogger({
     }),
     new transports.File({
       filename: 'combined.log',
-      format: format.uncolorize(),
+      format: combine(format.uncolorize(), logFilesFormat),
     }),
     new transports.File({
       filename: 'error.log',
-      level: 'error',
       dirname: 'logs',
-      format: format.uncolorize(),
+      format: combine(filterOnly('error'), format.uncolorize(), logFilesFormat),
     }),
     new transports.File({
       filename: 'warn.log',
-      level: 'warn',
       dirname: 'logs',
-      format: format.uncolorize(),
+      format: combine(filterOnly('warn'), format.uncolorize(), logFilesFormat),
     }),
     new transports.File({
       filename: 'debug.log',
-      level: 'debug',
       dirname: 'logs',
-      format: format.uncolorize(),
+      format: combine(filterOnly('debug'), format.uncolorize(), logFilesFormat),
     }),
     new transports.File({
       filename: 'info.log',
-      level: 'info',
       dirname: 'logs',
-      format: format.uncolorize(),
+      format: combine(filterOnly('info'), format.uncolorize(), logFilesFormat),
     }),
   ],
 });
