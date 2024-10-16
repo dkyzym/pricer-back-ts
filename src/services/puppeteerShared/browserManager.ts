@@ -106,19 +106,19 @@ export const getPage = async (
       logger.error(`Page crashed ${[page?.url()]}: ${err}`);
     });
 
-    // page.on('requestfailed', (request) => {
-    //   logger.error(
-    //     `Request failed: ${request.url()} ${request.failure()?.errorText}`
-    //   );
-    // });
+    page.on('requestfailed', (request) => {
+      logger.warn(
+        `Request failed: ${request.url()} ${request.failure()?.errorText}`
+      );
+    });
 
-    // page.on('response', (response) => {
-    //   if (!response.ok()) {
-    //     logger.warn(
-    //       `Response error: ${response.url()} Status: ${response.status()}`
-    //     );
-    //   }
-    // });
+    page.on('response', (response) => {
+      if (!response.ok()) {
+        logger.warn(
+          `Response error: ${response.url()} Status: ${response.status()}`
+        );
+      }
+    });
 
     await page.goto(url, {
       waitUntil: 'networkidle2',

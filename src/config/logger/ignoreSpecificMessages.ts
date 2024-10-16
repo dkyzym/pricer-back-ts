@@ -6,6 +6,14 @@ export const ignoreSpecificMessages = format((info) => {
     '__name is not defined',
     ' missing /',
     'GetGeoComment',
+    'img',
+    'yandex',
+    'ya',
+    'getfile',
+    'lottiefiles',
+    'favicon',
+    'galleyp',
+    'search.tips',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {
