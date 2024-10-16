@@ -1,5 +1,5 @@
+import { SUPPLIERS_DATA } from '@constants/index.js';
 import chalk from 'chalk';
-import { SUPPLIERS_DATA } from 'constants/constants';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
 import { UnAuthorizedError } from '../errors.js';

@@ -12,7 +12,7 @@ const pages: Map<SupplierName, Page> = new Map();
 export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
   let browser = browsers.get(supplier);
   if (!browser || !browser.connected) {
-    console.log(`Launching new browser for supplier: ${supplier}`);
+    logger.info(`Launching new browser for supplier: ${supplier}`);
     browser = await puppeteer.launch({
       headless: true,
       args: [

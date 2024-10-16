@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
 import { parsePickedUgResults } from 'utils/pupHelpers/parsePickedUgResults';
@@ -20,7 +19,6 @@ export const itemDataUgService = async ({
     element = page.locator(`tr[data-url="${item.dataUrl}" i]`);
   }
 
-  await element.hover();
   await element.click();
 
   await waitForPageNavigation(page, {
@@ -29,12 +27,6 @@ export const itemDataUgService = async ({
   });
 
   const allResults = await parsePickedUgResults({ page, item, supplier });
-
-  console.log(
-    chalk.bgYellowBright(
-      `Найдено результатов перед возвратом ${supplier} :  ${allResults.length}`
-    )
-  );
 
   return allResults;
 };

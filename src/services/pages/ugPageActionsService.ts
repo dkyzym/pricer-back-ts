@@ -1,5 +1,7 @@
+import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
+import { logResultCount } from 'utils/stdLogs';
 import { getPage } from '../puppeteerShared/browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
 import { clarifyBrandService } from '../ug/clarifyBrandService';
@@ -12,7 +14,7 @@ export const ugPageActionsService = async (
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
-  console.log(`[${supplier}] Выполнение действия: ${action}`);
+  logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   const page = await getPage(supplier, loginURL);
 
@@ -61,6 +63,7 @@ export const ugPageActionsService = async (
         const { item, supplier, action } = actionParams;
 
         const result = await itemDataUgService({ page, item, supplier });
+        logResultCount(item, supplier, result);
 
         return {
           success: true,
@@ -75,7 +78,7 @@ export const ugPageActionsService = async (
         };
     }
   } catch (error) {
-    console.error(
+    logger.error(
       `${supplier}: Error performing ${action} action on Page Auth Actions:`,
       error
     );

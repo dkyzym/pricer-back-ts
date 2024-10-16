@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
+import { logger } from 'config/logger';
 import { Server as HTTPServer } from 'http';
 import { patriotPageActionsService } from 'services/pages/patriotPageActionsService';
 import { turboCarsPageActionsService } from 'services/pages/turboCarsPageActionsService';
@@ -15,7 +16,7 @@ import {
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseApiResponse } from 'utils/data/profit/parseApiResponse';
-import { logWithRandomBackground } from 'utils/log';
+import { logResultCount } from '../utils/stdLogs';
 
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
@@ -36,7 +37,7 @@ export const initializeSocket = (server: HTTPServer) => {
   });
 
   io.on('connection', (socket) => {
-    console.log(`New client connected: ${socket.id}`);
+    logger.info(chalk.cyan(`New client connected: ${socket.id}`));
 
     socket.on('autocomplete', async (query: string) => {
       if (!query || query.trim() === '') {
@@ -93,9 +94,7 @@ export const initializeSocket = (server: HTTPServer) => {
           );
           const profitParsedData = parseApiResponse(relevantItems, item.brand);
 
-          logWithRandomBackground(
-            `Найдено результатов перед возвратом ${'profit'}:  ${profitParsedData.length}`
-          );
+          logResultCount(item, 'profit', profitParsedData);
 
           const profitResult: pageActionsResult = {
             success: profitParsedData.length > 0,

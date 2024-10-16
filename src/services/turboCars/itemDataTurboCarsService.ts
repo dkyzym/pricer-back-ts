@@ -1,6 +1,5 @@
-import { SUPPLIERS_DATA } from 'constants/constants';
+import { SUPPLIERS_DATA } from '@constants/index';
 import { ParallelSearchParams } from 'types';
-import { logWithRandomBackground } from 'utils/log';
 import {
   fillField,
   pressEnter,
@@ -30,8 +29,7 @@ export const itemDataTurboCarsService = async ({
   const hasResults = await isInStock(page, item);
 
   if (!hasResults) {
-    logWithRandomBackground(`Нет результатов от ${supplier}`);
-    return null;
+    return [];
   }
 
   await page.click(selectors.firstRowWrapper as string);
@@ -41,10 +39,6 @@ export const itemDataTurboCarsService = async ({
     item,
     supplier,
   });
-
-  logWithRandomBackground(
-    `Найдено результатов перед возвратом ${supplier}:  ${allResults?.length}`
-  );
 
   return allResults;
 };

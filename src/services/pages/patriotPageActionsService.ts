@@ -1,3 +1,4 @@
+import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { itemDataPatriotService } from '../patriot/itemDataPatriotService';
@@ -11,7 +12,7 @@ export const patriotPageActionsService = async (
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
   const page = await getPage(supplier, loginURL);
-  console.log(`[${supplier}] Выполнение действия: ${action}`);
+  logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   try {
     switch (action) {

@@ -47,8 +47,4 @@ function logWithRandomBackground(message: string): void {
   console.log(styledMessage);
 }
 
-// Пример использования
-// logWithRandomBackground('Это тестовое сообщение');
-// logWithRandomBackground('Другое сообщение для логирования');
-
 export { logWithRandomBackground };

@@ -1,6 +1,7 @@
-import chalk from 'chalk';
-import { NextFunction, Request, Response } from 'express';
 import { BaseError } from '@utils/errors';
+import chalk from 'chalk';
+import { logger } from 'config/logger';
+import { NextFunction, Request, Response } from 'express';
 
 export const error = (
   error: BaseError | Error,
@@ -8,7 +9,7 @@ export const error = (
   res: Response,
   _next: NextFunction
 ): Response => {
-  console.log(chalk.red.italic(`${error.stack}`));
+  logger.error(chalk.red.italic(`${error.stack}`));
 
   if (error instanceof BaseError) {
     const { code, success, message } = error;

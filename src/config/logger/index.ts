@@ -13,7 +13,7 @@ const customLevels = {
   colors: {
     error: 'red',
     warn: 'yellow',
-    info: 'green',
+    info: 'bold',
     http: 'magenta',
     debug: 'blue',
   },
@@ -51,6 +51,7 @@ export const logger = createLogger({
     }),
     new transports.File({
       filename: 'combined.log',
+      dirname: 'logs',
       format: combine(format.uncolorize(), logFilesFormat),
     }),
     new transports.File({
