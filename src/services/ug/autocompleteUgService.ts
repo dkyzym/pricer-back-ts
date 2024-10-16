@@ -16,7 +16,6 @@ export const autocompleteUgService = async (
   await clickOutsideInput(query, page);
 
   if (query.trim() === '' || query.trim().length < 3) {
-    console.log('Need 3 symbols at least, returning empty result set');
     return [];
   }
 

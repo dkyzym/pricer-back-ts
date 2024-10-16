@@ -31,7 +31,7 @@
 //         };
 //     }
 //   } catch (error) {
-//     console.error(
+//     logger.error(
 //       `${supplier}: Error performing ${action} action on Orion Page Auth Actions:`,
 //       error
 //     );

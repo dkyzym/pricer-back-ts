@@ -53,7 +53,6 @@ export const isInStock = async (
     !parentElementHandle ||
     !(await isElementVisible(page, parentElementHandle))
   ) {
-    // console.log(`Parent element not found or not visible: ${firstRowSelector}`);
     return false;
   }
 
@@ -93,7 +92,6 @@ export const isInStock = async (
       (hasMatchingClass || hasMatchingTextContent) &&
       (await isElementVisible(page, trHandle))
     ) {
-      // console.log(`Found visible <tr> element with matching brand name.`);
       return true;
     }
 
@@ -104,7 +102,6 @@ export const isInStock = async (
   // Dispose the parent element handle
   await parentElementHandle.dispose();
 
-  // console.log('No matching <tr> element found.');
   return false;
 };
 
@@ -195,8 +192,7 @@ export const parsePickedTurboCarsResults = async ({
               needToCheckBrand: false,
             };
           } catch (error) {
-            logger.error(`Ошибка при обработке строки: ${error}`);
-            console.error(`Ошибка при обработке строки: ${error}`);
+            logger.warn(`${page.url()} Ошибка при обработке строки: ${error}`);
             return null;
           }
         })

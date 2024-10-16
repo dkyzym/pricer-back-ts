@@ -8,6 +8,7 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
+import { logger } from 'config/logger';
 import { Dialog } from 'puppeteer';
 import { LoginServiceParams, pageActionsResult } from 'types';
 
@@ -20,7 +21,7 @@ export const loginTurboCars = async ({
   const { credentials, selectors, dashboardURL } = getSupplierData(supplier);
 
   page.on('dialog', async (dialog: Dialog) => {
-    console.log('Dialog message:', dialog.message());
+    logger.warn('Dialog message:', dialog.message());
     await dialog.accept();
   });
 
@@ -59,10 +60,10 @@ export const loginTurboCars = async ({
   });
 
   if (okButtonFound) {
-    console.log('Found and clicked OK button');
+    logger.info(`${supplier}: Found and clicked OK button`);
     // await page.waitForTimeout(1000);
   } else {
-    console.log('OK button not found');
+    logger.info(`${supplier}: OK button not found`);
   }
 
   // Переходим на страницу dashboard

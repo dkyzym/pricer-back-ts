@@ -136,3 +136,12 @@
 [2024-10-16 11:22:28] [info]: Найдено для SM105 SCT -  patriot: 1
 [2024-10-16 11:22:43] [info]: Найдено для SM105 SCT -  ug: 318
 [2024-10-16 11:22:45] [info]: Найдено для SM105 SCT -  profit: 80
+[2024-10-16 11:28:37] [info]: [ug] Выполнение действия: init
+[2024-10-16 11:28:37] [info]: Launching new browser for supplier: ug
+[2024-10-16 11:28:38] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 11:28:44] [info]: Server is running. Use port: 3000
+[2024-10-16 11:28:45] [info]: New client connected: McBbWgvYmkZDYwMnAAAB
+[2024-10-16 11:30:19] [info]: [ug] Выполнение действия: init
+[2024-10-16 11:30:19] [info]: Launching new browser for supplier: ug
+[2024-10-16 11:30:19] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 11:30:25] [info]: Server is running. Use port: 3000

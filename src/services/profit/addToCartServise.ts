@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '../../config/logger';
 
 const apiKey = process.env.PROFIT_API_KEY;
 
@@ -12,7 +13,6 @@ try {
   };
 
   const response = await axios.post(url, payload);
-  console.log(response.data);
 } catch (error) {
-  console.error('Ошибка при добавлении в корзину:', error);
+  logger.http('Ошибка при добавлении в корзину:', error);
 }

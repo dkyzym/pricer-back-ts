@@ -53,7 +53,7 @@ export const initializeSocket = (server: HTTPServer) => {
         });
         socket.emit('autocompleteResults', { query, results });
       } catch (error) {
-        console.error('Autocomplete error:', error);
+        logger.error('Autocomplete error:', error);
         socket.emit('autocompleteError', { query, message: error });
       }
     });
@@ -76,7 +76,7 @@ export const initializeSocket = (server: HTTPServer) => {
           });
         }
       } catch (error) {
-        console.error('Brand Clarification error:', error);
+        logger.error('Brand Clarification error:', error);
         socket.emit('brandClarificationError', {
           message: `Error clarifying brand: ${(error as Error).message}`,
         });
@@ -107,7 +107,7 @@ export const initializeSocket = (server: HTTPServer) => {
             result: profitResult,
           });
         } catch (error) {
-          console.error('Profit error:', error);
+          logger.error('Profit error:', error);
           socket.emit('supplierDataFetchError', {
             supplier: 'profit',
             error: (error as Error).message,
@@ -132,7 +132,7 @@ export const initializeSocket = (server: HTTPServer) => {
             });
             socket.emit('supplierDataFetchSuccess', { supplier, result });
           } catch (error) {
-            console.error(chalk.red(`Error fetching from ${supplier}:`, error));
+            logger.error(`Error fetching from ${supplier}: ${error}`);
             socket.emit('supplierDataFetchError', {
               supplier,
               error: (error as Error).message,
@@ -148,7 +148,7 @@ export const initializeSocket = (server: HTTPServer) => {
     });
 
     socket.on('disconnect', () => {
-      console.log(`Client disconnected: ${socket.id}`);
+      logger.info(chalk.bgCyan(`Client disconnected: ${socket.id}`));
     });
   });
 };

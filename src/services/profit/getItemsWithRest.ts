@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from 'config/logger';
 import { itemsGroupProfit } from 'types';
 
 export const getItemsWithRest = async (items: itemsGroupProfit) => {
@@ -14,7 +15,7 @@ export const getItemsWithRest = async (items: itemsGroupProfit) => {
 
     return res.data;
   } catch (error) {
-    console.error(`getItemsWithRest ${error}`);
+    logger.error(`getItemsWithRest ${error}`);
     return [];
   }
 };

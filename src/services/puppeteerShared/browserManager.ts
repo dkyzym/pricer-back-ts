@@ -99,12 +99,11 @@ export const getPage = async (
     });
 
     page.on('pageerror', (err) => {
-      logger.error(err);
-      // console.log(`Page error: ${err.toString()}`);
+      logger.error(`${[page?.url()]}, ${err}`);
     });
 
     page.on('error', (err) => {
-      logger.error(`Page crashed: ${err}`);
+      logger.error(`Page crashed ${[page?.url()]}: ${err}`);
     });
 
     // page.on('requestfailed', (request) => {

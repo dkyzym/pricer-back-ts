@@ -1,5 +1,5 @@
 import { SUPPLIERS_DATA } from '@constants/index.js';
-import chalk from 'chalk';
+import { logger } from 'config/logger/index.js';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
 import { UnAuthorizedError } from '../errors.js';
@@ -18,15 +18,9 @@ export const checkElementTextForAuthorization = async (
 
     const isLoggedIn = elementText.includes(expectedText.toLowerCase());
 
-    if (!isLoggedIn) {
-      // throw new UnAuthorizedError('Not logged in');
-      console.error('Not logged in');
-    }
-
-    console.log(chalk.bgBlue('Has credentials:', isLoggedIn));
     return isLoggedIn;
   } catch (error) {
-    console.error(chalk.bgRed('Error during authorization check:'), error);
+    logger.error(`${page.url()} Error during authorization check: ${error}`);
     throw new UnAuthorizedError('Authorization check failed');
   }
 };
@@ -42,7 +36,6 @@ export const checkTcAuth = async (
   const element = await page.$('#formLOGIN');
 
   if (element) {
-    // console.log('turboCars Not auth ');
     return false;
   } else if (url === 'https://turbo-cars.net/office/login.asp?mode=new') {
     return true;

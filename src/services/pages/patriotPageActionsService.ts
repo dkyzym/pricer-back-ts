@@ -48,7 +48,7 @@ export const patriotPageActionsService = async (
       }
     }
   } catch (error) {
-    console.error(
+    logger.error(
       `${supplier}: Error performing ${action} action on Page Auth Actions:`,
       error
     );

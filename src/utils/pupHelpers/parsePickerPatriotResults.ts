@@ -17,25 +17,12 @@ export const parsePickedPatriotResults = async ({
       timeout: 30000,
     });
 
-    // page.on('console', (msg: any) => {
-    //   const type = msg.type();
-    //   const text = msg.text();
-    //   if (type === 'log') {
-    //     console.log(`PAGE LOG: ${text}`);
-    //     logger.info(`PAGE LOG ${supplier}: ${text}`);
-    //   } else if (type === 'error') {
-    //     console.error(`PAGE ERROR: ${text}`);
-    //     logger.error(`PAGE ERROR ${supplier}: ${text}`);
-    //   }
-    // });
-
     const results = await page.evaluate(
       (item: ItemToParallelSearch, supplier: SupplierName) => {
         try {
           // Проверяем валидность данных item
           if (!item || !item.brand || !item.article) {
-            console.error('Invalid item data:', item);
-            logger.error('Invalid item data:', item);
+            logger.error(`${page.url()} Invalid item data: ${item}`);
             return [];
           }
 
@@ -50,12 +37,10 @@ export const parsePickedPatriotResults = async ({
           // Ищем строки с товарами
           const itemRows =
             document.querySelectorAll<HTMLTableRowElement>(itemRowSelector);
-          // console.log('Number of item rows found:', itemRows.length);
 
           if (itemRows.length === 0) {
-            console.warn('No item rows found with the given selector.');
-            console.info(
-              ` ${supplier} No item rows found with the given selector.`
+            logger.warn(
+              `${page.url()} No item rows found with the given selector.`
             );
             return [];
           }
@@ -67,13 +52,8 @@ export const parsePickedPatriotResults = async ({
               return textContent?.includes('Луганск');
             }
           );
-          // console.log(
-          //   'Number of closest warehouse item rows:',
-          //   closestWarehouseItemRows.length
-          // );
 
           if (closestWarehouseItemRows.length === 0) {
-            // console.warn('No rows found containing "Луганск".');
             return [];
           }
 
@@ -93,8 +73,7 @@ export const parsePickedPatriotResults = async ({
               );
 
               if (!fakeInputElement) {
-                console.warn(`Row ${index}: fakeInputElement not found.`);
-                logger.info(
+                logger.warn(
                   `${supplier} Row ${index}: fakeInputElement not found.`
                 );
                 return null; // Пропускаем строку, если элемент не найден
@@ -125,17 +104,14 @@ export const parsePickedPatriotResults = async ({
                 warehouse: warehouseElement?.innerText.trim() || '',
               };
 
-              // console.log(`Row ${index}: Parsed product data:`, product);
-
               return product;
             })
             .filter((product) => product !== null) as SearchResultsParsed[];
 
-          // console.log('Total products parsed:', data.length);
           return data;
         } catch (evalError) {
           logger.error(`${supplier} Error inside page.evaluate: ${evalError}`);
-          console.error('Error inside page.evaluate:', evalError);
+
           return [];
         }
       },
@@ -146,7 +122,7 @@ export const parsePickedPatriotResults = async ({
     return results;
   } catch (error) {
     logger.error(`${supplier} Error in parsePickedPatriotResults: ${error}`);
-    console.error(`Error in parsePickedPatriotResults: ${error}`);
+
     return [];
   }
 };

@@ -6,6 +6,7 @@ import {
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
 import { LoginServiceParams, pageActionsResult } from 'types';
+import { logger } from '../../config/logger';
 
 export const loginPatriotService = async ({
   page,
@@ -20,6 +21,7 @@ export const loginPatriotService = async ({
     selectors.credentialsEl,
     credentials
   );
+  logger.info(`${supplier} isLoggedIn: ${isLoggedIn}`);
 
   if (isLoggedIn) {
     return {
