@@ -8,6 +8,7 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
+import chalk from 'chalk';
 import { logger } from 'config/logger';
 import { Dialog } from 'puppeteer';
 import { LoginServiceParams, pageActionsResult } from 'types';
@@ -75,6 +76,8 @@ export const loginTurboCars = async ({
     selectors.credentialsEl,
     credentials
   );
+
+  logger.info(chalk.blue(`${supplier} Залогинен?: ${loggedIn}`));
 
   return {
     success: loggedIn,

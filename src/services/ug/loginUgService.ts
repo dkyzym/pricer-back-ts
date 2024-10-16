@@ -5,6 +5,8 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
+import chalk from 'chalk';
+import { logger } from 'config/logger';
 import { LoginServiceParams, pageActionsResult } from 'types';
 
 export const loginUgService = async ({
@@ -41,6 +43,8 @@ export const loginUgService = async ({
     selectors.credentialsEl,
     credentials
   );
+
+  logger.info(chalk.blue(`${supplier} Залогинен?: ${loggedIn}`));
 
   return {
     success: loggedIn,

@@ -1,147 +1,114 @@
-[2024-10-15 17:46:42] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-15 17:46:47] [info]: Server is running. Use port: 3000
-[2024-10-15 17:46:52] [info]: Reusing existing page for supplier: ug
-[2024-10-15 17:46:58] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
-[2024-10-15 17:47:06] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
-[2024-10-15 17:47:21] [info]: Reusing existing page for supplier: ug
-[2024-10-15 17:47:22] [info]: Reusing existing page for supplier: ug
-[2024-10-15 17:47:24] [info]: Reusing existing page for supplier: ug
-[2024-10-15 17:47:24] [info]: Reusing existing page for supplier: turboCars
-[2024-10-15 17:47:24] [info]: Reusing existing page for supplier: patriot
-[2024-10-15 17:47:24] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:21:47] [info]: [ug] Выполнение действия: init
-[2024-10-16 10:21:50] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 10:31:05] [info]: [ug] Выполнение действия: init
-[2024-10-16 10:31:06] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 10:31:11] [info]: Server is running. Use port: 3000
-[2024-10-16 10:31:23] [info]: [ug] Выполнение действия: login
-[2024-10-16 10:31:23] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:31:28] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
-[2024-10-16 10:31:30] [info]: [turboCars] Выполнение действия: login
-[2024-10-16 10:31:36] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
-[2024-10-16 10:31:39] [info]: [patriot] Выполнение действия: login
-[2024-10-16 10:31:48] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 10:31:48] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:31:49] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 10:31:49] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:31:51] [info]: [ug] Выполнение действия: pick
-[2024-10-16 10:31:51] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:31:51] [info]: Reusing existing page for supplier: turboCars
-[2024-10-16 10:31:51] [info]: Reusing existing page for supplier: patriot
-[2024-10-16 10:31:51] [info]: [turboCars] Выполнение действия: pick
-[2024-10-16 10:31:51] [info]: [patriot] Выполнение действия: pick
-[2024-10-16 10:31:52] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 10:31:52] [info]: Reusing existing page for supplier: ug
-[2024-10-16 10:31:53] [info]: patriot Элемент существует, выполняем клик.
-[2024-10-16 10:32:06] [info]: Найдено для SM105 SCT -  patriot: 1
-[2024-10-16 10:37:45] [info]: [ug] Выполнение действия: init
-[2024-10-16 10:37:46] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 10:37:54] [info]: Server is running. Use port: 3000
-[2024-10-16 10:39:00] [info]: [ug] Выполнение действия: init
-[2024-10-16 10:39:00] [info]: Launching new browser for supplier: ug
-[2024-10-16 10:39:00] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 10:39:07] [info]: Server is running. Use port: 3000
-[2024-10-16 11:10:58] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:10:58] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:10:59] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:11:05] [info]: Server is running. Use port: 3000
-[2024-10-16 11:11:07] [info]: New client connected: Yd47QjyZkDvvIqmNAAAB
-[2024-10-16 11:11:14] [info]: New client connected: 6oYcSVtad4xjW-jDAAAD
-[2024-10-16 11:11:19] [info]: [ug] Выполнение действия: login
-[2024-10-16 11:11:19] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:24] [info]: Launching new browser for supplier: turboCars
-[2024-10-16 11:11:25] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
-[2024-10-16 11:11:27] [info]: [turboCars] Выполнение действия: login
-[2024-10-16 11:11:31] [info]: Launching new browser for supplier: patriot
-[2024-10-16 11:11:32] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
-[2024-10-16 11:11:34] [info]: [patriot] Выполнение действия: login
-[2024-10-16 11:11:43] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:43] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:44] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:44] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:48] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:48] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:48] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:48] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:50] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:50] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:52] [info]: [ug] Выполнение действия: pick
-[2024-10-16 11:11:52] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:52] [info]: Reusing existing page for supplier: turboCars
-[2024-10-16 11:11:52] [info]: Reusing existing page for supplier: patriot
-[2024-10-16 11:11:52] [info]: [turboCars] Выполнение действия: pick
-[2024-10-16 11:11:52] [info]: [patriot] Выполнение действия: pick
-[2024-10-16 11:11:52] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:11:52] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:11:53] [info]: patriot Элемент существует, выполняем клик.
-[2024-10-16 11:11:54] [info]: Найдено для SM105 SCT -  turboCars: 30
-[2024-10-16 11:12:05] [info]: Найдено для SM105 SCT -  profit: 80
-[2024-10-16 11:12:07] [info]: Найдено для SM105 SCT -  patriot: 1
-[2024-10-16 11:12:25] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:25] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:26] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:26] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:27] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:27] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:30] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:30] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:31] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:31] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:35] [info]: [ug] Выполнение действия: pick
-[2024-10-16 11:12:35] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:35] [info]: Reusing existing page for supplier: turboCars
-[2024-10-16 11:12:35] [info]: Reusing existing page for supplier: patriot
-[2024-10-16 11:12:35] [info]: [turboCars] Выполнение действия: pick
-[2024-10-16 11:12:35] [info]: [patriot] Выполнение действия: pick
-[2024-10-16 11:12:35] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:12:35] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:12:36] [info]: patriot Элемент существует, выполняем клик.
-[2024-10-16 11:12:37] [info]: Найдено для SP1165 SANGSIN BRAKE -  turboCars: 0
-[2024-10-16 11:12:43] [info]: Найдено для SP1165 SANGSIN BRAKE -  patriot: 1
-[2024-10-16 11:12:47] [info]: Найдено для SP1165 SANGSIN BRAKE -  profit: 74
-[2024-10-16 11:19:42] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:19:42] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:19:42] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:20:28] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:20:28] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:20:29] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:21:27] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:21:27] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:21:28] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:21:33] [info]: Server is running. Use port: 3000
-[2024-10-16 11:21:35] [info]: New client connected: gJEscizz33wLHsn5AAAB
-[2024-10-16 11:21:39] [info]: New client connected: n38tVYZcLv0V16fEAAAD
-[2024-10-16 11:21:46] [info]: [ug] Выполнение действия: login
-[2024-10-16 11:21:46] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:21:51] [info]: Launching new browser for supplier: turboCars
-[2024-10-16 11:21:52] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
-[2024-10-16 11:21:53] [info]: [turboCars] Выполнение действия: login
-[2024-10-16 11:21:59] [info]: Launching new browser for supplier: patriot
-[2024-10-16 11:22:00] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
-[2024-10-16 11:22:03] [info]: [patriot] Выполнение действия: login
-[2024-10-16 11:22:08] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:22:08] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:22:09] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:22:09] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:22:15] [info]: [ug] Выполнение действия: pick
-[2024-10-16 11:22:15] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:22:15] [info]: Reusing existing page for supplier: turboCars
-[2024-10-16 11:22:15] [info]: Reusing existing page for supplier: patriot
-[2024-10-16 11:22:15] [info]: [turboCars] Выполнение действия: pick
-[2024-10-16 11:22:15] [info]: [patriot] Выполнение действия: pick
-[2024-10-16 11:22:16] [info]: [ug] Выполнение действия: autocomplete
-[2024-10-16 11:22:16] [info]: Reusing existing page for supplier: ug
-[2024-10-16 11:22:17] [info]: patriot Элемент существует, выполняем клик.
-[2024-10-16 11:22:18] [info]: Найдено для SM105 SCT -  turboCars: 30
-[2024-10-16 11:22:28] [info]: Найдено для SM105 SCT -  patriot: 1
-[2024-10-16 11:22:43] [info]: Найдено для SM105 SCT -  ug: 318
-[2024-10-16 11:22:45] [info]: Найдено для SM105 SCT -  profit: 80
-[2024-10-16 11:28:37] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:28:37] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:28:38] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:28:44] [info]: Server is running. Use port: 3000
-[2024-10-16 11:28:45] [info]: New client connected: McBbWgvYmkZDYwMnAAAB
-[2024-10-16 11:30:19] [info]: [ug] Выполнение действия: init
-[2024-10-16 11:30:19] [info]: Launching new browser for supplier: ug
-[2024-10-16 11:30:19] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
-[2024-10-16 11:30:25] [info]: Server is running. Use port: 3000
+[2024-10-16 12:28:59] [info]: ug Выполнение действия: init
+[2024-10-16 12:28:59] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:29:00] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:29:06] [info]: Server is running. Use port: 3000
+[2024-10-16 12:29:06] [info]: New client connected: Ng0fc49uylQT6sR7AAAB
+[2024-10-16 12:29:11] [info]: ug Выполнение действия: login
+[2024-10-16 12:29:11] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:29:13] [info]: ug isLoggedIn: false
+[2024-10-16 12:29:22] [info]: Launching new browser for supplier: turboCars
+[2024-10-16 12:29:22] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-16 12:29:24] [info]: turboCars Выполнение действия: login
+[2024-10-16 12:29:24] [info]: turboCars: OK button not found
+[2024-10-16 12:29:26] [info]: turboCars loggedIn: true
+[2024-10-16 12:30:13] [info]: ug Выполнение действия: init
+[2024-10-16 12:30:13] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:30:14] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:30:19] [info]: Server is running. Use port: 3000
+[2024-10-16 12:30:23] [info]: New client connected: DkMoO4dYI5xOuhcjAAAB
+[2024-10-16 12:30:28] [info]: ug Выполнение действия: login
+[2024-10-16 12:30:28] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:30:30] [info]: ug loggedIn: true
+[2024-10-16 12:30:35] [info]: Launching new browser for supplier: turboCars
+[2024-10-16 12:30:35] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-16 12:30:37] [info]: turboCars Выполнение действия: login
+[2024-10-16 12:30:37] [info]: turboCars: OK button not found
+[2024-10-16 12:30:39] [info]: turboCars loggedIn: true
+[2024-10-16 12:30:43] [info]: Launching new browser for supplier: patriot
+[2024-10-16 12:30:43] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-16 12:30:46] [info]: patriot Выполнение действия: login
+[2024-10-16 12:30:47] [info]: patriot loggedIn: true
+[2024-10-16 12:30:52] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:30:52] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:30:53] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:30:53] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:30:56] [info]: ug Выполнение действия: pick
+[2024-10-16 12:30:56] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:30:56] [info]: Reusing existing page for supplier: turboCars
+[2024-10-16 12:30:56] [info]: Reusing existing page for supplier: patriot
+[2024-10-16 12:30:56] [info]: turboCars Выполнение действия: pick
+[2024-10-16 12:30:56] [info]: patriot Выполнение действия: pick
+[2024-10-16 12:30:56] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:30:56] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:30:57] [info]: patriot Элемент существует, выполняем клик.
+[2024-10-16 12:30:59] [info]: Найдено для SM105 SCT -  turboCars: 30
+[2024-10-16 12:31:01] [info]: Найдено для SM105 SCT -  patriot: 1
+[2024-10-16 12:31:13] [info]: Найдено для SM105 SCT -  profit: 80
+[2024-10-16 12:31:25] [info]: Найдено для SM105 SCT -  ug: 340
+[2024-10-16 12:32:14] [info]: ug Выполнение действия: init
+[2024-10-16 12:32:14] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:32:15] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:32:21] [info]: Server is running. Use port: 3000
+[2024-10-16 12:32:23] [info]: New client connected: QZ0cwkroLDuUewV0AAAB
+[2024-10-16 12:32:30] [info]: ug Выполнение действия: init
+[2024-10-16 12:32:30] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:32:31] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:32:37] [info]: ug Выполнение действия: init
+[2024-10-16 12:32:37] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:32:38] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:32:42] [info]: ug Выполнение действия: init
+[2024-10-16 12:32:42] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:32:43] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:32:48] [info]: Server is running. Use port: 3000
+[2024-10-16 12:32:48] [info]: New client connected: T6FFHV6Q4cCT5stAAAAB
+[2024-10-16 12:33:08] [info]: ug Выполнение действия: init
+[2024-10-16 12:33:08] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:33:09] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:33:14] [info]: Server is running. Use port: 3000
+[2024-10-16 12:33:17] [info]: New client connected: W5u_GZ_jnnkHbU4BAAAB
+[2024-10-16 12:33:21] [info]: ug Выполнение действия: login
+[2024-10-16 12:33:21] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:33:23] [info]: ug loggedIn: true
+[2024-10-16 12:33:27] [info]: Launching new browser for supplier: turboCars
+[2024-10-16 12:33:27] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-16 12:33:28] [info]: turboCars Выполнение действия: login
+[2024-10-16 12:33:29] [info]: turboCars: OK button not found
+[2024-10-16 12:33:31] [info]: turboCars loggedIn: true
+[2024-10-16 12:33:33] [info]: Launching new browser for supplier: patriot
+[2024-10-16 12:33:33] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-16 12:33:36] [info]: patriot Выполнение действия: login
+[2024-10-16 12:33:37] [info]: patriot loggedIn: true
+[2024-10-16 12:33:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:33:41] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:33:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:33:41] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:33:43] [info]: ug Выполнение действия: pick
+[2024-10-16 12:33:43] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:33:43] [info]: Reusing existing page for supplier: turboCars
+[2024-10-16 12:33:43] [info]: Reusing existing page for supplier: patriot
+[2024-10-16 12:33:43] [info]: turboCars Выполнение действия: pick
+[2024-10-16 12:33:43] [info]: patriot Выполнение действия: pick
+[2024-10-16 12:33:44] [info]: ug Выполнение действия: autocomplete
+[2024-10-16 12:33:44] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:33:44] [info]: Найдено для SM105 SCT -  profit: 80
+[2024-10-16 12:33:45] [info]: patriot Элемент существует, выполняем клик.
+[2024-10-16 12:33:46] [info]: Найдено для SM105 SCT -  turboCars: 30
+[2024-10-16 12:33:55] [info]: Найдено для SM105 SCT -  patriot: 1
+[2024-10-16 12:34:03] [info]: Найдено для SM105 SCT -  ug: 340
+[2024-10-16 12:35:47] [info]: ug Выполнение действия: init
+[2024-10-16 12:35:47] [info]: Launching new browser for supplier: ug
+[2024-10-16 12:35:47] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 12:35:53] [info]: Server is running. Use port: 3000
+[2024-10-16 12:35:53] [info]: New client connected: m1rsY8g6wiMHhDRJAAAB
+[2024-10-16 12:35:58] [info]: ug Выполнение действия: login
+[2024-10-16 12:35:58] [info]: Reusing existing page for supplier: ug
+[2024-10-16 12:35:59] [info]: ug Залогинен?: true
+[2024-10-16 12:36:02] [info]: Launching new browser for supplier: turboCars
+[2024-10-16 12:36:02] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-16 12:36:04] [info]: turboCars Выполнение действия: login
+[2024-10-16 12:36:04] [info]: turboCars: OK button not found
+[2024-10-16 12:36:06] [info]: turboCars Залогинен?: true
+[2024-10-16 12:36:10] [info]: Launching new browser for supplier: patriot
+[2024-10-16 12:36:10] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-16 12:36:13] [info]: patriot Выполнение действия: login
+[2024-10-16 12:36:14] [info]: patriot Залогинен?: true
