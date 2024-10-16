@@ -1,12 +1,11 @@
 import chalk from 'chalk';
 import { PORT } from 'config';
+import { logger } from 'config/logger';
 import type { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
 import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { initializeSocket } from 'sockets';
-import { logger } from '../config/logger';
-// import { logger } from '../logger';
 
 export const startServer = async (app: Application) => {
   try {

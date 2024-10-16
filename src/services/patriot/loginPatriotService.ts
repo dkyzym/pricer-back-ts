@@ -5,8 +5,8 @@ import {
   fillField,
   waitForPageNavigation,
 } from '@utils/pupHelpers/pageHelpers';
+import { logger } from 'config/logger';
 import { LoginServiceParams, pageActionsResult } from 'types';
-import { logger } from '../../config/logger';
 
 export const loginPatriotService = async ({
   page,

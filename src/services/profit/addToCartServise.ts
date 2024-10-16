@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { logger } from '../../config/logger';
+import { logger } from 'config/logger';
 
 const apiKey = process.env.PROFIT_API_KEY;
 

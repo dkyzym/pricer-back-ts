@@ -1,5 +1,5 @@
-import { SUPPLIERS_DATA } from '@constants/index.js';
 import { logger } from 'config/logger/index.js';
+import { SUPPLIERS_DATA } from 'constants/index.js';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
 import { UnAuthorizedError } from '../errors.js';

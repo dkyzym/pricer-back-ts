@@ -21,7 +21,7 @@ export const loginTurboCars = async ({
   const { credentials, selectors, dashboardURL } = getSupplierData(supplier);
 
   page.on('dialog', async (dialog: Dialog) => {
-    logger.warn('Dialog message:', dialog.message());
+    logger.warn(`${supplier} Dialog message:`, dialog.message());
     await dialog.accept();
   });
 
@@ -61,12 +61,9 @@ export const loginTurboCars = async ({
 
   if (okButtonFound) {
     logger.info(`${supplier}: Found and clicked OK button`);
-    // await page.waitForTimeout(1000);
   } else {
     logger.info(`${supplier}: OK button not found`);
   }
-
-  // Переходим на страницу dashboard
 
   await page.goto(dashboardURL as string, {
     waitUntil: 'networkidle2',

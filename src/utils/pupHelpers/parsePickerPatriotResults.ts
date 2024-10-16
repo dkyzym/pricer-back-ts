@@ -1,4 +1,3 @@
-// import { logger } from 'logger';
 import { logger } from 'config/logger';
 import {
   ItemToParallelSearch,
@@ -74,7 +73,7 @@ export const parsePickedPatriotResults = async ({
 
               if (!fakeInputElement) {
                 logger.warn(
-                  `${supplier} Row ${index}: fakeInputElement not found.`
+                  `${page.url()} Row ${index}: fakeInputElement not found.`
                 );
                 return null; // Пропускаем строку, если элемент не найден
               }

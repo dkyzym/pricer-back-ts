@@ -14,7 +14,7 @@ export const ugPageActionsService = async (
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
-  logger.info(`[${supplier}] Выполнение действия: ${action}`);
+  logger.info(`${supplier} Выполнение действия: ${action}`);
 
   const page = await getPage(supplier, loginURL);
 
