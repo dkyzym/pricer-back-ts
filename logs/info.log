@@ -28,3 +28,21 @@
 [2024-10-16 15:25:14] [info]: turboCars Выполнение действия: login
 [2024-10-16 15:25:16] [info]: Reusing existing page for supplier: patriot
 [2024-10-16 15:25:16] [info]: patriot Выполнение действия: login
+[2024-10-16 15:33:26] [info]: ug Выполнение действия: init
+[2024-10-16 15:33:26] [info]: Launching new browser for supplier: ug
+[2024-10-16 15:33:26] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-16 15:33:45] [info]: Server is running. Use port: 3000
+[2024-10-16 15:33:49] [info]: New client connected: 4wCWmcZdlqNmcwQyAAAB
+[2024-10-16 15:33:53] [info]: Client disconnected: 4wCWmcZdlqNmcwQyAAAB
+[2024-10-16 15:33:54] [info]: New client connected: VBlVSZ23Io5kxN5hAAAD
+[2024-10-16 15:33:59] [info]: ug Выполнение действия: login
+[2024-10-16 15:33:59] [info]: Reusing existing page for supplier: ug
+[2024-10-16 15:34:01] [info]: ug Залогинен?: true
+[2024-10-16 15:34:03] [info]: Launching new browser for supplier: turboCars
+[2024-10-16 15:34:04] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-16 15:34:05] [info]: turboCars Выполнение действия: login
+[2024-10-16 15:34:08] [info]: turboCars Залогинен?: true
+[2024-10-16 15:34:10] [info]: Launching new browser for supplier: patriot
+[2024-10-16 15:34:11] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-16 15:34:14] [info]: patriot Выполнение действия: login
+[2024-10-16 15:34:15] [info]: patriot Залогинен?: true

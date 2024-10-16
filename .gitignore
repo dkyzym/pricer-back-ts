@@ -6,3 +6,5 @@ some*
 todo*
 logs/*
 !logs/.gitkeep
+*.log
+
