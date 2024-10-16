@@ -14,6 +14,7 @@ export const ignoreSpecificMessages = format((info) => {
     'favicon',
     'galleyp',
     'search.tips',
+    'ERR_ABORTED',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {

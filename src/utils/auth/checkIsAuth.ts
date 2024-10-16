@@ -3,7 +3,6 @@ import { SUPPLIERS_DATA } from 'constants/index.js';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
 import { UnAuthorizedError } from '../errors.js';
-import { waitForPageNavigation } from '../pupHelpers/pageHelpers';
 
 export const checkElementTextForAuthorization = async (
   page: Page,
@@ -29,35 +28,25 @@ export const checkTcAuth = async (
   page: Page,
   selector: Selectors['credentialsEl'],
   expectedText: SupplierData['credentials']
-) => {
-  const { dashboardURL } = SUPPLIERS_DATA['turboCars'];
-  let url = page.url();
+): Promise<boolean> => {
+  // Проверяем наличие формы логина
+  const loginFormExists = (await page.$('#formLOGIN')) !== null;
 
-  const element = await page.$('#formLOGIN');
-
-  if (element) {
+  if (loginFormExists) {
+    // Если форма логина присутствует, значит, пользователь не залогинен
     return false;
-  } else if (url === 'https://turbo-cars.net/office/login.asp?mode=new') {
-    return true;
-  } else {
-    if (url !== dashboardURL) {
-      await page.goto(dashboardURL as string, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      });
+  }
 
-      await waitForPageNavigation(page, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60_000,
-      });
-    }
-
-    const result = await checkElementTextForAuthorization(
-      page,
+  // Проверяем наличие элемента credentialsEl
+  try {
+    const elementText = await page.$eval(
       selector,
-      expectedText
+      (element) => element.textContent?.trim().toLowerCase() || ''
     );
 
-    return result;
+    return elementText.includes(expectedText.toLowerCase());
+  } catch (error) {
+    // Элемент credentialsEl не найден, значит, пользователь не залогинен
+    return false;
   }
 };

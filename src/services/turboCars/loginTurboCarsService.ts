@@ -1,13 +1,6 @@
-import {
-  checkElementTextForAuthorization,
-  checkTcAuth,
-} from '@utils/auth/checkIsAuth';
+import { checkTcAuth } from '@utils/auth/checkIsAuth';
 import { getSupplierData } from '@utils/data/getSupplierData';
-import {
-  clickButton,
-  fillField,
-  waitForPageNavigation,
-} from '@utils/pupHelpers/pageHelpers';
+import { clickButton, fillField } from '@utils/pupHelpers/pageHelpers';
 import chalk from 'chalk';
 import { logger } from 'config/logger';
 import { Dialog } from 'puppeteer';
@@ -41,37 +34,38 @@ export const loginTurboCars = async ({
 
   await fillField(page, selectors.emailUsernameField, username);
   await fillField(page, selectors.passwordField, password);
-
   await clickButton(page, selectors.loginBtn);
 
-  await waitForPageNavigation(page, {
-    waitUntil: 'domcontentloaded',
-    timeout: 60_000,
-  });
-
-  const okButtonFound = await page.evaluate(() => {
-    const elements = Array.from(document.querySelectorAll('*'));
-    for (const element of elements) {
-      if (element.textContent && element.textContent.trim() === 'OK') {
-        (element as HTMLElement).click();
-        return true;
-      }
-    }
-    return false;
-  });
-
-  if (okButtonFound) {
-    logger.info(`${supplier}: Found and clicked OK button`);
-  } else {
-    logger.info(`${supplier}: OK button not found`);
+  try {
+    await Promise.race([
+      page.waitForSelector(selectors.credentialsEl, { timeout: 10_000 }),
+      page.waitForFunction(
+        () => {
+          const errorMessages = ['Внимание!'];
+          return errorMessages.some((msg) =>
+            document.body.innerText.includes(msg)
+          );
+        },
+        { timeout: 10000 }
+      ),
+      new Promise((resolve) => setTimeout(resolve, 10_000)),
+    ]);
+  } catch (error) {
+    logger.error(`${supplier}: Login failed or took too long.`);
+    return {
+      success: false,
+      message: `${supplier}: Login failed or took too long`,
+    };
   }
 
-  await page.goto(dashboardURL as string, {
-    waitUntil: 'networkidle2',
-    timeout: 60_000,
-  });
+  if (page.url() !== dashboardURL) {
+    await page.goto(dashboardURL as string, {
+      waitUntil: 'networkidle2',
+      timeout: 30000,
+    });
+  }
 
-  const loggedIn = await checkElementTextForAuthorization(
+  const loggedIn = await checkTcAuth(
     page,
     selectors.credentialsEl,
     credentials
