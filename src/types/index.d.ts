@@ -100,6 +100,7 @@ export interface SearchResultsParsed {
   probability: number | '';
   needToCheckBrand?: boolean;
   innerId?: string;
+  deadLineTimeToOrder?: string;
 }
 
 export interface pageActionsResult {

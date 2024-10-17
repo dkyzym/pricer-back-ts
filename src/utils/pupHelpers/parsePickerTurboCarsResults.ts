@@ -148,13 +148,25 @@ export const parsePickedTurboCarsResults = async ({
             const [warehouseRaw, ...deadlineParts] = firstTdText.split(' ');
             const warehouse = warehouseRaw;
             let deadline = 4;
+            let deadLineTimeToOrder = '';
 
             const deadlineText = deadlineParts.join(' ');
+
+            // Извлекаем дедлайн в часах
             const deadlineMatch = deadlineText.match(/(\d+)\s*дн\./);
             if (deadlineMatch) {
               const days = parseInt(deadlineMatch[1], 10);
               deadline = days * 24;
             }
+
+            // Извлекаем deadLineTimeToOrder
+            const timeMatch = deadlineText.match(/до\s*(\d{1,2}:\d{2})/);
+            if (timeMatch) {
+              deadLineTimeToOrder = timeMatch[1];
+            }
+
+            // Обновляем deadLineMax
+            const deadLineMax = deadline + 24;
 
             const secondTdHtml = tds[1].innerHTML;
             const availabilityMatch = secondTdHtml.match(/<b>(.*?)<\/b>/);
@@ -186,7 +198,8 @@ export const parsePickedTurboCarsResults = async ({
               warehouse,
               imageUrl: '',
               deadline,
-              deadLineMax: deadline,
+              deadLineMax,
+              deadLineTimeToOrder,
               supplier: '',
               probability: 99.9,
               needToCheckBrand: false,

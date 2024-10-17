@@ -46,3 +46,6 @@
 [2024-10-16 15:34:11] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
 [2024-10-16 15:34:14] [info]: patriot Выполнение действия: login
 [2024-10-16 15:34:15] [info]: patriot Залогинен?: true
+[2024-10-17 12:26:42] [info]: ug Выполнение действия: init
+[2024-10-17 12:26:42] [info]: Launching new browser for supplier: ug
+[2024-10-17 12:26:43] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
