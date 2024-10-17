@@ -627,3 +627,48 @@
 [2024-10-17 17:09:02] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
 [2024-10-17 17:09:13] [info]: Server is running. Use port: 3000
 [2024-10-17 17:09:13] [info]: New client connected: F4_OeIcLKMrlzZ9rAAAB
+[2024-10-17 17:28:38] [info]: ug Выполнение действия: init
+[2024-10-17 17:28:38] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:28:38] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:28:47] [info]: Server is running. Use port: 3000
+[2024-10-17 17:28:52] [info]: New client connected: XJRjilezl3RvgLXBAAAB
+[2024-10-17 17:28:54] [info]: Client disconnected: XJRjilezl3RvgLXBAAAB
+[2024-10-17 17:28:55] [info]: New client connected: LpLvmDkswzfJzs47AAAD
+[2024-10-17 17:28:59] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:28:59] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:29:00] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:29:00] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:29:04] [info]: ug Выполнение действия: pick
+[2024-10-17 17:29:04] [info]: Launching new browser for supplier: turboCars
+[2024-10-17 17:29:04] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:29:04] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:29:04] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:29:05] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-17 17:29:06] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 17:29:06] [info]: turboCars Выполнение действия: pick
+[2024-10-17 17:29:07] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 17:29:36] [info]: ug Выполнение действия: init
+[2024-10-17 17:29:36] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:29:37] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:29:47] [info]: Server is running. Use port: 3000
+[2024-10-17 17:29:47] [info]: Launching new browser for supplier: turboCars
+[2024-10-17 17:29:47] [info]: New client connected: Xxg8AN4lGsxRatRTAAAB
+[2024-10-17 17:29:48] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-17 17:29:49] [info]: turboCars Выполнение действия: login
+[2024-10-17 17:29:52] [info]: turboCars Залогинен?: true
+[2024-10-17 17:29:57] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:29:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:29:58] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:29:58] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:30:01] [info]: ug Выполнение действия: pick
+[2024-10-17 17:30:01] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:30:01] [info]: Reusing existing page for supplier: turboCars
+[2024-10-17 17:30:01] [info]: turboCars Выполнение действия: pick
+[2024-10-17 17:30:02] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:30:02] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:30:02] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 17:30:04] [info]: Найдено для SM105 SCT -  turboCars: 31
+[2024-10-17 17:30:06] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 17:35:31] [info]: ug Выполнение действия: init
+[2024-10-17 17:35:31] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:35:32] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/

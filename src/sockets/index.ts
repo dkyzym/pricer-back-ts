@@ -118,7 +118,7 @@ export const initializeSocket = (server: HTTPServer) => {
       const fetchSuppliersData = async () => {
         const suppliers: PuppeteerSupplierName[] = [
           'ug',
-          // 'turboCars',
+          'turboCars',
           // 'patriot',
         ];
 

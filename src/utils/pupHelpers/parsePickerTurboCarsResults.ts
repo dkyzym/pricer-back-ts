@@ -1,4 +1,5 @@
 import { logger } from 'config/logger';
+import { DateTime } from 'luxon';
 import { ElementHandle, Page } from 'puppeteer';
 import {
   ItemToParallelSearch,
@@ -6,6 +7,7 @@ import {
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
+import { calculateDeliveryDate } from '../data/calculateDeliveryDate';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
@@ -147,26 +149,26 @@ export const parsePickedTurboCarsResults = async ({
             const firstTdText = tds[0].innerText.trim();
             const [warehouseRaw, ...deadlineParts] = firstTdText.split(' ');
             const warehouse = warehouseRaw;
-            let deadline = 4;
+            let deadline = 0; // in days
             let deadLineTimeToOrder = '';
 
             const deadlineText = deadlineParts.join(' ');
 
-            // Извлекаем дедлайн в часах
+            // Extract deadline in days
             const deadlineMatch = deadlineText.match(/(\d+)\s*дн\./);
             if (deadlineMatch) {
               const days = parseInt(deadlineMatch[1], 10);
-              deadline = days * 24;
+              deadline = days;
             }
 
-            // Извлекаем deadLineTimeToOrder
+            // Extract deadLineTimeToOrder
             const timeMatch = deadlineText.match(/до\s*(\d{1,2}:\d{2})/);
             if (timeMatch) {
               deadLineTimeToOrder = timeMatch[1];
             }
 
-            // Обновляем deadLineMax
-            const deadLineMax = deadline + 24;
+            // Update deadLineMax
+            const deadLineMax = deadline + 1; // in days
 
             const secondTdHtml = tds[1].innerHTML;
             const availabilityMatch = secondTdHtml.match(/<b>(.*?)<\/b>/);
@@ -214,9 +216,14 @@ export const parsePickedTurboCarsResults = async ({
     brand
   );
 
+  const currentTime = DateTime.now().setZone('UTC+3');
+
   const allResults: SearchResultsParsed[] = results.map(
     (result: SearchResultsParsed) => {
       const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
+
+      const deliveryDate = calculateDeliveryDate(result, currentTime);
+      logger.warn(`${deliveryDate}, ${result.deadline}`);
 
       return {
         ...result,
@@ -225,6 +232,7 @@ export const parsePickedTurboCarsResults = async ({
         supplier,
         description,
         needToCheckBrand: needToCheckBrandResult,
+        deliveryDate,
       };
     }
   );
