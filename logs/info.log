@@ -49,3 +49,581 @@
 [2024-10-17 12:26:42] [info]: ug Выполнение действия: init
 [2024-10-17 12:26:42] [info]: Launching new browser for supplier: ug
 [2024-10-17 12:26:43] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 12:38:43] [info]: ug Выполнение действия: init
+[2024-10-17 12:38:43] [info]: Launching new browser for supplier: ug
+[2024-10-17 12:38:44] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 12:38:54] [info]: Server is running. Use port: 3000
+[2024-10-17 12:38:55] [info]: New client connected: b4t3ptgojTMNzW7NAAAB
+[2024-10-17 12:39:08] [info]: ug Выполнение действия: login
+[2024-10-17 12:39:08] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:39:10] [info]: ug Залогинен?: true
+[2024-10-17 12:39:13] [info]: Launching new browser for supplier: turboCars
+[2024-10-17 12:39:13] [info]: Opening page for supplier: turboCars, URL: https://turbo-cars.net/office/
+[2024-10-17 12:39:15] [info]: turboCars Выполнение действия: login
+[2024-10-17 12:39:17] [info]: turboCars Залогинен?: true
+[2024-10-17 12:39:19] [info]: Launching new browser for supplier: patriot
+[2024-10-17 12:39:20] [info]: Opening page for supplier: patriot, URL: https://optautotorg.com/
+[2024-10-17 12:39:23] [info]: patriot Выполнение действия: login
+[2024-10-17 12:39:24] [info]: patriot Залогинен?: true
+[2024-10-17 12:40:23] [info]: ug Выполнение действия: login
+[2024-10-17 12:40:23] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:40:25] [info]: Reusing existing page for supplier: turboCars
+[2024-10-17 12:40:25] [info]: turboCars Выполнение действия: login
+[2024-10-17 12:40:27] [info]: Reusing existing page for supplier: patriot
+[2024-10-17 12:40:27] [info]: patriot Выполнение действия: login
+[2024-10-17 12:40:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 12:40:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:40:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 12:40:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:40:41] [info]: ug Выполнение действия: pick
+[2024-10-17 12:40:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:40:41] [info]: Reusing existing page for supplier: turboCars
+[2024-10-17 12:40:41] [info]: Reusing existing page for supplier: patriot
+[2024-10-17 12:40:41] [info]: turboCars Выполнение действия: pick
+[2024-10-17 12:40:41] [info]: patriot Выполнение действия: pick
+[2024-10-17 12:40:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 12:40:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:40:42] [info]: Найдено для OC90 MAHLE/KNECHT -  profit: 48
+[2024-10-17 12:40:43] [info]: patriot Элемент существует, выполняем клик.
+[2024-10-17 12:40:43] [info]: Найдено для OC90 MAHLE/KNECHT -  turboCars: 29
+[2024-10-17 12:40:54] [info]: Найдено для OC90 MAHLE/KNECHT -  patriot: 0
+[2024-10-17 12:41:24] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 363
+[2024-10-17 12:44:35] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 12:44:35] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:44:38] [info]: ug Выполнение действия: pick
+[2024-10-17 12:44:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:44:38] [info]: Reusing existing page for supplier: turboCars
+[2024-10-17 12:44:38] [info]: Reusing existing page for supplier: patriot
+[2024-10-17 12:44:38] [info]: turboCars Выполнение действия: pick
+[2024-10-17 12:44:38] [info]: patriot Выполнение действия: pick
+[2024-10-17 12:44:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 12:44:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 12:44:40] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 12:44:40] [info]: patriot Элемент существует, выполняем клик.
+[2024-10-17 12:44:41] [info]: Найдено для SM105 SCT -  turboCars: 30
+[2024-10-17 12:44:50] [info]: Найдено для SM105 SCT -  patriot: 1
+[2024-10-17 12:45:06] [info]: Найдено для SM105 SCT -  ug: 339
+[2024-10-17 13:54:04] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:04] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:06] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:06] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:08] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:08] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:10] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:10] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:12] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:12] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:15] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:15] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:18] [info]: ug Выполнение действия: pick
+[2024-10-17 13:54:18] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:18] [info]: Reusing existing page for supplier: turboCars
+[2024-10-17 13:54:18] [info]: Reusing existing page for supplier: patriot
+[2024-10-17 13:54:18] [info]: turboCars Выполнение действия: pick
+[2024-10-17 13:54:18] [info]: patriot Выполнение действия: pick
+[2024-10-17 13:54:19] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 13:54:19] [info]: Reusing existing page for supplier: ug
+[2024-10-17 13:54:20] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 13:54:20] [info]: patriot Элемент существует, выполняем клик.
+[2024-10-17 13:54:21] [info]: Найдено для SM105 SCT -  turboCars: 30
+[2024-10-17 13:54:31] [info]: Найдено для SM105 SCT -  patriot: 1
+[2024-10-17 13:54:46] [info]: Найдено для SM105 SCT -  ug: 325
+[2024-10-17 14:56:12] [info]: ug Выполнение действия: init
+[2024-10-17 14:56:12] [info]: Launching new browser for supplier: ug
+[2024-10-17 14:56:14] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 14:56:30] [info]: Server is running. Use port: 3000
+[2024-10-17 14:56:31] [info]: New client connected: oPFHq7jIGqG4GwtKAAAB
+[2024-10-17 14:56:35] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 14:56:35] [info]: Reusing existing page for supplier: ug
+[2024-10-17 14:56:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 14:56:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 14:56:38] [info]: ug Выполнение действия: pick
+[2024-10-17 14:56:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 14:56:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 14:56:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 14:56:40] [info]: Найдено для SP1165 SANGSIN BRAKE -  profit: 79
+[2024-10-17 14:56:41] [info]: Найдено для SP1165 SANGSIN BRAKE -  ug: 0
+[2024-10-17 14:57:49] [info]: ug Выполнение действия: init
+[2024-10-17 14:57:49] [info]: Launching new browser for supplier: ug
+[2024-10-17 14:57:50] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 14:57:55] [info]: ug Выполнение действия: init
+[2024-10-17 14:57:55] [info]: Launching new browser for supplier: ug
+[2024-10-17 14:57:56] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 14:58:06] [info]: Server is running. Use port: 3000
+[2024-10-17 14:58:06] [info]: New client connected: sj2fcTi6RhcAziS0AAAB
+[2024-10-17 14:59:51] [info]: ug Выполнение действия: init
+[2024-10-17 14:59:51] [info]: Launching new browser for supplier: ug
+[2024-10-17 14:59:51] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:00:03] [info]: Server is running. Use port: 3000
+[2024-10-17 15:00:08] [info]: New client connected: qDOEabwoRxC4Za9tAAAB
+[2024-10-17 15:00:16] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:00:16] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:00:19] [info]: ug Выполнение действия: pick
+[2024-10-17 15:00:19] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:00:19] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:00:19] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:00:20] [info]: Найдено для OC90 MAHLE/KNECHT -  profit: 48
+[2024-10-17 15:00:22] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 0
+[2024-10-17 15:03:32] [info]: ug Выполнение действия: init
+[2024-10-17 15:03:32] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:03:33] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:03:39] [info]: Server is running. Use port: 3000
+[2024-10-17 15:03:43] [info]: New client connected: qN-DDeQ54GMfIFOyAAAB
+[2024-10-17 15:04:49] [info]: ug Выполнение действия: init
+[2024-10-17 15:04:49] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:04:49] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:04:58] [info]: Server is running. Use port: 3000
+[2024-10-17 15:04:58] [info]: New client connected: W6KQFuqDmS4fIYZlAAAB
+[2024-10-17 15:04:58] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:04:58] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:04:58] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:04:58] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:05:00] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:05:00] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:05:01] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:05:01] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:05:03] [info]: ug Выполнение действия: pick
+[2024-10-17 15:05:03] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:05:03] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:05:03] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:05:03] [info]: Найдено для OC90 MAHLE/KNECHT -  profit: 48
+[2024-10-17 15:05:06] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 0
+[2024-10-17 15:06:20] [info]: ug Выполнение действия: init
+[2024-10-17 15:06:20] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:06:21] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:06:33] [info]: Server is running. Use port: 3000
+[2024-10-17 15:06:36] [info]: New client connected: BnGm1UkjJiXaHrxCAAAB
+[2024-10-17 15:06:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:36] [info]: ug Выполнение действия: clarifyBrand
+[2024-10-17 15:06:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:40] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:40] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:44] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:44] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:46] [info]: ug Выполнение действия: pick
+[2024-10-17 15:06:46] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:46] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:06:46] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:06:49] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 15:07:06] [info]: ug Выполнение действия: init
+[2024-10-17 15:07:06] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:07:06] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:07:18] [info]: Server is running. Use port: 3000
+[2024-10-17 15:07:25] [info]: ug Выполнение действия: init
+[2024-10-17 15:07:25] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:07:25] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:07:35] [info]: Server is running. Use port: 3000
+[2024-10-17 15:07:38] [info]: New client connected: LZw9XQhY1fC8q4-TAAAB
+[2024-10-17 15:07:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:39] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:39] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:41] [info]: ug Выполнение действия: pick
+[2024-10-17 15:07:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:42] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:07:42] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:07:45] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 15:08:38] [info]: ug Выполнение действия: init
+[2024-10-17 15:08:38] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:08:39] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:08:50] [info]: Server is running. Use port: 3000
+[2024-10-17 15:08:55] [info]: New client connected: yd-eUOQBKtX6X3LYAAAB
+[2024-10-17 15:08:55] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:55] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:55] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:55] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:55] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:55] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:55] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:55] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:55] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:55] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:57] [info]: ug Выполнение действия: pick
+[2024-10-17 15:08:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:57] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:08:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:08:58] [info]: Найдено для OC90 MAHLE/KNECHT -  profit: 0
+[2024-10-17 15:09:01] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 0
+[2024-10-17 15:09:32] [info]: ug Выполнение действия: init
+[2024-10-17 15:09:32] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:09:32] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:09:40] [info]: Server is running. Use port: 3000
+[2024-10-17 15:09:43] [info]: New client connected: n8RUZM0BQ53FqBBdAAAB
+[2024-10-17 15:09:58] [info]: ug Выполнение действия: init
+[2024-10-17 15:09:58] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:09:58] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:10:09] [info]: Server is running. Use port: 3000
+[2024-10-17 15:10:09] [info]: New client connected: oOpbJ3Oe0LJW_ow_AAAB
+[2024-10-17 15:10:15] [info]: ug Выполнение действия: init
+[2024-10-17 15:10:15] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:10:16] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:10:25] [info]: Server is running. Use port: 3000
+[2024-10-17 15:10:26] [info]: New client connected: e0bTYn0hyPW1SPRrAAAB
+[2024-10-17 15:23:15] [info]: ug Выполнение действия: init
+[2024-10-17 15:23:15] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:23:16] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:23:25] [info]: Server is running. Use port: 3000
+[2024-10-17 15:23:27] [info]: New client connected: LccDzz5vJAZZiER2AAAB
+[2024-10-17 15:24:12] [info]: ug Выполнение действия: init
+[2024-10-17 15:24:12] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:24:13] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:39:04] [info]: ug Выполнение действия: init
+[2024-10-17 15:39:04] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:39:04] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:39:14] [info]: Server is running. Use port: 3000
+[2024-10-17 15:39:19] [info]: New client connected: izWa8GWA7HJ_4cLHAAAB
+[2024-10-17 15:39:32] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:39:32] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:39:33] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:39:33] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:39:38] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:39:38] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:40:57] [info]: ug Выполнение действия: init
+[2024-10-17 15:40:57] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:40:58] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:41:07] [info]: Server is running. Use port: 3000
+[2024-10-17 15:41:07] [info]: New client connected: NP7UAM9euXamd7HjAAAB
+[2024-10-17 15:41:07] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:41:07] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:41:11] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:41:11] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:41:13] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:41:13] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:41:15] [info]: ug Выполнение действия: pick
+[2024-10-17 15:41:15] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:41:16] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:41:16] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:41:17] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 15:41:18] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 15:43:13] [info]: ug Выполнение действия: init
+[2024-10-17 15:43:13] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:43:13] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:43:23] [info]: Server is running. Use port: 3000
+[2024-10-17 15:43:28] [info]: New client connected: 0Cbd7TbcAWzFthRVAAAB
+[2024-10-17 15:43:56] [info]: ug Выполнение действия: init
+[2024-10-17 15:43:56] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:43:56] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:44:05] [info]: Server is running. Use port: 3000
+[2024-10-17 15:44:06] [info]: New client connected: enOaiM4beDBPVcHoAAAB
+[2024-10-17 15:44:25] [info]: Client disconnected: enOaiM4beDBPVcHoAAAB
+[2024-10-17 15:44:25] [info]: New client connected: p9OnEQM0VaVFtLdEAAAD
+[2024-10-17 15:44:28] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:44:28] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:44:28] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:44:28] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:44:29] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:44:30] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:44:34] [info]: ug Выполнение действия: pick
+[2024-10-17 15:44:34] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:44:34] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:44:34] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:44:34] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 15:44:37] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 15:47:01] [info]: ug Выполнение действия: init
+[2024-10-17 15:47:01] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:47:02] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:47:11] [info]: Server is running. Use port: 3000
+[2024-10-17 15:47:15] [info]: New client connected: Zh3J3k40Yp9X1nsUAAAB
+[2024-10-17 15:47:17] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:17] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:21] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:21] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:23] [info]: ug Выполнение действия: pick
+[2024-10-17 15:47:23] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:24] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:24] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:27] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 0
+[2024-10-17 15:47:34] [info]: ug Выполнение действия: login
+[2024-10-17 15:47:34] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:40] [info]: ug Залогинен?: true
+[2024-10-17 15:47:45] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:45] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:45] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:45] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:48] [info]: ug Выполнение действия: pick
+[2024-10-17 15:47:48] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:47:48] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:47:48] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:48:04] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 365
+[2024-10-17 15:48:50] [info]: ug Выполнение действия: init
+[2024-10-17 15:48:50] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:48:51] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:49:00] [info]: Server is running. Use port: 3000
+[2024-10-17 15:49:00] [info]: New client connected: Z7Ho3FcyOp3MJbvzAAAB
+[2024-10-17 15:49:08] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:49:08] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:49:09] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:49:09] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:49:11] [info]: ug Выполнение действия: pick
+[2024-10-17 15:49:11] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:49:11] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:49:11] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:49:12] [info]: Найдено для OC90 MAHLE/KNECHT -  profit: 48
+[2024-10-17 15:49:14] [info]: Найдено для OC90 MAHLE/KNECHT -  ug: 0
+[2024-10-17 15:51:24] [info]: ug Выполнение действия: init
+[2024-10-17 15:51:24] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:51:24] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:51:31] [info]: Server is running. Use port: 3000
+[2024-10-17 15:51:33] [info]: New client connected: 9Izpc55wBok53BGqAAAB
+[2024-10-17 15:54:49] [info]: ug Выполнение действия: init
+[2024-10-17 15:54:49] [info]: Launching new browser for supplier: ug
+[2024-10-17 15:54:50] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 15:54:58] [info]: Server is running. Use port: 3000
+[2024-10-17 15:55:00] [info]: New client connected: CxZHbMWS8lUq3NrRAAAB
+[2024-10-17 15:55:05] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:55:05] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:55:05] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:55:05] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:55:08] [info]: ug Выполнение действия: pick
+[2024-10-17 15:55:08] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:55:08] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 15:55:08] [info]: Reusing existing page for supplier: ug
+[2024-10-17 15:55:10] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 15:55:11] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:02:46] [info]: ug Выполнение действия: init
+[2024-10-17 16:02:46] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:02:47] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:03:00] [info]: ug Выполнение действия: init
+[2024-10-17 16:03:00] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:03:01] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:03:09] [info]: Server is running. Use port: 3000
+[2024-10-17 16:03:13] [info]: New client connected: ji3zOia_rbYawAHzAAAB
+[2024-10-17 16:03:44] [info]: ug Выполнение действия: init
+[2024-10-17 16:03:44] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:03:44] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:03:52] [info]: Server is running. Use port: 3000
+[2024-10-17 16:03:52] [info]: New client connected: xDZ6wuadAIB6P6A9AAAB
+[2024-10-17 16:04:01] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:04:01] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:04:02] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:04:02] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:04:05] [info]: ug Выполнение действия: pick
+[2024-10-17 16:04:05] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:04:05] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:04:05] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:04:05] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:04:08] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:09:18] [info]: ug Выполнение действия: init
+[2024-10-17 16:09:18] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:09:19] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:09:25] [info]: Server is running. Use port: 3000
+[2024-10-17 16:09:26] [info]: New client connected: oBQF7dlNetX9YEInAAAB
+[2024-10-17 16:09:32] [info]: Client disconnected: oBQF7dlNetX9YEInAAAB
+[2024-10-17 16:09:33] [info]: New client connected: koa3CvqWkORxXgBeAAAD
+[2024-10-17 16:09:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:36] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:36] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:37] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:37] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:39] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:39] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:40] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:40] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:40] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:40] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:44] [info]: ug Выполнение действия: pick
+[2024-10-17 16:09:44] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:44] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:09:44] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:09:46] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:09:47] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:12:13] [info]: ug Выполнение действия: init
+[2024-10-17 16:12:13] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:12:14] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:12:22] [info]: Server is running. Use port: 3000
+[2024-10-17 16:12:23] [info]: New client connected: ClvZyre7cIvlMRCdAAAB
+[2024-10-17 16:12:37] [info]: Client disconnected: ClvZyre7cIvlMRCdAAAB
+[2024-10-17 16:12:37] [info]: New client connected: qy-pLzKJUuC1uYSMAAAD
+[2024-10-17 16:12:41] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:12:41] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:12:42] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:12:42] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:12:42] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:12:42] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:12:44] [info]: ug Выполнение действия: pick
+[2024-10-17 16:12:44] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:12:45] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:12:45] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:12:45] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:12:48] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:19:32] [info]: ug Выполнение действия: init
+[2024-10-17 16:19:32] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:19:32] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:19:41] [info]: Server is running. Use port: 3000
+[2024-10-17 16:19:41] [info]: New client connected: wV-bgJjHxIVRQDAVAAAB
+[2024-10-17 16:22:19] [info]: ug Выполнение действия: init
+[2024-10-17 16:22:19] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:22:20] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:22:28] [info]: Server is running. Use port: 3000
+[2024-10-17 16:22:30] [info]: New client connected: EkgRG1brBuPwxOFYAAAB
+[2024-10-17 16:22:41] [info]: ug Выполнение действия: init
+[2024-10-17 16:22:41] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:22:41] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:22:52] [info]: Server is running. Use port: 3000
+[2024-10-17 16:22:52] [info]: New client connected: G9F6GG8xEY5MA12KAAAB
+[2024-10-17 16:23:10] [info]: ug Выполнение действия: init
+[2024-10-17 16:23:10] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:23:11] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:23:21] [info]: Server is running. Use port: 3000
+[2024-10-17 16:23:21] [info]: New client connected: 2wlR8dXeKjDRfXxlAAAB
+[2024-10-17 16:25:14] [info]: ug Выполнение действия: init
+[2024-10-17 16:25:14] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:25:15] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:25:24] [info]: Server is running. Use port: 3000
+[2024-10-17 16:25:29] [info]: New client connected: m8lVzA25McKATVgAAAAB
+[2024-10-17 16:26:27] [info]: ug Выполнение действия: init
+[2024-10-17 16:26:27] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:26:27] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:26:34] [info]: ug Выполнение действия: init
+[2024-10-17 16:26:34] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:26:35] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:26:45] [info]: Server is running. Use port: 3000
+[2024-10-17 16:26:47] [info]: New client connected: z0tfYYrsScAZL5CIAAAB
+[2024-10-17 16:26:50] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:26:50] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:26:51] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:26:51] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:26:53] [info]: ug Выполнение действия: pick
+[2024-10-17 16:26:53] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:26:54] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:26:54] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:26:56] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:26:57] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:29:24] [info]: ug Выполнение действия: init
+[2024-10-17 16:29:24] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:29:25] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:29:34] [info]: Server is running. Use port: 3000
+[2024-10-17 16:29:34] [info]: New client connected: FDcKn3Qh6gSjg9ehAAAB
+[2024-10-17 16:29:43] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:29:43] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:29:44] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:29:44] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:29:46] [info]: ug Выполнение действия: pick
+[2024-10-17 16:29:46] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:29:46] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:29:46] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:29:49] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:33:35] [info]: ug Выполнение действия: init
+[2024-10-17 16:33:35] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:33:35] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:33:46] [info]: Server is running. Use port: 3000
+[2024-10-17 16:33:46] [info]: New client connected: j5mO8V3NZtIlMscNAAAB
+[2024-10-17 16:33:56] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:33:56] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:33:57] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:33:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:33:59] [info]: ug Выполнение действия: pick
+[2024-10-17 16:33:59] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:34:00] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:34:00] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:34:00] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:34:02] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:41:18] [info]: ug Выполнение действия: init
+[2024-10-17 16:41:18] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:41:19] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:41:25] [info]: ug Выполнение действия: init
+[2024-10-17 16:41:25] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:41:26] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:41:34] [info]: Server is running. Use port: 3000
+[2024-10-17 16:41:34] [info]: New client connected: 8gMbRED5fKTdWF_AAAAB
+[2024-10-17 16:42:12] [info]: ug Выполнение действия: init
+[2024-10-17 16:42:12] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:42:12] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:42:22] [info]: Server is running. Use port: 3000
+[2024-10-17 16:42:22] [info]: New client connected: Yd0BsE_3o2oIvNCSAAAB
+[2024-10-17 16:43:08] [info]: ug Выполнение действия: init
+[2024-10-17 16:43:08] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:43:08] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:43:18] [info]: Server is running. Use port: 3000
+[2024-10-17 16:43:19] [info]: New client connected: osb_0_9-St1U78CpAAAB
+[2024-10-17 16:43:23] [info]: ug Выполнение действия: init
+[2024-10-17 16:43:23] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:43:23] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:43:32] [info]: Server is running. Use port: 3000
+[2024-10-17 16:43:32] [info]: New client connected: s0Etp2ZQeajEQLxAAAAB
+[2024-10-17 16:43:46] [info]: Client disconnected: s0Etp2ZQeajEQLxAAAAB
+[2024-10-17 16:43:47] [info]: New client connected: fFlp1jxrC_wPvvFCAAAD
+[2024-10-17 16:43:53] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:43:53] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:43:54] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:43:54] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:43:56] [info]: ug Выполнение действия: pick
+[2024-10-17 16:43:56] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:43:56] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:43:56] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:43:58] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:43:59] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 16:52:38] [info]: ug Выполнение действия: init
+[2024-10-17 16:52:38] [info]: Launching new browser for supplier: ug
+[2024-10-17 16:52:38] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 16:52:45] [info]: Server is running. Use port: 3000
+[2024-10-17 16:52:45] [info]: New client connected: IxBYQhMkOD9Ex_3XAAAB
+[2024-10-17 16:53:54] [info]: Client disconnected: IxBYQhMkOD9Ex_3XAAAB
+[2024-10-17 16:53:55] [info]: New client connected: F2n0wMqpi6YOFoblAAAD
+[2024-10-17 16:53:57] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:53:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:53:58] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:53:58] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:54:00] [info]: ug Выполнение действия: pick
+[2024-10-17 16:54:00] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:54:01] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 16:54:01] [info]: Reusing existing page for supplier: ug
+[2024-10-17 16:54:03] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 16:54:03] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 17:05:49] [info]: ug Выполнение действия: init
+[2024-10-17 17:05:49] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:05:50] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:05:59] [info]: ug Выполнение действия: init
+[2024-10-17 17:05:59] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:06:00] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:06:11] [info]: Server is running. Use port: 3000
+[2024-10-17 17:06:11] [info]: New client connected: Fpgmzbw3qPzjJYBPAAAB
+[2024-10-17 17:06:16] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:06:16] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:06:17] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:06:17] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:06:20] [info]: ug Выполнение действия: pick
+[2024-10-17 17:06:20] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:06:20] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:06:20] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:06:22] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 17:06:23] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 17:07:23] [info]: ug Выполнение действия: init
+[2024-10-17 17:07:23] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:07:24] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:07:32] [info]: Server is running. Use port: 3000
+[2024-10-17 17:07:33] [info]: New client connected: uIZ5RNS21dAllPhhAAAB
+[2024-10-17 17:07:48] [info]: ug Выполнение действия: init
+[2024-10-17 17:07:48] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:07:48] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:07:54] [info]: Server is running. Use port: 3000
+[2024-10-17 17:07:54] [info]: New client connected: 6wGo4KVRgTdwfX-jAAAB
+[2024-10-17 17:07:54] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:07:54] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:07:54] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:07:54] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:07:57] [info]: ug Выполнение действия: pick
+[2024-10-17 17:07:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:07:57] [info]: ug Выполнение действия: autocomplete
+[2024-10-17 17:07:57] [info]: Reusing existing page for supplier: ug
+[2024-10-17 17:07:57] [info]: Найдено для SM105 SCT -  profit: 83
+[2024-10-17 17:07:59] [info]: Найдено для SM105 SCT -  ug: 0
+[2024-10-17 17:09:01] [info]: ug Выполнение действия: init
+[2024-10-17 17:09:01] [info]: Launching new browser for supplier: ug
+[2024-10-17 17:09:02] [info]: Opening page for supplier: ug, URL: https://ugautopart.ru/
+[2024-10-17 17:09:13] [info]: Server is running. Use port: 3000
+[2024-10-17 17:09:13] [info]: New client connected: F4_OeIcLKMrlzZ9rAAAB

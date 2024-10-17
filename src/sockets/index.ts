@@ -118,8 +118,8 @@ export const initializeSocket = (server: HTTPServer) => {
       const fetchSuppliersData = async () => {
         const suppliers: PuppeteerSupplierName[] = [
           'ug',
-          'turboCars',
-          'patriot',
+          // 'turboCars',
+          // 'patriot',
         ];
 
         const supplierPromises = suppliers.map(async (supplier) => {

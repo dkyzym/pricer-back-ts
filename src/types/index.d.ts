@@ -101,6 +101,7 @@ export interface SearchResultsParsed {
   needToCheckBrand?: boolean;
   innerId?: string;
   deadLineTimeToOrder?: string;
+  deliveryDate?: string;
 }
 
 export interface pageActionsResult {

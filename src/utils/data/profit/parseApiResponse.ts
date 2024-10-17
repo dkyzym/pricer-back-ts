@@ -37,6 +37,7 @@ export const parseApiResponse = (
         expectedBrand,
         product.brand
       );
+      const deliveryDate = product.delivery_date.split(' ')[0]; // yyyy-mm-dd
 
       const parsedItem: SearchResultsParsed = {
         id: productKey,
@@ -53,6 +54,7 @@ export const parseApiResponse = (
         supplier,
         probability,
         needToCheckBrand: needToCheckBrandRes,
+        deliveryDate,
       };
 
       parsedResults.push(parsedItem);

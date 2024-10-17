@@ -15,6 +15,7 @@ export const ignoreSpecificMessages = format((info) => {
     'galleyp',
     'search.tips',
     'ERR_ABORTED',
+    'nodacdn',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {

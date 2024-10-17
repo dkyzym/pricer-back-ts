@@ -17,6 +17,7 @@
   "description": "",
   "dependencies": {
     "@types/cors": "^2.8.17",
+    "@types/luxon": "^3.4.2",
     "@types/string-similarity": "^4.0.2",
     "@types/uuid": "^10.0.0",
     "async-mutex": "^0.5.0",
@@ -26,6 +27,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "luxon": "^3.5.0",
     "morgan": "^1.10.0",
     "puppeteer": "^23.1.1",
     "puppeteer-extra": "^3.3.6",
