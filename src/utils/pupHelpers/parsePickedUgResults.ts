@@ -1,5 +1,7 @@
+import { DateTime } from 'luxon';
 import { Page } from 'puppeteer';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
+import { calculateDeliveryDate } from '../calculateDates/calculateUgDeliveryDate';
 import { filterEqualResults } from '../data/filterEqualResults';
 
 export const parseData = async (
@@ -41,7 +43,7 @@ export const parseData = async (
               .querySelector('.resultProbability')
               ?.textContent?.replace('%', '')
               .trim() || '0'
-          ) || '',
+          ) || 0,
         id:
           row
             .querySelector('input.quantityInputFake')
@@ -82,12 +84,22 @@ export const parsePickedUgResults = async ({
   if (newData.length > 0) {
     const resultsWithIdAndSupplier = newData.map((product) => ({
       ...product,
-      supplier: supplier,
+      supplier,
     }));
 
     const filteredResults = filterEqualResults(resultsWithIdAndSupplier, item);
 
-    allResults.push(...filteredResults);
+    const currentTime = DateTime.now().setZone('UTC+3');
+
+    const resultsWithDeliveryDate = filteredResults.map((result) => {
+      const deliveryDate = calculateDeliveryDate(result, currentTime);
+      return {
+        ...result,
+        deliveryDate,
+      };
+    });
+
+    allResults.push(...resultsWithDeliveryDate);
   }
 
   return allResults;
