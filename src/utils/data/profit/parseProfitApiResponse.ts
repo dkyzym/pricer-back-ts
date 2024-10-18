@@ -10,7 +10,7 @@ const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';
 };
 
-export const parseApiResponse = (
+export const parseProfitApiResponse = (
   apiResponse: ApiResponseItem[],
   expectedBrand: string
 ): SearchResultsParsed[] => {
@@ -37,7 +37,8 @@ export const parseApiResponse = (
         expectedBrand,
         product.brand
       );
-      const deliveryDate = product.delivery_date.split(' ')[0]; // yyyy-mm-dd
+
+      const deliveryDate = product.delivery_date?.split(' ')[0] ?? '';
 
       const parsedItem: SearchResultsParsed = {
         id: productKey,

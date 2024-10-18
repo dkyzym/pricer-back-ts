@@ -7,7 +7,7 @@ import {
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateDeliveryDate } from '../data/calculateDeliveryDate';
+import { calculateTCdeliveryDate } from '../calculateDates/calculateTCdeliveryDate';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
@@ -222,7 +222,7 @@ export const parsePickedTurboCarsResults = async ({
     (result: SearchResultsParsed) => {
       const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
 
-      const deliveryDate = calculateDeliveryDate(result, currentTime);
+      const deliveryDate = calculateTCdeliveryDate(result, currentTime);
       logger.warn(`${deliveryDate}, ${result.deadline}`);
 
       return {

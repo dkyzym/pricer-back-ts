@@ -15,8 +15,8 @@ import {
   PuppeteerSupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
-import { parseApiResponse } from 'utils/data/profit/parseApiResponse';
-import { logResultCount } from '../utils/stdLogs';
+import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
+import { logResultCount } from 'utils/stdLogs';
 
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
@@ -92,7 +92,10 @@ export const initializeSocket = (server: HTTPServer) => {
           const relevantItems = itemsWithRest.filter(({ brand }: any) =>
             isBrandMatch(item.brand, brand)
           );
-          const profitParsedData = parseApiResponse(relevantItems, item.brand);
+          const profitParsedData = parseProfitApiResponse(
+            relevantItems,
+            item.brand
+          );
 
           logResultCount(item, 'profit', profitParsedData);
 
@@ -119,7 +122,7 @@ export const initializeSocket = (server: HTTPServer) => {
         const suppliers: PuppeteerSupplierName[] = [
           'ug',
           'turboCars',
-          // 'patriot',
+          'patriot',
         ];
 
         const supplierPromises = suppliers.map(async (supplier) => {

@@ -1,10 +1,12 @@
-import { logger } from 'config/logger';
+import { DateTime } from 'luxon';
 import {
   ItemToParallelSearch,
   ParallelSearchParams,
   SearchResultsParsed,
   SupplierName,
 } from 'types';
+import { calculatePatriotDeliveryDate } from '../calculateDates/calculatePatriotDeliveryDate';
+import { needToCheckBrand } from '../data/needToCheckBrand';
 
 export const parsePickedPatriotResults = async ({
   page,
@@ -21,7 +23,7 @@ export const parsePickedPatriotResults = async ({
         try {
           // Проверяем валидность данных item
           if (!item || !item.brand || !item.article) {
-            logger.error(`${page.url()} Invalid item data: ${item}`);
+            console.error(`Invalid item data: ${JSON.stringify(item)}`);
             return [];
           }
 
@@ -29,7 +31,9 @@ export const parsePickedPatriotResults = async ({
           const brandWithoutGaps = item.brand.replace(/[^\p{L}]/gu, '');
 
           // Формируем dataContent и селектор строки
-          const dataContent = `${encodeURIComponent(item.article)}_${encodeURIComponent(brandWithoutGaps)}`;
+          const dataContent = `${encodeURIComponent(
+            item.article
+          )}_${encodeURIComponent(brandWithoutGaps)}`;
 
           const itemRowSelector = `tr[data-current-brand-number="${dataContent}" i]`;
 
@@ -38,8 +42,8 @@ export const parsePickedPatriotResults = async ({
             document.querySelectorAll<HTMLTableRowElement>(itemRowSelector);
 
           if (itemRows.length === 0) {
-            logger.warn(
-              `${page.url()} No item rows found with the given selector.`
+            console.warn(
+              `No item rows found with the given selector: ${itemRowSelector}`
             );
             return [];
           }
@@ -72,19 +76,15 @@ export const parsePickedPatriotResults = async ({
               );
 
               if (!fakeInputElement) {
-                logger.warn(
-                  `${page.url()} Row ${index}: fakeInputElement not found.`
-                );
+                console.warn(`Row ${index}: fakeInputElement not found.`);
                 return null; // Пропускаем строку, если элемент не найден
               }
 
               // Собираем данные продукта
               const product: SearchResultsParsed = {
                 article: fakeInputElement.getAttribute('number') || '',
-                availability: parseInt(
-                  fakeInputElement.getAttribute('availability') || '0',
-                  10
-                ),
+                availability:
+                  fakeInputElement.getAttribute('availability') || '',
                 brand: fakeInputElement.getAttribute('brand') || '',
                 deadline: parseInt(
                   fakeInputElement.getAttribute('data-deadline') || '0',
@@ -101,6 +101,7 @@ export const parsePickedPatriotResults = async ({
                 probability: 99,
                 supplier,
                 warehouse: warehouseElement?.innerText.trim() || '',
+                needToCheckBrand: false,
               };
 
               return product;
@@ -109,8 +110,7 @@ export const parsePickedPatriotResults = async ({
 
           return data;
         } catch (evalError) {
-          logger.error(`${supplier} Error inside page.evaluate: ${evalError}`);
-
+          console.error(`Error inside page.evaluate: ${evalError}`);
           return [];
         }
       },
@@ -118,10 +118,28 @@ export const parsePickedPatriotResults = async ({
       supplier
     );
 
-    return results;
-  } catch (error) {
-    logger.error(`${supplier} Error in parsePickedPatriotResults: ${error}`);
+    const currentTime = DateTime.now().setZone('UTC+3');
 
+    const allResults: SearchResultsParsed[] = results.map(
+      (result: SearchResultsParsed) => {
+        const needToCheckBrandResult = needToCheckBrand(
+          item.brand,
+          result.brand
+        );
+
+        const deliveryDate = calculatePatriotDeliveryDate(currentTime);
+
+        return {
+          ...result,
+          needToCheckBrand: needToCheckBrandResult,
+          deliveryDate,
+        };
+      }
+    );
+
+    return allResults;
+  } catch (error) {
+    console.error(`Error in parsePickedPatriotResults: ${error}`);
     return [];
   }
 };

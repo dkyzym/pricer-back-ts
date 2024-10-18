@@ -1,11 +1,10 @@
 import { DateTime } from 'luxon';
-import { SearchResultsParsed } from '../../types';
+import { SearchResultsParsed } from 'types';
 
-// import { DateTime } from 'luxon';
-export function calculateDeliveryDate(
+export const calculateTCdeliveryDate = (
   result: SearchResultsParsed,
   currentTime: DateTime
-): string {
+): string => {
   let deliveryDate: DateTime;
 
   if (result.warehouse === 'РД-3') {
@@ -50,4 +49,4 @@ export function calculateDeliveryDate(
 
   // Format deliveryDate as 'yyyy:mm:dd'
   return deliveryDate.toFormat('yyyy-MM-dd');
-}
+};
