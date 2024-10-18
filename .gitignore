@@ -4,7 +4,8 @@ dist
 .vscode
 some*
 todo*
-logs/*
+logs/**
 !logs/.gitkeep
-*.log
+
+
 

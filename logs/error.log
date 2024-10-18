@@ -1,8 +1,0 @@
-[2024-10-17 15:06:48] [error]: Profit error: Cannot read properties of undefined (reading 'filter')
-[2024-10-17 15:07:42] [error]: Profit error: itemsWithRest.filter is not a function
-[2024-10-17 15:08:58] [error]: getItemsWithRest TypeError: info.message.includes is not a function
-[2024-10-17 15:40:04] [error]: ug: Error performing autocomplete action on Page Auth Actions: Timed out after waiting 30000ms
-[2024-10-17 15:40:08] [error]: ug: Error performing autocomplete action on Page Auth Actions: Timed out after waiting 30000ms
-[2024-10-17 15:47:24] [error]: Profit error: info.message.includes is not a function
-[2024-10-17 15:47:48] [error]: Profit error: info.message.includes is not a function
-[2024-10-17 16:29:46] [error]: Profit error: info.message.includes is not a function
