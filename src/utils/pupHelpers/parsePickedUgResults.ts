@@ -1,7 +1,6 @@
-import { DateTime } from 'luxon';
 import { Page } from 'puppeteer';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
-import { calculateDeliveryDate } from '../calculateDates/calculateUgDeliveryDate';
+import { calculateDeliveryDate } from '../calculateDates';
 import { filterEqualResults } from '../data/filterEqualResults';
 
 export const parseData = async (
@@ -89,10 +88,8 @@ export const parsePickedUgResults = async ({
 
     const filteredResults = filterEqualResults(resultsWithIdAndSupplier, item);
 
-    const currentTime = DateTime.now().setZone('UTC+3');
-
     const resultsWithDeliveryDate = filteredResults.map((result) => {
-      const deliveryDate = calculateDeliveryDate(result, currentTime);
+      const deliveryDate = calculateDeliveryDate(result);
       return {
         ...result,
         deliveryDate,

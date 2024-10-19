@@ -7,7 +7,8 @@ import {
   SearchResultsParsed,
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateTCdeliveryDate } from '../calculateDates/calculateTCdeliveryDate';
+import { calculateDeliveryDate } from '../calculateDates';
+import { suppliersConfig } from '../calculateDates/suppliersConfig/suppliersConfig';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
@@ -220,15 +221,17 @@ export const parsePickedTurboCarsResults = async ({
 
   const allResults: SearchResultsParsed[] = results.map(
     (result: SearchResultsParsed) => {
+      // Добавляем supplier в result до вызова calculateDeliveryDate
+      result.supplier = supplier;
+
       const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
 
-      const deliveryDate = calculateTCdeliveryDate(result, currentTime);
+      const deliveryDate = calculateDeliveryDate(result);
 
       return {
         ...result,
         id: uuidv4(),
         article: item.article,
-        supplier,
         description,
         needToCheckBrand: needToCheckBrandResult,
         deliveryDate,

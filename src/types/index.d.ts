@@ -161,3 +161,14 @@ export interface SearchResult {
   supplier: SupplierName;
   result: pageActionsResult | null;
 }
+
+export interface SupplierConfig {
+  supplierName: SupplierName;
+  workingDays: number[]; // дни недели с 1 (понедельник) до 7 (воскресенье)
+  cutoffTimes: { [warehouse: string]: string }; // Крайние сроки для каждого склада
+  processingTime: { days?: number; hours?: number };
+  specialConditions?: (
+    currentTime: DateTime,
+    result: SearchResultsParsed
+  ) => DateTime;
+}

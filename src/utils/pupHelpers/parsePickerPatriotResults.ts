@@ -1,11 +1,10 @@
-import { DateTime } from 'luxon';
 import {
   ItemToParallelSearch,
   ParallelSearchParams,
   SearchResultsParsed,
   SupplierName,
 } from 'types';
-import { calculatePatriotDeliveryDate } from '../calculateDates/calculatePatriotDeliveryDate';
+import { calculateDeliveryDate } from '../calculateDates';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
 export const parsePickedPatriotResults = async ({
@@ -118,8 +117,6 @@ export const parsePickedPatriotResults = async ({
       supplier
     );
 
-    const currentTime = DateTime.now().setZone('UTC+3');
-
     const allResults: SearchResultsParsed[] = results.map(
       (result: SearchResultsParsed) => {
         const needToCheckBrandResult = needToCheckBrand(
@@ -127,7 +124,7 @@ export const parsePickedPatriotResults = async ({
           result.brand
         );
 
-        const deliveryDate = calculatePatriotDeliveryDate(currentTime);
+        const deliveryDate = calculateDeliveryDate(result);
 
         return {
           ...result,

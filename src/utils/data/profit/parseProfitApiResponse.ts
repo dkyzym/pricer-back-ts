@@ -1,9 +1,11 @@
+import { DateTime } from 'luxon';
 import {
   ApiResponseItem,
   ProductProfit,
   SearchResultsParsed,
   SupplierName,
 } from 'types';
+import { calculateDeliveryDate } from '../../calculateDates';
 import { needToCheckBrand } from '../needToCheckBrand';
 
 const getImageUrl = (product: ProductProfit): string => {
@@ -15,6 +17,9 @@ export const parseProfitApiResponse = (
   expectedBrand: string
 ): SearchResultsParsed[] => {
   const parsedResults: SearchResultsParsed[] = [];
+
+  // Получаем текущее время
+  const currentTime = DateTime.now().setZone('UTC+3');
 
   apiResponse.forEach((item) => {
     const { id: innerId, article, brand, products } = item;
@@ -38,8 +43,10 @@ export const parseProfitApiResponse = (
         product.brand
       );
 
-      const deliveryDate = product.delivery_date?.split(' ')[0] ?? '';
+      // Извлекаем дату доставки
+      const deliveryDateFromApi = product.delivery_date?.split(' ')[0] ?? '';
 
+      // Создаем объект результата без даты доставки
       const parsedItem: SearchResultsParsed = {
         id: productKey,
         innerId,
@@ -55,8 +62,14 @@ export const parseProfitApiResponse = (
         supplier,
         probability,
         needToCheckBrand: needToCheckBrandRes,
-        deliveryDate,
+        deliveryDate: '', // Дата доставки будет рассчитана ниже
       };
+
+      // Устанавливаем дату доставки, полученную из API
+      parsedItem.deliveryDate = deliveryDateFromApi;
+
+      // Вызываем функцию расчета даты доставки
+      parsedItem.deliveryDate = calculateDeliveryDate(parsedItem);
 
       parsedResults.push(parsedItem);
     });
