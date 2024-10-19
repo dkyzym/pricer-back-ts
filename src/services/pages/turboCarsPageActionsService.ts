@@ -2,7 +2,7 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
-import { getPage } from '../puppeteerShared/browserManager';
+import { getPage } from '../browserManager';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
 import { loginTurboCars } from '../turboCars/loginTurboCarsService';
 import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';

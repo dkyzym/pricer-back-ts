@@ -16,6 +16,9 @@ export const ignoreSpecificMessages = format((info) => {
     'search.tips',
     'ERR_ABORTED',
     'nodacdn',
+    'png',
+    'gif',
+    'jpg',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {

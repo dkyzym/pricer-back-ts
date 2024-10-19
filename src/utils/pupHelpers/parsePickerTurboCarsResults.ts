@@ -223,7 +223,6 @@ export const parsePickedTurboCarsResults = async ({
       const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
 
       const deliveryDate = calculateTCdeliveryDate(result, currentTime);
-      logger.warn(`${deliveryDate}, ${result.deadline}`);
 
       return {
         ...result,

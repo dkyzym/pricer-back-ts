@@ -1,10 +1,10 @@
 import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
+import { getPage } from '../browserManager';
 import { itemDataPatriotService } from '../patriot/itemDataPatriotService';
 import { loginPatriotService } from '../patriot/loginPatriotService';
 import { logoutPatriotService } from '../patriot/logoutPatriotService';
-import { getPage } from '../puppeteerShared/browserManager';
 
 export const patriotPageActionsService = async (
   actionParams: PageAction

@@ -2,7 +2,7 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
-import { getPage } from '../puppeteerShared/browserManager';
+import { getPage } from '../browserManager';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
 import { clarifyBrandService } from '../ug/clarifyBrandService';
 import { itemDataUgService } from '../ug/itemDataUgService';

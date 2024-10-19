@@ -46,17 +46,12 @@ export const getPage = async (
     logger.info(`Reusing existing page for supplier: ${supplier}`);
 
     await page.bringToFront();
-
-    await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: waitTimeOutPeriod,
-    });
   } else {
     logger.info(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
     const context = await browser.createBrowserContext();
     page = await context.newPage();
 
-    await browser.userAgent();
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     );
@@ -89,21 +84,29 @@ export const getPage = async (
       deviceScaleFactor: 1,
     });
 
+    // Enable request interception
     await page.setRequestInterception(true);
+
     page.on('request', (request) => {
       const headers = {
         ...request.headers(),
         'Accept-Language': 'ru-RU,ru;q=0.9',
       };
-      request.continue({ headers });
+
+      if (request.resourceType() === 'image') {
+        // Abort image requests to prevent hanging
+        request.abort();
+      } else {
+        request.continue({ headers });
+      }
     });
 
     page.on('pageerror', (err) => {
-      logger.error(`${[page?.url()]}, ${err}`);
+      logger.error(`${page?.url()}, ${err}`);
     });
 
     page.on('error', (err) => {
-      logger.error(`Page crashed ${[page?.url()]}: ${err}`);
+      logger.error(`Page crashed ${page?.url()}: ${err}`);
     });
 
     page.on('requestfailed', (request) => {
@@ -120,14 +123,25 @@ export const getPage = async (
       }
     });
 
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: waitTimeOutPeriod,
-    });
+    try {
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: waitTimeOutPeriod,
+      });
+    } catch (error) {
+      logger.error(`Error during page.goto for supplier ${supplier}: ${error}`);
+      // Handle the error as needed
+    }
 
-    await page.waitForFunction(() => document.readyState === 'complete', {
-      timeout: waitTimeOutPeriod,
-    });
+    // Optionally, you can remove or adjust this waitForFunction
+    try {
+      await page.waitForFunction(() => document.readyState === 'complete', {
+        timeout: waitTimeOutPeriod,
+      });
+    } catch (error) {
+      logger.error(`Error during waitForFunction: ${error}`);
+      // Handle the error as needed
+    }
 
     pages.set(supplier, page);
   }
