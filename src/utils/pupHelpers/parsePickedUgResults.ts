@@ -42,7 +42,7 @@ export const parseData = async (
               .querySelector('.resultProbability')
               ?.textContent?.replace('%', '')
               .trim() || '0'
-          ) || 0,
+          ) || '',
         id:
           row
             .querySelector('input.quantityInputFake')
