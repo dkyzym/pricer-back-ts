@@ -84,6 +84,11 @@ export const initializeSocket = (server: HTTPServer) => {
     });
 
     socket.on('getItemResults', async (item: ItemToParallelSearch) => {
+      logger.info(
+        chalk.bgGreenBright(
+          `${'[supplierDataFetchStarted] - Искали это: \n'}${JSON.stringify(item, null, 2)})`
+        )
+      );
       const fetchProfitData = async () => {
         try {
           socket.emit('supplierDataFetchStarted', { supplier: 'profit' });
