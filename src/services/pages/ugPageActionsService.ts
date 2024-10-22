@@ -49,16 +49,28 @@ export const ugPageActionsService = async (
       case 'clarifyBrand': {
         const { query } = actionParams;
 
-        const possibleBrands = await clarifyBrandService(page, query);
+        try {
+          const possibleBrands = await clarifyBrandService(page, query);
 
-        const hasData = Boolean(possibleBrands.length);
+          const hasData = possibleBrands.length > 0;
 
-        return {
-          success: hasData,
-          message: `${supplier}: Brand clarification successful`,
-          data: possibleBrands,
-        };
+          return {
+            success: true,
+            message: hasData
+              ? `${supplier}: Уточнение  выполнено успешно`
+              : `${supplier}: По запросу "${query}" данные не найдены`,
+            data: possibleBrands,
+          };
+        } catch (error) {
+          logger.error(`Ошибка в clarifyBrand: ${error}`);
+          return {
+            success: false,
+            message: `${supplier}: Ошибка при уточнении`,
+            data: [],
+          };
+        }
       }
+
       case 'pick': {
         const { item, supplier, action } = actionParams;
 

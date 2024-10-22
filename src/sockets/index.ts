@@ -66,9 +66,10 @@ export const initializeSocket = (server: HTTPServer) => {
           supplier: 'ug',
         });
 
-        if (result.success && result.data) {
+        if (result.success) {
           socket.emit('brandClarificationResults', {
             brands: result.data,
+            message: result.message,
           });
         } else {
           socket.emit('brandClarificationError', {
