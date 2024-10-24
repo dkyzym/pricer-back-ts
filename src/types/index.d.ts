@@ -102,6 +102,11 @@ export interface SearchResultsParsed {
   innerId?: string;
   deadLineTimeToOrder?: string;
   deliveryDate?: string;
+  returnable?: number;
+  multi?: number;
+  allow_return?: string;
+  warehouse_id?: string;
+  inner_product_code?: string;
 }
 
 export interface pageActionsResult {
@@ -171,4 +176,12 @@ export interface SupplierConfig {
     currentTime: DateTime,
     result: SearchResultsParsed
   ) => DateTime;
+}
+
+interface AddToCartConfig {
+  id: string;
+  warehouse: string;
+  quantity: number;
+  code: string;
+  supplier?: SupplierName;
 }

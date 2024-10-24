@@ -42,6 +42,11 @@ export const parseProfitApiResponse = (
         expectedBrand,
         product.brand
       );
+      const returnable = product.returnable; // number
+      const multi = product.multi; // number
+      const allow_return = product.allow_return; //string
+      const warehouse_id = product.warehouse_id; // number
+      const inner_product_code = product.product_code;
 
       // Извлекаем дату доставки
       const deliveryDateFromApi = product.delivery_date?.split(' ')[0] ?? '';
@@ -63,6 +68,11 @@ export const parseProfitApiResponse = (
         probability,
         needToCheckBrand: needToCheckBrandRes,
         deliveryDate: '', // Дата доставки будет рассчитана ниже
+        returnable,
+        multi,
+        allow_return,
+        warehouse_id,
+        inner_product_code,
       };
 
       // Устанавливаем дату доставки, полученную из API
