@@ -1,5 +1,4 @@
 import { logger } from 'config/logger';
-import { DateTime } from 'luxon';
 import { ElementHandle, Page } from 'puppeteer';
 import {
   ItemToParallelSearch,
@@ -8,7 +7,6 @@ import {
 } from 'types';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateDeliveryDate } from '../calculateDates';
-import { suppliersConfig } from '../calculateDates/suppliersConfig/suppliersConfig';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
@@ -191,6 +189,12 @@ export const parsePickedTurboCarsResults = async ({
               );
             }
 
+            // Получаем минимальное количество для заказа как число
+            const multi =
+              parseInt(
+                (document.getElementById('QtyZakaz') as HTMLInputElement).min
+              ) || 1;
+
             return {
               id: '',
               article: '',
@@ -206,6 +210,7 @@ export const parsePickedTurboCarsResults = async ({
               supplier: '',
               probability: 99.9,
               needToCheckBrand: false,
+              multi,
             };
           } catch (error) {
             logger.warn(`${page.url()} Ошибка при обработке строки: ${error}`);
@@ -216,8 +221,6 @@ export const parsePickedTurboCarsResults = async ({
     },
     brand
   );
-
-  const currentTime = DateTime.now().setZone('UTC+3');
 
   const allResults: SearchResultsParsed[] = results.map(
     (result: SearchResultsParsed) => {
