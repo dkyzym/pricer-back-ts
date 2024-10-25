@@ -7,6 +7,7 @@ export const brandGroupsMap = [
   ['змз', 'дайдо металл русь', 'дайдо метал'],
   ['lada', 'ваз', 'вис', 'оат'],
   ['HYUNDAI', 'KIA', 'MOBIS'],
+  ['total', 'TotalEnergies'],
 ];
 
 // 2389901318

@@ -47,6 +47,17 @@ export const parseData = async (
           row
             .querySelector('input.quantityInputFake')
             ?.getAttribute('searchresultuniqueid') || '',
+        multi: Number(
+          row
+            .querySelector('input.addToBasketLinkFake')
+            ?.getAttribute('packing') || '1'
+        ),
+        allow_return: row
+          .querySelector('.fr-icon2-minus-circled.fr-text-danger')
+          ?.getAttribute('title')
+          ?.includes('не подлежит возврату или обмену')
+          ? '0'
+          : '1',
       };
 
       data.push(product);
