@@ -62,6 +62,12 @@ export const parsePickedPatriotResults = async ({
           // Парсим данные из строк
           const data: SearchResultsParsed[] = closestWarehouseItemRows
             .map((row, index) => {
+              const addToBasketElement = row.querySelector(
+                'input.addToBasketLinkFake'
+              );
+              const multiText =
+                addToBasketElement?.getAttribute('packing') || '1';
+              const multi = Number(multiText);
               // Получаем элементы внутри строки
               const fakeInputElement = row.querySelector<HTMLInputElement>(
                 'input.addToBasketLinkFake'
@@ -101,6 +107,7 @@ export const parsePickedPatriotResults = async ({
                 supplier,
                 warehouse: warehouseElement?.innerText.trim() || '',
                 needToCheckBrand: false,
+                multi,
               };
 
               return product;

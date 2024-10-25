@@ -22,21 +22,31 @@ export const calculateDeliveryDate = (
     throw new Error(`Configuration for supplier ${result.supplier} not found.`);
   }
 
-  let deliveryDate: DateTime;
+  let deliveryDate: DateTime | null = null;
 
   if (supplierConfig.specialConditions) {
     // Если supplierConfig требует SearchResultsParsed, то используем type guard
     if (isProductProfit(result)) {
-      throw new Error(
+      logger.error(
         `Special conditions не поддерживают ProductProfit для поставщика ${result.supplier}`
       );
+      // Устанавливаем дату по умолчанию вместо выбрасывания ошибки
+      deliveryDate = DateTime.fromISO('2999-01-01');
+    } else {
+      deliveryDate = supplierConfig.specialConditions(currentTime, result);
     }
-    deliveryDate = supplierConfig.specialConditions(currentTime, result);
   } else if (isProductProfit(result) && result.delivery_date) {
     deliveryDate = DateTime.fromISO(result.delivery_date);
-  } else {
-    logger.error(`Неизвестные условия для поставщика ${result.supplier}`);
-    throw new Error(`Неизвестные условия для поставщика ${result.supplier}`);
+  }
+
+  if (!deliveryDate) {
+    // Если deliveryDate не удалось определить, устанавливаем дату по умолчанию
+    deliveryDate = DateTime.fromISO('2999-02-28');
+    logger.warn(
+      `delivery_date отсутствует для поставщика ${result.supplier}. Установлена дата по умолчанию: ${deliveryDate.toFormat(
+        'yyyy-MM-dd'
+      )}`
+    );
   }
 
   return deliveryDate.toFormat('yyyy-MM-dd');
