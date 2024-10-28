@@ -9,6 +9,7 @@ export const brandGroupsMap = [
   ['HYUNDAI', 'KIA', 'MOBIS'],
   ['total', 'TotalEnergies'],
   ['gaz', 'g-part'],
+  ['general motors', 'gm', 'opel'],
 ];
 
 // 2389901318

@@ -15,7 +15,7 @@ export const getItemsWithRest = async (items: itemsGroupProfit) => {
 
     return res.data;
   } catch (error) {
-    logger.error(`getItemsWithRest ${error}`);
+    logger.error(`getItemsWithRest ${(error as Error).stack}`);
     return [];
   }
 };

@@ -118,7 +118,7 @@ export const getPage = async (
     page.on('response', (response) => {
       if (!response.ok()) {
         logger.warn(
-          `Response error: ${response.url()} Status: ${response.status()}`
+          `Response warn: ${response.url()} Status: ${response.status()}`
         );
       }
     });
