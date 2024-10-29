@@ -113,27 +113,25 @@ export const parsePickedTurboCarsResults = async ({
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   await page.waitForSelector('#codeinfo', { visible: true, timeout: 60_000 });
 
-  const { description, brand } = await page.$eval(
-    '#codeinfo tbody',
-    (tbody: HTMLTableSectionElement) => {
-      if (!tbody) {
-        throw new Error('Элемент #codeinfo tbody не найден.');
-      }
+  const brand = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('tr')); // Находим все строки
+    const producerRow = rows.find((row) =>
+      row.textContent!.includes('Производитель/поставщик')
+    ); // Ищем нужную строку
+    return producerRow
+      ? producerRow.querySelector('a')?.textContent?.trim()
+      : null; // Если нашли, возвращаем текст ссылки, иначе null
+  });
 
-      const rows = tbody.querySelectorAll('tr');
-      const rowsMap = {
-        description: rows[6],
-        brand: rows[7],
-      };
-
-      const description =
-        rowsMap.description.lastChild?.textContent?.trim() || '';
-
-      const brand = rowsMap.brand.lastChild?.textContent?.trim() || '';
-
-      return { description, brand };
-    }
-  );
+  const description = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('tr')); // Находим все строки
+    const nameRow = rows.find((row) =>
+      row.textContent!.includes('Наименование')
+    ); // Ищем строку с текстом "Наименование"
+    return nameRow
+      ? nameRow.querySelector('td[colspan="4"]')?.textContent!.trim()
+      : null; // Если нашли, возвращаем текст из ячейки с colspan=4, иначе null
+  });
 
   const results = await page.$$eval(
     'table.noborder.ss tr.aaa',

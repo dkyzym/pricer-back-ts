@@ -13,6 +13,7 @@ import {
   PageAction,
   pageActionsResult,
   PuppeteerSupplierName,
+  SupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
@@ -180,7 +181,7 @@ export const initializeSocket = (server: HTTPServer) => {
       try {
         let result;
 
-        if (supplier === 'turbo-cars') {
+        if ((supplier as SupplierName) === 'turboCars') {
           result = await turboCarsPageActionsService({
             action: 'addToCart',
             supplier,

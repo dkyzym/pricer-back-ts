@@ -33,7 +33,7 @@ export interface SessionData {
   sessionStorage: { [key: string]: string };
 }
 
-export type PageAction =
+type PageAction =
   | {
       action: 'init';
       supplier: SupplierName;

@@ -3,6 +3,7 @@ import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
 import { getPage } from '../browserManager';
+import { addToCartTurboCarsService } from '../turboCars/addToCartTurboCarsService';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
 import { loginTurboCars } from '../turboCars/loginTurboCarsService';
 import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
@@ -43,6 +44,11 @@ export const turboCarsPageActionsService = async (
           data: result,
         };
       }
+
+      case 'addToCart':
+        const { count, item } = actionParams;
+        console.log(count, JSON.stringify(item));
+        return await addToCartTurboCarsService(page, supplier, item, count);
 
       default:
         return {
