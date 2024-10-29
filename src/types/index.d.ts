@@ -59,6 +59,12 @@ export type PageAction =
       query: string;
     }
   | {
+      action: 'addToCart';
+      supplier: SupplierName;
+      item: SearchResultsParsed;
+      count: number;
+    }
+  | {
       action: 'pick';
       supplier: SupplierName;
       item: ItemToParallelSearch;

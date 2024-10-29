@@ -17,6 +17,7 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { logResultCount } from 'utils/stdLogs';
+import { SOCKET_EVENTS } from '../constants/socketEvents';
 
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
@@ -39,26 +40,32 @@ export const initializeSocket = (server: HTTPServer) => {
   io.on('connection', (socket) => {
     logger.info(chalk.cyan(`New client connected: ${socket.id}`));
 
-    socket.on('autocomplete', async (query: string) => {
+    socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (query: string) => {
       if (!query || query.trim() === '') {
-        socket.emit('autocompleteResults', { query: '', results: [] });
+        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
+          query: '',
+          results: [],
+        });
         return;
       }
 
       try {
         const results = await ugPageActionsService({
-          action: 'autocomplete',
+          action: SOCKET_EVENTS.AUTOCOMPLETE,
           query,
           supplier: 'ug',
         });
-        socket.emit('autocompleteResults', { query, results });
+        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, { query, results });
       } catch (error) {
         logger.error('Autocomplete error:', error);
-        socket.emit('autocompleteError', { query, message: error });
+        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
+          query,
+          message: error,
+        });
       }
     });
 
-    socket.on('getBrandClarification', async (query: string) => {
+    socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (query: string) => {
       try {
         const result = await ugPageActionsService({
           action: 'clarifyBrand',
@@ -67,93 +74,136 @@ export const initializeSocket = (server: HTTPServer) => {
         });
 
         if (result.success) {
-          socket.emit('brandClarificationResults', {
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.data,
             message: result.message,
           });
         } else {
-          socket.emit('brandClarificationError', {
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
             message: result.message,
           });
         }
       } catch (error) {
         logger.error('Brand Clarification error:', error);
-        socket.emit('brandClarificationError', {
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
           message: `Error clarifying brand: ${(error as Error).message}`,
         });
       }
     });
 
-    socket.on('getItemResults', async (item: ItemToParallelSearch) => {
-      logger.info(
-        chalk.bgGreenBright(
-          `${'[supplierDataFetchStarted] - Искали это: \n'}${JSON.stringify(item, null, 2)})`
-        )
-      );
-      const fetchProfitData = async () => {
-        try {
-          socket.emit('supplierDataFetchStarted', { supplier: 'profit' });
-          const data = await getItemsListByArticleService(item.article);
-          const itemsWithRest = await getItemsWithRest(data);
-          const relevantItems = itemsWithRest.filter(({ brand }: any) =>
-            isBrandMatch(item.brand, brand)
-          );
-          const profitParsedData = parseProfitApiResponse(
-            relevantItems,
-            item.brand
-          );
-
-          logResultCount(item, 'profit', profitParsedData);
-
-          const profitResult: pageActionsResult = {
-            success: profitParsedData.length > 0,
-            message: `Profit data fetched: ${profitParsedData.length > 0}`,
-            data: profitParsedData,
-          };
-
-          socket.emit('supplierDataFetchSuccess', {
-            supplier: 'profit',
-            result: profitResult,
-          });
-        } catch (error) {
-          logger.error('Profit error:', error);
-          socket.emit('supplierDataFetchError', {
-            supplier: 'profit',
-            error: (error as Error).message,
-          });
-        }
-      };
-
-      const fetchSuppliersData = async () => {
-        const suppliers: PuppeteerSupplierName[] = [
-          'ug',
-          'turboCars',
-          'patriot',
-        ];
-
-        const supplierPromises = suppliers.map(async (supplier) => {
+    socket.on(
+      SOCKET_EVENTS.GET_ITEM_RESULTS,
+      async (item: ItemToParallelSearch) => {
+        logger.info(
+          chalk.bgGreenBright(
+            `${'[supplierDataFetchStarted] - Искали это: \n'}${JSON.stringify(item, null, 2)})`
+          )
+        );
+        const fetchProfitData = async () => {
           try {
-            socket.emit('supplierDataFetchStarted', { supplier });
-            const result = await supplierServices[supplier]({
-              action: 'pick',
-              item,
-              supplier,
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier: 'profit',
             });
-            socket.emit('supplierDataFetchSuccess', { supplier, result });
+            const data = await getItemsListByArticleService(item.article);
+            const itemsWithRest = await getItemsWithRest(data);
+            const relevantItems = itemsWithRest.filter(({ brand }: any) =>
+              isBrandMatch(item.brand, brand)
+            );
+            const profitParsedData = parseProfitApiResponse(
+              relevantItems,
+              item.brand
+            );
+
+            logResultCount(item, 'profit', profitParsedData);
+
+            const profitResult: pageActionsResult = {
+              success: profitParsedData.length > 0,
+              message: `Profit data fetched: ${profitParsedData.length > 0}`,
+              data: profitParsedData,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier: 'profit',
+              result: profitResult,
+            });
           } catch (error) {
-            logger.error(`Error fetching from ${supplier}: ${error}`);
-            socket.emit('supplierDataFetchError', {
-              supplier,
+            logger.error('Profit error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'profit',
               error: (error as Error).message,
             });
           }
+        };
+
+        const fetchSuppliersData = async () => {
+          const suppliers: PuppeteerSupplierName[] = [
+            'ug',
+            'turboCars',
+            'patriot',
+          ];
+
+          const supplierPromises = suppliers.map(async (supplier) => {
+            try {
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+                supplier,
+              });
+              const result = await supplierServices[supplier]({
+                action: 'pick',
+                item,
+                supplier,
+              });
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier,
+                result,
+              });
+            } catch (error) {
+              logger.error(`Error fetching from ${supplier}: ${error}`);
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+                supplier,
+                error: (error as Error).message,
+              });
+            }
+          });
+
+          await Promise.allSettled(supplierPromises);
+        };
+
+        fetchProfitData();
+        fetchSuppliersData();
+      }
+    );
+
+    socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
+      const { count, item } = data;
+      const supplier = item.supplier;
+
+      try {
+        let result;
+
+        if (supplier === 'turbo-cars') {
+          result = await turboCarsPageActionsService({
+            action: 'addToCart',
+            supplier,
+            count,
+            item,
+          });
+        } else {
+          // Handle other suppliers if necessary
+        }
+
+        if (result?.success) {
+          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, result);
+        } else {
+          socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
+            message: result?.message,
+          });
+        }
+      } catch (error) {
+        console.error(`Error in ADD_TO_CART_REQUEST:`, error);
+        socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
+          message: (error as Error).message,
         });
-
-        await Promise.allSettled(supplierPromises);
-      };
-
-      fetchProfitData();
-      fetchSuppliersData();
+      }
     });
 
     socket.on('disconnect', () => {
