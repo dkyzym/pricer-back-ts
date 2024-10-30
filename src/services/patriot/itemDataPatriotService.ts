@@ -30,7 +30,7 @@ export const itemDataPatriotService = async ({
   const elementExists = await page.$(itemRowSelector);
 
   if (elementExists) {
-    logger.info(`${supplier} Элемент существует, выполняем клик.`);
+    logger.info(`[${supplier}] Элемент существует, выполняем клик.`);
     await clickItem(page, itemRowSelector);
   } else {
     logger.info(

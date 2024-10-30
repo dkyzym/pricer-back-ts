@@ -12,7 +12,7 @@ export const patriotPageActionsService = async (
   const { action, supplier } = actionParams;
   const { loginURL } = getSupplierData(supplier);
   const page = await getPage(supplier, loginURL);
-  logger.info(`${supplier} Выполнение действия: ${action}`);
+  logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   try {
     switch (action) {

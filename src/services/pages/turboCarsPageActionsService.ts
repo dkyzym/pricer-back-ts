@@ -17,7 +17,7 @@ export const turboCarsPageActionsService = async (
   const page = await getPage(supplier, loginURL);
 
   try {
-    logger.info(`${supplier} Выполнение действия: ${action}`);
+    logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
     switch (action) {
       case 'login': {
