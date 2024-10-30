@@ -20,24 +20,24 @@ export const addToCartTurboCarsService = async (
     searchButtonSelector,
   } = SUPPLIERS_DATA['turboCars'].selectors;
 
-  page.on('console', (msg) => {
-    const text = msg.text();
-    if (text.includes('Failed to load resource: net::ERR_FAILED')) {
-      // Ignore this error
-      return;
-    }
-    logger.info('PAGE LOG:', text);
-  });
+  //   page.on('console', (msg) => {
+  //     const text = msg.text();
+  //     if (text.includes('Failed to load resource: net::ERR_FAILED')) {
+  //       // Ignore this error
+  //       return;
+  //     }
+  //     logger.info('PAGE LOG:', text);
+  //   });
 
   // Suppress specific page errors
-  page.on('pageerror', (err) => {
-    const message = err.message || '';
-    if (message.includes('__name is not defined')) {
-      // Ignore this error
-      return;
-    }
-    logger.info('Page error:', err);
-  });
+  //   page.on('pageerror', (err) => {
+  //     const message = err.message || '';
+  //     if (message.includes('__name is not defined')) {
+  //       // Ignore this error
+  //       return;
+  //     }
+  //     logger.info('Page error:', err);
+  //   });
 
   try {
     // Click on the quantity input

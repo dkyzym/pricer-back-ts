@@ -8,6 +8,7 @@ import { clarifyBrandService } from '../ug/clarifyBrandService';
 import { itemDataUgService } from '../ug/itemDataUgService';
 import { loginUgService } from '../ug/loginUgService';
 import { logoutUgService } from '../ug/logoutUgService';
+import { addToCartUgService } from '../ug/addToCartUgService';
 
 export const ugPageActionsService = async (
   actionParams: PageAction
@@ -83,6 +84,12 @@ export const ugPageActionsService = async (
           data: result,
         };
       }
+
+      case 'addToCart':
+        const { count, item } = actionParams;
+
+        return await addToCartUgService(page, supplier, item, count);
+
       default:
         return {
           success: false,

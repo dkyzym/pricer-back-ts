@@ -188,8 +188,14 @@ export const initializeSocket = (server: HTTPServer) => {
             count,
             item,
           });
-        } else {
+        } else if ((supplier as SupplierName) === 'ug') {
           // Handle other suppliers if necessary
+          result = await ugPageActionsService({
+            action: 'addToCart',
+            supplier,
+            count,
+            item,
+          });
         }
 
         if (result?.success) {
