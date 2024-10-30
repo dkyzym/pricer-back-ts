@@ -1,35 +1,32 @@
-import chalk from 'chalk';
 import { logger } from 'config/logger';
 import { Page } from 'puppeteer';
-import { pageActionsResult, SearchResultsParsed } from 'types';
-
-// Quantity input
-const quantityInputSelector = '#QtyZakaz';
-
-// Delivery options container
-const deliveryOptionsContainerSelector = '#ztab';
-
-// Radio buttons for delivery options
-const deliveryOptionRadioSelector = 'input[name="StSel"]';
-
-// Submit order button
-const submitOrderButtonSelector = '#INSERT';
-
-const reserveCheckboxSelector = 'input[name="ReservCB"]';
+import { pageActionsResult, SearchResultsParsed, SupplierName } from 'types';
+import { SUPPLIERS_DATA } from '../../constants';
 
 export const addToCartTurboCarsService = async (
   page: Page,
-  supplier: string,
+  supplier: SupplierName,
   item: SearchResultsParsed,
   count: number
 ): Promise<pageActionsResult> => {
+  const {
+    quantityInputSelector,
+    deliveryOptionsContainerSelector,
+    deliveryOptionRadioSelector,
+    submitOrderButtonSelector,
+    reserveCheckboxSelector,
+    messageBoxSelector,
+    messagePanelSelector,
+    searchButtonSelector,
+  } = SUPPLIERS_DATA['turboCars'].selectors;
+
   page.on('console', (msg) => {
     const text = msg.text();
     if (text.includes('Failed to load resource: net::ERR_FAILED')) {
       // Ignore this error
       return;
     }
-    console.log('PAGE LOG:', text);
+    logger.info('PAGE LOG:', text);
   });
 
   // Suppress specific page errors
@@ -39,24 +36,24 @@ export const addToCartTurboCarsService = async (
       // Ignore this error
       return;
     }
-    console.log('Page error:', err);
+    logger.info('Page error:', err);
   });
 
   try {
     // Click on the quantity input
-    const quantityInput = page.locator(quantityInputSelector);
+    const quantityInput = page.locator(quantityInputSelector!);
 
     await quantityInput.click();
 
     // Wait for the delivery options container to become visible
-    await page.waitForSelector(deliveryOptionsContainerSelector, {
+    await page.waitForSelector(deliveryOptionsContainerSelector!, {
       visible: true,
       timeout: 15000,
     });
 
     // Select the appropriate delivery option (radio button) based on warehouse name
     const warehouseName = item.warehouse; // Ensure this is available in `row`
-    const deliveryOptions = await page.$$(deliveryOptionRadioSelector);
+    const deliveryOptions = await page.$$(deliveryOptionRadioSelector!);
 
     let optionFound = false;
 
@@ -93,10 +90,10 @@ export const addToCartTurboCarsService = async (
       throw new Error(`Не найден вариант склада: ${warehouseName}`);
     }
 
-    await page.click(reserveCheckboxSelector);
+    await page.click(reserveCheckboxSelector!);
 
     const isChecked = await page.$eval(
-      reserveCheckboxSelector,
+      reserveCheckboxSelector!,
       (el) => (el as HTMLInputElement).checked
     );
     if (!isChecked)
@@ -108,28 +105,36 @@ export const addToCartTurboCarsService = async (
     // Enter the quantity
     await quantityInput.fill(count.toString());
 
-    // Optionally, check the 'reserve' checkbox if needed
-
     // Click the submit order button
-    await page.click(submitOrderButtonSelector);
+    await page.click(submitOrderButtonSelector!);
 
     // Ожидание появления модального окна
-    await page.waitForSelector('#msgbox', { visible: true, timeout: 15000 });
+    await page.waitForSelector(messageBoxSelector!, {
+      visible: true,
+      timeout: 15000,
+    });
 
     // Ожидаем, пока в #msgpanel появится текст 'Результат:'
     await page.waitForFunction(
-      () => {
-        const msgPanel = document.querySelector('#msgpanel');
-        return msgPanel && msgPanel.innerText.includes('Результат:');
+      (selector) => {
+        const msgPanel = document.querySelector(selector!);
+        return (
+          msgPanel &&
+          (msgPanel as HTMLDivElement).innerText.includes('Результат:')
+        );
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
+      messagePanelSelector!
     );
 
     // Получение содержимого #msgpanel
-    const msgPanelContent = await page.$eval('#msgpanel', (el) => el.innerText);
+    const msgPanelContent = await page.$eval(
+      messagePanelSelector!,
+      (el) => (el as HTMLDivElement).innerText
+    );
 
     // Выводим содержимое msgPanelContent
-    console.log('msgPanelContent:', msgPanelContent);
+    // console.log('msgPanelContent:', msgPanelContent);
 
     // Разбиваем содержимое на строки
     const lines = msgPanelContent.split('\n');
@@ -150,9 +155,8 @@ export const addToCartTurboCarsService = async (
     if (confirmationResult === 'OK') {
       // Закрываем модальное окно
       await page.keyboard.press('Escape');
-      console.log(chalk.bgYellowBright('after escape'));
 
-      await page.click('#Submit1');
+      await page.click(searchButtonSelector!);
 
       return {
         success: true,
@@ -171,7 +175,6 @@ export const addToCartTurboCarsService = async (
     }
   } catch (error) {
     logger.error(`${supplier}: Error in addToCart:`, (error as Error).stack);
-    console.log(error);
     return {
       success: false,
       message: `Ошибка при добавлении в корзину: ${(error as Error).message}`,

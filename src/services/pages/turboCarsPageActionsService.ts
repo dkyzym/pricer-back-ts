@@ -47,7 +47,7 @@ export const turboCarsPageActionsService = async (
 
       case 'addToCart':
         const { count, item } = actionParams;
-        console.log(count, JSON.stringify(item));
+
         return await addToCartTurboCarsService(page, supplier, item, count);
 
       default:
