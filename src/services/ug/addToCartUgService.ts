@@ -22,42 +22,63 @@ export const addToCartUgService = async (
 
     // Ждем появления строки товара
     await page.waitForSelector(targetRowSelector, { timeout: 5000 });
-    const targetRow = await page.$(targetRowSelector);
-    if (!targetRow) {
-      throw new Error('Не найдена строка товара.');
-    }
 
-    const inputElement = await targetRow.$(inputSelector);
-    if (!inputElement) {
-      throw new Error('Не найдено поле ввода количества в строке товара.');
-    }
+    // Селекторы для элементов внутри строки товара
+    const inputElementSelector = `${targetRowSelector} ${inputSelector}`;
+    const buyButtonSelector = `${targetRowSelector} ${addToCartButtonSelector}`;
 
-    const buyButton = await targetRow.$(addToCartButtonSelector);
-    if (!buyButton) {
-      throw new Error('Не найдена кнопка "Купить" в строке товара.');
-    }
+    // Ждем появления и видимости поля ввода количества
+    await page.waitForSelector(inputElementSelector, {
+      visible: true,
+      timeout: 5000,
+    });
 
-    await inputElement.click();
-    await inputElement.type(count.toString());
-    await buyButton.click();
-    console.log('Кнопка "Купить" нажата.');
+    // Очищаем поле и вводим количество
+    await page.focus(inputElementSelector);
+    await page.click(inputElementSelector, { clickCount: 3 });
+    await page.keyboard.press('Backspace');
+    await page.type(inputElementSelector, count.toString(), { delay: 100 });
+
+    // Ждем появления и видимости кнопки "Купить"
+    await page.waitForSelector(buyButtonSelector, {
+      visible: true,
+      timeout: 5000,
+    });
+
+    // Выполняем клик по кнопке "Купить" через page.evaluate()
+    await page.evaluate((selector) => {
+      const button = document.querySelector(selector) as HTMLElement;
+      if (button) {
+        button.click();
+      }
+    }, buyButtonSelector);
+
+    logger.info(`[${supplier}] ${item.article} Кнопка "Купить" нажата.`);
 
     // Ждем появления либо диалогового окна, либо тултипа
     await page.waitForFunction(
-      () => {
-        return (
-          document.querySelector('div.ui-dialog') ||
-          document.querySelector('div.ui-tooltip-content')
-        );
-      },
+      () =>
+        document.querySelector('div.ui-dialog') ||
+        document.querySelector('div.ui-tooltip-content'),
       { timeout: 5000 }
     );
 
-    const modalDialog = await page.$('div.ui-dialog');
+    // Обработка диалогового окна, если оно появилось
+    const modalDialogSelector = 'div.ui-dialog';
+    const modalDialog = await page.$(modalDialogSelector);
 
     if (modalDialog) {
-      // Если появилось диалоговое окно, находим кнопку "Да" и нажимаем
-      const buttons = await modalDialog.$$('button');
+      // Ждем, пока диалоговое окно станет видимым
+      await page.waitForSelector(
+        `${modalDialogSelector}[style*="display: block"]`,
+        { timeout: 5000 }
+      );
+
+      // Селектор кнопок внутри диалогового окна
+      const yesButtonSelector = `${modalDialogSelector} button`;
+
+      // Находим все кнопки и кликаем по той, которая содержит текст "Да"
+      const buttons = await page.$$(yesButtonSelector);
       let yesButtonFound = false;
       for (const button of buttons) {
         const buttonText = await page.evaluate(
@@ -65,42 +86,38 @@ export const addToCartUgService = async (
           button
         );
         if (buttonText === 'Да') {
-          await button.click();
-          console.log('Нажата кнопка "Да" в диалоговом окне.');
+          await page.evaluate((el) => (el as HTMLElement).click(), button);
+          logger.info(`Подтвердили добавление еще ${item.article}`);
           yesButtonFound = true;
           break;
         }
       }
+
       if (!yesButtonFound) {
         throw new Error('Не найдена кнопка "Да" в диалоговом окне.');
       }
-      // Возвращаем успех без ожидания тултипа
+    }
+
+    // Ждем появления тултипа
+    const tooltipSelector = 'div.ui-tooltip-content';
+    await page.waitForSelector(tooltipSelector, {
+      visible: true,
+      timeout: 5000,
+    });
+    const tooltipText = await page.$eval(tooltipSelector, (el) =>
+      el.textContent?.trim()
+    );
+
+    if (tooltipText === 'Товар добавлен в корзину') {
+      logger.info(`${item.brand} ${item.article} Добавлен в корзину`);
       return {
         message: `${item.brand} ${item.article} успешно добавлен`,
         success: true,
       };
     } else {
-      // Если диалогового окна нет, ждем появления тултипа
-      await page.waitForSelector('div.ui-tooltip-content', { timeout: 5000 });
-
-      const tooltipText = await page.$eval('div.ui-tooltip-content', (el) =>
-        el.textContent?.trim()
+      logger.warn(
+        'Тултип подтверждения добавления товара в корзину не соответствует ожиданиям.'
       );
-
-      if (tooltipText === 'Товар добавлен в корзину') {
-        console.log(
-          'Тултип подтверждения добавления товара в корзину обнаружен.'
-        );
-        return {
-          message: `${item.brand} ${item.article} успешно добавлен`,
-          success: true,
-        };
-      } else {
-        console.log(
-          'Тултип подтверждения добавления товара в корзину не соответствует ожиданиям.'
-        );
-      }
-
       return {
         message: `Товар не добавлен в корзину`,
         success: false,
