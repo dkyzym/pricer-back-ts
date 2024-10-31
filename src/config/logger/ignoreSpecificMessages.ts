@@ -19,6 +19,7 @@ export const ignoreSpecificMessages = format((info) => {
     'png',
     'gif',
     'jpg',
+    '302',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {

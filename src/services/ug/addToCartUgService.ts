@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { Page } from 'puppeteer';
 import { pageActionsResult, SearchResultsParsed, SupplierName } from 'types';
 import { logger } from '../../config/logger';
@@ -125,6 +126,11 @@ export const addToCartUgService = async (
     }
   } catch (error) {
     logger.error(`${supplier}: Error in addToCart:`, (error as Error).stack);
+    console.log(chalk.yellow((error as Error).stack));
+    console.log(chalk.yellow((error as Error).message));
+    await page.screenshot({
+      path: `/src/screenshots/error_screenshot_${Date.now()}.png`,
+    });
     return {
       success: false,
       message: `Ошибка при добавлении в корзину: ${(error as Error).message}`,
