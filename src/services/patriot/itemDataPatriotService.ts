@@ -1,5 +1,4 @@
 import { SUPPLIERS_DATA } from '@constants/index';
-import { parsePickedPatriotResults } from '@utils/pupHelpers/parsePickerPatriotResults';
 import { logger } from 'config/logger';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import {
@@ -8,6 +7,7 @@ import {
   pressEnter,
   waitForPageNavigation,
 } from 'utils/pupHelpers/pageHelpers';
+import { parsePickedUgResults } from 'utils/pupHelpers/parsePickedUgResults';
 import { logResultCount } from 'utils/stdLogs';
 
 export const itemDataPatriotService = async ({
@@ -37,8 +37,9 @@ export const itemDataPatriotService = async ({
       `${supplier} Элемент ${itemRowSelector} не найден. Продолжаем без клика.`
     );
   }
-
-  const allResults = await parsePickedPatriotResults({
+  // используем сервис парсинга ЮГ, так как они идентичны
+  // а переименовывать не охота
+  const allResults = await parsePickedUgResults({
     page,
     item,
     supplier,

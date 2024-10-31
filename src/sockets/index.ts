@@ -180,19 +180,22 @@ export const initializeSocket = (server: HTTPServer) => {
 
       try {
         let result;
+        const supplierName = supplier as SupplierName;
 
-        if ((supplier as SupplierName) === 'turboCars') {
+        if (supplierName === 'turboCars') {
           result = await turboCarsPageActionsService({
             action: 'addToCart',
-            supplier,
+            supplier: supplierName,
             count,
             item,
           });
-        } else if ((supplier as SupplierName) === 'ug') {
-          // Handle other suppliers if necessary
+        } else if (supplierName === 'ug' || supplierName === 'patriot') {
+          /*используем один сервис для ЮГ и Патриот так как
+           функции парсинга и добавления в корзину идентичны
+           и чтобы пока не создавать карту и усложнять не код */
           result = await ugPageActionsService({
             action: 'addToCart',
-            supplier,
+            supplier: supplierName,
             count,
             item,
           });
