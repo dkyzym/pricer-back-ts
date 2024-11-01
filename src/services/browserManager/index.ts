@@ -1,18 +1,18 @@
 import { logger } from 'config/logger';
-import { Browser, Page } from 'puppeteer';
+import { Browser, BrowserContext, HTTPRequest, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { SupplierName } from 'types';
 
 puppeteer.use(StealthPlugin());
 
-const browsers: Map<SupplierName, Browser> = new Map();
+let browser: Browser | null = null;
+const contexts: Map<SupplierName, BrowserContext> = new Map();
 const pages: Map<SupplierName, Page> = new Map();
 
-export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
-  let browser = browsers.get(supplier);
+export const initBrowser = async (): Promise<Browser> => {
   if (!browser || !browser.connected) {
-    logger.info(`Launching new browser for supplier: ${supplier}`);
+    logger.info(`Launching new browser`);
     browser = await puppeteer.launch({
       headless: true,
       args: [
@@ -24,12 +24,14 @@ export const initBrowser = async (supplier: SupplierName): Promise<Browser> => {
       ],
       defaultViewport: null,
     });
-    browsers.set(supplier, browser);
 
-    const pagesArray = await browser.pages();
-    if (pagesArray.length > 0) {
-      await pagesArray[0].close();
-    }
+    // Добавляем обработчик на случай отключения браузера
+    browser.on('disconnected', () => {
+      browser = null;
+      contexts.clear();
+      pages.clear();
+      logger.info(`Browser disconnected`);
+    });
   }
   return browser;
 };
@@ -38,18 +40,23 @@ export const getPage = async (
   supplier: SupplierName,
   url: string
 ): Promise<Page> => {
-  const browser = await initBrowser(supplier);
+  const browser = await initBrowser();
   const waitTimeOutPeriod = 60_000;
 
   let page = pages.get(supplier);
   if (page && !page.isClosed()) {
     logger.info(`Reusing existing page for supplier: ${supplier}`);
-
     await page.bringToFront();
   } else {
     logger.info(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
-    const context = await browser.createBrowserContext();
+    // Создаём или получаем существующий контекст
+    let context = contexts.get(supplier);
+    if (!context) {
+      context = await browser.createBrowserContext();
+      contexts.set(supplier, context);
+    }
+
     page = await context.newPage();
 
     await page.setUserAgent(
@@ -84,28 +91,29 @@ export const getPage = async (
       deviceScaleFactor: 1,
     });
 
-    // Enable request interception
+    // Включаем перехват запросов
     await page.setRequestInterception(true);
 
-    page.on('request', (request) => {
+    page.on('request', (request: HTTPRequest) => {
+      const resourceType = request.resourceType();
       const headers = {
         ...request.headers(),
         'Accept-Language': 'ru-RU,ru;q=0.9',
       };
 
-      if (request.resourceType() === 'image') {
-        // Abort image requests to prevent hanging
+      // Блокируем ненужные ресурсы
+      if (['image', 'font'].includes(resourceType)) {
         request.abort();
       } else {
         request.continue({ headers });
       }
     });
 
-    page.on('pageerror', (err) => {
+    page.on('pageerror', (err: Error) => {
       logger.error(`${page?.url()}, ${err}`);
     });
 
-    page.on('error', (err) => {
+    page.on('error', (err: Error) => {
       logger.error(`Page crashed ${page?.url()}: ${err}`);
     });
 
@@ -130,23 +138,63 @@ export const getPage = async (
       });
     } catch (error) {
       logger.error(`Error during page.goto for supplier ${supplier}: ${error}`);
-      // Handle the error as needed
     }
 
-    // Optionally, you can remove or adjust this waitForFunction
     try {
       await page.waitForFunction(() => document.readyState === 'complete', {
         timeout: waitTimeOutPeriod,
       });
     } catch (error) {
       logger.error(`Error during waitForFunction: ${error}`);
-      // Handle the error as needed
     }
 
     pages.set(supplier, page);
+
+    // Добавляем обработчик закрытия страницы
+    page.on('close', () => {
+      pages.delete(supplier);
+      logger.info(`Page closed for supplier: ${supplier}`);
+    });
   }
 
   return page;
+};
+
+export const closePage = async (supplier: SupplierName): Promise<void> => {
+  const page = pages.get(supplier);
+  if (page && !page.isClosed()) {
+    await page.close();
+    pages.delete(supplier);
+    logger.info(`Closed page for supplier: ${supplier}`);
+  }
+};
+
+export const closeContext = async (supplier: SupplierName): Promise<void> => {
+  const context = contexts.get(supplier);
+  if (context) {
+    await context.close();
+    contexts.delete(supplier);
+    logger.info(`Closed context for supplier: ${supplier}`);
+  }
+};
+
+export const closeBrowser = async (): Promise<void> => {
+  if (browser && browser.connected) {
+    await browser.close();
+    browser = null;
+    contexts.clear();
+    pages.clear();
+    logger.info(`Closed browser`);
+  }
+};
+
+export const closeAllResources = async () => {
+  const suppliers: SupplierName[] = ['ug', 'turboCars', 'patriot'];
+  for (const supplier of suppliers) {
+    await closePage(supplier);
+    await closeContext(supplier);
+  }
+  await closeBrowser();
 };
 
 declare global {

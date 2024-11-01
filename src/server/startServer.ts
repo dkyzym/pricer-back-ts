@@ -6,6 +6,9 @@ import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
 import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { initializeSocket } from 'sockets';
+import { closeAllResources } from '../services/browserManager';
+
+// В файле, где вы инициализируете сервер
 
 export const startServer = async (app: Application) => {
   try {
@@ -23,6 +26,15 @@ export const startServer = async (app: Application) => {
     });
 
     initializeSocket(server);
+
+    // Добавляем обработчик для остановки сервера
+    process.on('SIGINT', async () => {
+      await closeAllResources();
+      server.close(() => {
+        logger.info(chalk.cyanBright.italic('Server closed'));
+        process.exit();
+      });
+    });
   } catch (e) {
     logger.error((e as Error).message);
   }
