@@ -74,22 +74,6 @@ export const SUPPLIERS_DATA: SuppliersData = {
       firstRowWrapper: '',
     },
   },
-  // orion: {
-  //   credentials: 'аккаунт',
-  //   cookieName: 'orCookies',
-  //   loginURL: 'https://x-orion.ru/login',
-  //   logoutURL: 'https://x-orion.ru/logout',
-  //   dashboardURL: 'https://x-orion.ru/lk',
-  //   selectors: {
-  //     loginForm: 'a[data-bs-toggle="modal"]',
-  //     credentialsEl: 'a[href="https://x-orion.ru/lk"] span',
-  //     emailUsernameField: '#email_auth',
-  //     passwordField: '#password_auth',
-  //     loginBtn: '.btn-login',
-  //     logoutBtn: '.account__leave-btn',
-  //     input: '',
-  //   },
-  // },
   // armtek: {
   //   credentials: 'Кизим',
   //   cookieName: 'arCookies',
@@ -108,13 +92,3 @@ export const SUPPLIERS_DATA: SuppliersData = {
 };
 
 Object.freeze(SUPPLIERS_DATA);
-
-export const HEADLESS_SETTINGS = {
-  userAgent:
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
-  language: {
-    'accept-language': 'ru-RU,ru;q=0.9',
-  },
-};
-
-Object.freeze(HEADLESS_SETTINGS);
