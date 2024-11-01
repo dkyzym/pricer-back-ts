@@ -109,10 +109,12 @@ export const parsePickedUgResults = async ({
 
   if (currentData.length > 0) {
     // Добавляем информацию о поставщике к каждому продукту
-    const resultsWithSupplier = currentData.map((product) => ({
-      ...product,
-      supplier,
-    }));
+    const resultsWithSupplier = currentData
+      .map((product) => ({
+        ...product,
+        supplier,
+      }))
+      .filter((product) => product.warehouse !== 'Внешний склад');
 
     // Фильтруем результаты на основе заданных критериев
     const filteredResults = filterEqualResults(resultsWithSupplier, item);
