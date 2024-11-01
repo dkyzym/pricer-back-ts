@@ -10,8 +10,11 @@ export const addToCartUgService = async (
   count: number
 ): Promise<pageActionsResult> => {
   try {
+    const removeSymbols = (string: string) =>
+      string.replace(/[^a-zA-Zа-яА-ЯёЁ0-9]/g, '');
+
     // Формируем селектор для строки товара
-    const dataBrandNumberAttr = `${item.article.replace(/\s/g, '')}_${item.brand.replace(/\s/g, '')}`;
+    const dataBrandNumberAttr = `${removeSymbols(item.article)}_${removeSymbols(item.brand)}`;
     const dataBrandAttr = `tr[data-current-brand-number="${dataBrandNumberAttr}"]`;
     const dataAvailabilityAttr = `[data-availability="${item.availability}"]`;
     const dataOutputPriceAttr = `[data-output-price="${item.price}"]`;
