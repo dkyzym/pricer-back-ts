@@ -1,6 +1,8 @@
 import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
+import { checkElementTextForAuthorization } from '../../utils/auth/checkIsAuth';
+import { NotLoggedInError } from '../../utils/errors';
 import { getPage } from '../browserManager';
 import { itemDataPatriotService } from '../patriot/itemDataPatriotService';
 import { loginPatriotService } from '../patriot/loginPatriotService';
@@ -10,7 +12,7 @@ export const patriotPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
-  const { loginURL } = getSupplierData(supplier);
+  const { loginURL, credentials, selectors } = getSupplierData(supplier);
   const page = await getPage(supplier, loginURL);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
@@ -27,13 +29,20 @@ export const patriotPageActionsService = async (
       }
       case 'logout':
         return await logoutPatriotService(page, supplier);
-      default:
-        return {
-          success: false,
-          message: `${supplier}: Invalid action`,
-        };
       case 'pick': {
         const { item, supplier, action } = actionParams;
+
+        const isLoggedIn = await checkElementTextForAuthorization(
+          page,
+          selectors.credentialsEl,
+          credentials
+        );
+        if (!isLoggedIn) {
+          const notLoggedInMessage = `${supplier}: ${action} не залогинен`;
+          logger.error(notLoggedInMessage);
+          throw new NotLoggedInError(notLoggedInMessage);
+        }
+
         const result = await itemDataPatriotService({
           page,
           item,
@@ -42,19 +51,21 @@ export const patriotPageActionsService = async (
 
         return {
           success: true,
-          message: `${supplier}: ${action} successful`,
+          message: `${supplier}: ${action} успешен`,
           data: result,
         };
       }
+      default:
+        return {
+          success: false,
+          message: `${supplier}: Некорректное действие`,
+        };
     }
   } catch (error) {
     logger.error(
-      `${supplier}: Error performing ${action} action on Page Auth Actions:`,
+      `${supplier}: Ошибка при выполнении действия ${action} в Page Auth Actions:`,
       error
     );
-    return {
-      success: false,
-      message: `${supplier}: An error occurred during the ${action} action`,
-    };
+    throw error;
   }
 };

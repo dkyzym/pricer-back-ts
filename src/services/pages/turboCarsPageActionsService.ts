@@ -2,6 +2,8 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
+import { checkTcAuth } from '../../utils/auth/checkIsAuth';
+import { NotLoggedInError } from '../../utils/errors';
 import { getPage } from '../browserManager';
 import { addToCartTurboCarsService } from '../turboCars/addToCartTurboCarsService';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
@@ -12,7 +14,7 @@ export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
-  const { loginURL } = getSupplierData(supplier);
+  const { loginURL, credentials, selectors } = getSupplierData(supplier);
 
   const page = await getPage(supplier, loginURL);
 
@@ -36,34 +38,43 @@ export const turboCarsPageActionsService = async (
       case 'pick': {
         const { item, supplier, action } = actionParams;
 
+        const isLoggedIn = await checkTcAuth(
+          page,
+          selectors.credentialsEl,
+          credentials
+        );
+        if (!isLoggedIn) {
+          const notLoggedInMessage = `${supplier}: ${action} не залогинен`;
+          logger.error(notLoggedInMessage);
+          throw new NotLoggedInError(notLoggedInMessage); // Бросаем пользовательскую ошибку
+        }
         const result = await itemDataTurboCarsService({ page, item, supplier });
         logResultCount(item, supplier, result);
+
         return {
           success: true,
-          message: `${supplier}: ${action} successful`,
+          message: `${supplier}: ${action} успешно выполнено`,
           data: result,
         };
       }
 
-      case 'addToCart':
+      case 'addToCart': {
         const { count, item } = actionParams;
 
         return await addToCartTurboCarsService(page, supplier, item, count);
+      }
 
       default:
         return {
           success: false,
-          message: `${supplier}: Invalid action`,
+          message: `${supplier}: Некорректное действие`,
         };
     }
   } catch (error) {
     logger.error(
-      `${supplier}: Error performing ${action} action on Page Auth Actions:`,
+      `${supplier}: Ошибка при выполнении действия ${action} в Turbo Cars Page Actions:`,
       error
     );
-    return {
-      success: false,
-      message: `${supplier}: An error occurred during the ${action} action`,
-    };
+    throw error;
   }
 };

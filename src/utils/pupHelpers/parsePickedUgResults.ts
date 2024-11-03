@@ -39,8 +39,8 @@ export const parseData = async (
       const warehouse = warehouseElement?.innerText.trim() || '';
       const imageUrl = imageElement?.getAttribute('src') || '';
       const probabilityText =
-        probabilityElement?.textContent?.replace('%', '').trim() || '0';
-      const probability = parseFloat(probabilityText) || 0;
+        probabilityElement?.textContent?.replace('%', '').trim() || '';
+      const probability = parseFloat(probabilityText) || '';
       const id =
         quantityInputElement?.getAttribute('searchresultuniqueid') || '';
       const multiText = addToBasketElement?.getAttribute('packing') || '1';

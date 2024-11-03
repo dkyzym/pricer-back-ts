@@ -2,19 +2,21 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
+import { checkElementTextForAuthorization } from '../../utils/auth/checkIsAuth';
+import { NotLoggedInError } from '../../utils/errors';
 import { getPage } from '../browserManager';
+import { addToCartUgService } from '../ug/addToCartUgService';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
 import { clarifyBrandService } from '../ug/clarifyBrandService';
 import { itemDataUgService } from '../ug/itemDataUgService';
 import { loginUgService } from '../ug/loginUgService';
 import { logoutUgService } from '../ug/logoutUgService';
-import { addToCartUgService } from '../ug/addToCartUgService';
 
 export const ugPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier } = actionParams;
-  const { loginURL } = getSupplierData(supplier);
+  const { loginURL, credentials, selectors } = getSupplierData(supplier);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   const page = await getPage(supplier, loginURL);
@@ -58,22 +60,30 @@ export const ugPageActionsService = async (
           return {
             success: true,
             message: hasData
-              ? `${supplier}: Уточнение  выполнено успешно`
+              ? `${supplier}: Уточнение выполнено успешно`
               : `${supplier}: По запросу "${query}" данные не найдены`,
             data: possibleBrands,
           };
         } catch (error) {
           logger.error(`Ошибка в clarifyBrand: ${error}`);
-          return {
-            success: false,
-            message: `${supplier}: Ошибка при уточнении`,
-            data: [],
-          };
+          // Бросаем ошибку дальше для глобальной обработки
+          throw error;
         }
       }
 
       case 'pick': {
         const { item, supplier, action } = actionParams;
+
+        const isLoggedIn = await checkElementTextForAuthorization(
+          page,
+          selectors.credentialsEl,
+          credentials
+        );
+        if (!isLoggedIn) {
+          const notLoggedInMessage = `${supplier}: ${action} не залогинен`;
+          logger.error(notLoggedInMessage);
+          throw new NotLoggedInError(notLoggedInMessage);
+        }
 
         const result = await itemDataUgService({ page, item, supplier });
         logResultCount(item, supplier, result);
@@ -85,25 +95,23 @@ export const ugPageActionsService = async (
         };
       }
 
-      case 'addToCart':
+      case 'addToCart': {
         const { count, item } = actionParams;
 
         return await addToCartUgService(page, supplier, item, count);
+      }
 
       default:
         return {
           success: false,
-          message: `${supplier}: Invalid action`,
+          message: `${supplier}: Некорректное действие`,
         };
     }
   } catch (error) {
     logger.error(
-      `${supplier}: Error performing ${action} action on Page Auth Actions:`,
+      `${supplier}: Ошибка при выполнении действия ${action} в Page Auth Actions:`,
       error
     );
-    return {
-      success: false,
-      message: `${supplier}: An error occurred during the ${action} action`,
-    };
+    throw error;
   }
 };

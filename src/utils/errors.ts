@@ -59,3 +59,11 @@ export class ForbiddenError extends BaseError {
     this.code = 403;
   }
 }
+
+export class NotLoggedInError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotLoggedInError';
+    Object.setPrototypeOf(this, NotLoggedInError.prototype);
+  }
+}
