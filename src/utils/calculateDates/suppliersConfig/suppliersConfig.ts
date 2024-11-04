@@ -27,6 +27,16 @@ export const suppliersConfig: SupplierConfig[] = [
         deliveryDate = currentTime.plus({ days: 2 });
       }
 
+      // Добавляем специальные условия для warehouse
+      if (
+        result.warehouse.includes('Донецк') ||
+        result.warehouse.includes('Мариуполь')
+      ) {
+        deliveryDate = deliveryDate.plus({ days: 2 });
+      } else if (result.warehouse.includes('Мелитополь')) {
+        deliveryDate = deliveryDate.plus({ days: 3 });
+      }
+
       // Корректировка для дней без доставки (воскресенье и понедельник)
       while (deliveryDate.weekday === 1 || deliveryDate.weekday === 7) {
         deliveryDate = deliveryDate.plus({ days: 1 });
