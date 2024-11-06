@@ -42,11 +42,12 @@ export const loginTurboCars = async ({
       page.waitForFunction(
         () => {
           const errorMessages = ['Внимание!'];
-          return errorMessages.some((msg) =>
-            document.body.innerText.includes(msg)
+          return (
+            document.body &&
+            errorMessages.some((msg) => document.body.innerText.includes(msg))
           );
         },
-        { timeout: 10000 }
+        { timeout: 10_000 }
       ),
       new Promise((resolve) => setTimeout(resolve, 10_000)),
     ]);
