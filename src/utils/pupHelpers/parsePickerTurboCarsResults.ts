@@ -10,7 +10,7 @@ import { calculateDeliveryDate } from '../calculateDates';
 import { isBrandMatch } from '../data/isBrandMatch';
 import { needToCheckBrand } from '../data/needToCheckBrand';
 
-// Helper function to check element visibility
+// Функция для проверки видимости элемента
 const isElementVisible = async (
   page: Page,
   element: ElementHandle<Element>
@@ -27,8 +27,13 @@ const isElementVisible = async (
   }, element);
 };
 
-// Helper function to normalize brand names and handle variations like parentheses
-const normalizeBrandNameExtended = (brand: string): string[] => {
+// Функция для нормализации названий брендов
+const normalizeBrandNameExtended = (
+  brand: string | null | undefined
+): string[] => {
+  if (!brand) {
+    return [];
+  }
   const normalized = brand.replace(/\s+/g, '').toLowerCase();
   const parts = normalized
     .split(/[()]/)
@@ -41,69 +46,86 @@ export const isInStock = async (
   page: Page,
   item: ItemToParallelSearch
 ): Promise<boolean> => {
+  logger.info(`Проверка наличия товара: ${item.article}, бренд: ${item.brand}`);
+
   const firstRowSelector = '#block0';
 
-  // Decode and normalize the brand name
-  const brandVariants = normalizeBrandNameExtended(
-    decodeURIComponent(item.brand)
-  );
+  // Декодируем и нормализуем название бренда
+  const decodedBrand = item.brand ? decodeURIComponent(item.brand) : '';
+  const brandVariants = normalizeBrandNameExtended(decodedBrand);
+  logger.debug(`Варианты бренда: ${JSON.stringify(brandVariants)}`);
 
-  // Find the parent element and check if it's visible
+  // Находим родительский элемент и проверяем, видим ли он
   const parentElementHandle = await page.$(firstRowSelector);
   if (
     !parentElementHandle ||
     !(await isElementVisible(page, parentElementHandle))
   ) {
+    logger.warn(
+      `Родительский элемент не найден или не виден для товара: ${item.article}`
+    );
     return false;
   }
 
-  // Find all <tr> elements inside the parent element
+  // Находим все элементы <tr> внутри родительского элемента
   const trHandles = await parentElementHandle.$$(':scope > tr');
 
+  let inStock = false;
+
   for (const trHandle of trHandles) {
-    // Check if the class list or text content contains the brand name
-    const { classList, textContent } = await page.evaluate(
-      (el) => ({
-        classList: Array.from(el.classList),
-        textContent: el.textContent || '',
-      }),
-      trHandle
-    );
+    try {
+      // Проверяем, содержит ли список классов или текстовое содержимое название бренда
+      const { classList, textContent } = await page.evaluate(
+        (el) => ({
+          classList: Array.from(el.classList),
+          textContent: el.textContent || '',
+        }),
+        trHandle
+      );
 
-    const normalizedClassList = classList.map((cls) =>
-      cls.replace(/\s+/g, '').toLowerCase()
-    );
+      const normalizedClassList = classList.map((cls) =>
+        cls.replace(/\s+/g, '').toLowerCase()
+      );
 
-    // Use the brand matching function to verify if the brand matches
-    const hasMatchingClass = normalizedClassList.some((cls) =>
-      brandVariants.some((variant) => isBrandMatch(variant, cls))
-    );
+      const hasMatchingClass = normalizedClassList.some((cls) =>
+        brandVariants.some((variant) => isBrandMatch(variant, cls))
+      );
 
-    // Extend the text content check to include matches for partial brand names (like SANGSIN and HI-Q)
-    const textParts = textContent
-      .toLowerCase()
-      .split(/[()]/)
-      .filter(Boolean)
-      .map((part) => part.trim());
-    const hasMatchingTextContent = textParts.some((part) =>
-      brandVariants.some((variant) => isBrandMatch(variant, part))
-    );
+      const textParts = textContent
+        .toLowerCase()
+        .split(/[()]/)
+        .filter(Boolean)
+        .map((part) => part.trim());
+      const hasMatchingTextContent = textParts.some((part) =>
+        brandVariants.some((variant) => isBrandMatch(variant, part))
+      );
 
-    if (
-      (hasMatchingClass || hasMatchingTextContent) &&
-      (await isElementVisible(page, trHandle))
-    ) {
-      return true;
+      if (
+        (hasMatchingClass || hasMatchingTextContent) &&
+        (await isElementVisible(page, trHandle))
+      ) {
+        logger.info(`Товар ${item.article} в наличии`);
+        inStock = true;
+        break;
+      }
+    } catch (error) {
+      logger.error(
+        `Ошибка при проверке наличия товара ${item.article}: ${error}`
+      );
+    } finally {
+      // Освобождаем ресурсы
+      await trHandle.dispose();
     }
-
-    // Dispose the handle to prevent memory leaks
-    await trHandle.dispose();
   }
 
-  // Dispose the parent element handle
+  // Освобождаем родительский элемент
   await parentElementHandle.dispose();
 
-  return false;
+  if (!inStock) {
+    logger.info(`Товар ${item.article} не в наличии`);
+  }
+
+  return inStock;
 };
 
 export const parsePickedTurboCarsResults = async ({
@@ -111,27 +133,32 @@ export const parsePickedTurboCarsResults = async ({
   item,
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
+  logger.info(
+    `Парсинг результатов для товара: ${item.article}, поставщик: ${supplier}`
+  );
   await page.waitForSelector('#codeinfo', { visible: true, timeout: 60_000 });
 
   const brand = await page.evaluate(() => {
-    const rows = Array.from(document.querySelectorAll('tr')); // Находим все строки
+    const rows = Array.from(document.querySelectorAll('tr'));
     const producerRow = rows.find((row) =>
-      row.textContent!.includes('Производитель/поставщик')
-    ); // Ищем нужную строку
+      row.textContent?.includes('Производитель/поставщик')
+    );
     return producerRow
-      ? producerRow.querySelector('a')?.textContent?.trim()
-      : null; // Если нашли, возвращаем текст ссылки, иначе null
+      ? producerRow.querySelector('a')?.textContent?.trim() || ''
+      : '';
   });
 
   const description = await page.evaluate(() => {
-    const rows = Array.from(document.querySelectorAll('tr')); // Находим все строки
+    const rows = Array.from(document.querySelectorAll('tr'));
     const nameRow = rows.find((row) =>
-      row.textContent!.includes('Наименование')
-    ); // Ищем строку с текстом "Наименование"
+      row.textContent?.includes('Наименование')
+    );
     return nameRow
-      ? nameRow.querySelector('td[colspan="4"]')?.textContent!.trim()
-      : null; // Если нашли, возвращаем текст из ячейки с colspan=4, иначе null
+      ? nameRow.querySelector('td[colspan="4"]')?.textContent?.trim() || ''
+      : '';
   });
+
+  logger.debug(`Получены бренд: ${brand}, описание: ${description}`);
 
   const results = await page.$$eval(
     'table.noborder.ss tr.aaa',
@@ -146,31 +173,28 @@ export const parsePickedTurboCarsResults = async ({
             const firstTdText = tds[0].innerText.trim();
             const [warehouseRaw, ...deadlineParts] = firstTdText.split(' ');
             const warehouse = warehouseRaw;
-            let deadline = 0; // in days
+            let deadline = 0;
             let deadLineTimeToOrder = '';
 
             const deadlineText = deadlineParts.join(' ');
 
-            // Extract deadline in days
             const deadlineMatch = deadlineText.match(/(\d+)\s*дн\./);
             if (deadlineMatch) {
               const days = parseInt(deadlineMatch[1], 10);
               deadline = days;
             }
 
-            // Extract deadLineTimeToOrder
             const timeMatch = deadlineText.match(/до\s*(\d{1,2}:\d{2})/);
             if (timeMatch) {
               deadLineTimeToOrder = timeMatch[1];
             }
 
-            // Update deadLineMax
-            const deadLineMax = deadline + 1; // in days
+            const deadLineMax = deadline + 1;
 
             const secondTdHtml = tds[1].innerHTML;
             const availabilityMatch = secondTdHtml.match(/<b>(.*?)<\/b>/);
             let availability = '';
-            if (availabilityMatch) {
+            if (availabilityMatch && availabilityMatch[1]) {
               availability = availabilityMatch[1]
                 .replace(/шт\./, '')
                 .replace(/&gt;/g, '>')
@@ -187,16 +211,16 @@ export const parsePickedTurboCarsResults = async ({
               );
             }
 
-            // Получаем минимальное количество для заказа как число
+            const qtyZakazElement = document.getElementById(
+              'QtyZakaz'
+            ) as HTMLInputElement;
             const multi =
-              parseInt(
-                (document.getElementById('QtyZakaz') as HTMLInputElement).min
-              ) || 1;
+              (qtyZakazElement && parseInt(qtyZakazElement.min)) || 1;
 
             return {
               id: '',
               article: '',
-              brand,
+              brand: brand || '',
               description: '',
               availability,
               price,
@@ -211,7 +235,9 @@ export const parsePickedTurboCarsResults = async ({
               multi,
             };
           } catch (error) {
-            logger.warn(`${page.url()} Ошибка при обработке строки: ${error}`);
+            console.warn(
+              `${window.location.href} Ошибка при обработке строки: ${error}`
+            );
             return null;
           }
         })
@@ -220,9 +246,12 @@ export const parsePickedTurboCarsResults = async ({
     brand
   );
 
+  if (!results.length) {
+    logger.warn(`Результаты не найдены для товара: ${item.article}`);
+  }
+
   const allResults: SearchResultsParsed[] = results.map(
     (result: SearchResultsParsed) => {
-      // Добавляем supplier в result до вызова calculateDeliveryDate
       result.supplier = supplier;
 
       const needToCheckBrandResult = needToCheckBrand(item.brand, result.brand);
@@ -238,6 +267,10 @@ export const parsePickedTurboCarsResults = async ({
         deliveryDate,
       };
     }
+  );
+
+  logger.info(
+    `Получено ${allResults.length} результатов для товара: ${item.article}`
   );
 
   return allResults;
