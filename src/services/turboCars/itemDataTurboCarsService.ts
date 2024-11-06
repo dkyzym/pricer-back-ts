@@ -9,6 +9,7 @@ import {
   isInStock,
   parsePickedTurboCarsResults,
 } from 'utils/pupHelpers/parsePickerTurboCarsResults';
+import { logger } from 'config/logger';
 
 export const itemDataTurboCarsService = async ({
   page,
@@ -29,6 +30,7 @@ export const itemDataTurboCarsService = async ({
   const hasResults = await isInStock(page, item);
 
   if (!hasResults) {
+    logger.info(`[${supplier}]: не нашли`);
     return [];
   }
 

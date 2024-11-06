@@ -1,7 +1,9 @@
 import chalk from 'chalk';
+import { logger } from 'config/logger';
+import path from 'path';
 import { Page } from 'puppeteer';
 import { pageActionsResult, SearchResultsParsed, SupplierName } from 'types';
-import { logger } from '../../config/logger';
+import { fileURLToPath } from 'url';
 
 export const addToCartUgService = async (
   page: Page,
@@ -9,13 +11,23 @@ export const addToCartUgService = async (
   item: SearchResultsParsed,
   count: number
 ): Promise<pageActionsResult> => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const screenshotPath = path.join(
+    __dirname,
+    '..',
+    '..',
+    'screenshots',
+    `error_screenshot_${Date.now()}.png`
+  );
+
   try {
     const removeSymbols = (string: string) =>
       string.replace(/[^a-zA-Zа-яА-ЯёЁ0-9]/g, '');
 
     // Формируем селектор для строки товара
     const dataBrandNumberAttr = `${removeSymbols(item.article)}_${removeSymbols(item.brand)}`;
-    const dataBrandAttr = `tr[data-current-brand-number="${dataBrandNumberAttr}"]`;
+    const dataBrandAttr = `tr[data-current-brand-number="${dataBrandNumberAttr}" i]`;
     const dataAvailabilityAttr = `[data-availability="${item.availability}"]`;
     const dataOutputPriceAttr = `[data-output-price="${item.price}"]`;
     const dataDeadlineAttr = `[data-deadline="${item.deadline}"]`;
@@ -132,7 +144,7 @@ export const addToCartUgService = async (
     console.log(chalk.yellow((error as Error).stack));
     console.log(chalk.yellow((error as Error).message));
     await page.screenshot({
-      path: `/src/screenshots/error_screenshot_${Date.now()}.png`,
+      path: screenshotPath,
     });
     return {
       success: false,
