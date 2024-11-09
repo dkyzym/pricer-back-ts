@@ -13,6 +13,8 @@ interface SOCKET_EVENTS {
   ADD_TO_CART_REQUEST: 'addToCartRequest';
   ADD_TO_CART_SUCCESS: 'addToCartSuccess';
   ADD_TO_CART_ERROR: 'addToCartError';
+  SESSIONS_CREATED: 'sessionsCreated';
+  SESSIONS_ERROR: 'sessionsError';
 }
 
 export const SOCKET_EVENTS: SOCKET_EVENTS = {
@@ -30,4 +32,6 @@ export const SOCKET_EVENTS: SOCKET_EVENTS = {
   ADD_TO_CART_REQUEST: 'addToCartRequest',
   ADD_TO_CART_SUCCESS: 'addToCartSuccess',
   ADD_TO_CART_ERROR: 'addToCartError',
+  SESSIONS_CREATED: 'sessionsCreated',
+  SESSIONS_ERROR: 'sessionsError',
 };

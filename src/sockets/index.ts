@@ -19,6 +19,7 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { logResultCount } from 'utils/stdLogs';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
+import { sessionManager } from '../session/sessionManager';
 
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
@@ -38,14 +39,36 @@ export const initializeSocket = (server: HTTPServer) => {
     },
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     logger.info(chalk.cyan(`New client connected: ${socket.id}`));
 
-    socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (query: string) => {
+    try {
+      const sessions = await sessionManager.createSessionsForSocket(socket.id);
+      // Отправляем клиенту информацию о созданных сессиях
+      socket.emit(
+        SOCKET_EVENTS.SESSIONS_CREATED,
+        sessions.map((session) => ({
+          sessionID: session.sessionID,
+          supplier: session.supplier,
+        }))
+      );
+    } catch (error) {
+      logger.error(
+        `Error creating sessions for socket ${socket.id}: ${(error as Error).message}`
+      );
+      socket.emit(SOCKET_EVENTS.SESSIONS_ERROR, {
+        message: 'Error creating sessions',
+      });
+    }
+
+    socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
+      const { sessionID, query } = data;
+
       if (!query || query.trim() === '') {
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
           query: '',
           results: [],
+          sessionID,
         });
         return;
       }
@@ -55,6 +78,7 @@ export const initializeSocket = (server: HTTPServer) => {
           action: SOCKET_EVENTS.AUTOCOMPLETE,
           query,
           supplier: 'ug',
+          sessionID,
         });
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, { query, results });
       } catch (error) {
@@ -62,39 +86,60 @@ export const initializeSocket = (server: HTTPServer) => {
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
           query,
           message: error,
+          sessionID,
         });
       }
     });
 
-    socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (query: string) => {
+    socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
+      const { sessionID, query } = data;
+
+      if (!query || query.trim() === '') {
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+          query: '',
+          results: [],
+          sessionID,
+        });
+        return;
+      }
+
       try {
         const result = await ugPageActionsService({
           action: 'clarifyBrand',
           query,
           supplier: 'ug',
+          sessionID,
         });
 
         if (result.success) {
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.data,
             message: result.message,
+            sessionID,
           });
         } else {
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
             message: result.message,
+            sessionID,
           });
         }
       } catch (error) {
         logger.error('Brand Clarification error:', error);
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
           message: `Error clarifying brand: ${(error as Error).message}`,
+          sessionID,
         });
       }
     });
 
+    interface getItemResultsParams {
+      sessionID: string;
+      item: ItemToParallelSearch;
+    }
     socket.on(
       SOCKET_EVENTS.GET_ITEM_RESULTS,
-      async (item: ItemToParallelSearch) => {
+      async (data: getItemResultsParams) => {
+        const { sessionID, item } = data as getItemResultsParams;
         logger.info(
           chalk.bgGreenBright(
             `${'[supplierDataFetchStarted] - Искали это: \n'}${JSON.stringify(item, null, 2)})`
@@ -152,16 +197,19 @@ export const initializeSocket = (server: HTTPServer) => {
                 action: 'pick',
                 item,
                 supplier,
+                sessionID,
               });
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
                 supplier,
                 result,
+                sessionID,
               });
             } catch (error) {
               logger.error(`Error fetching from ${supplier}: ${error}`);
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
                 supplier,
                 error: (error as Error).message,
+                sessionID,
               });
             }
           });
@@ -175,7 +223,7 @@ export const initializeSocket = (server: HTTPServer) => {
     );
 
     socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
-      const { count, item } = data;
+      const { count, item, sessionID } = data;
       const supplier = item.supplier;
 
       try {
@@ -188,6 +236,7 @@ export const initializeSocket = (server: HTTPServer) => {
             supplier: supplierName,
             count,
             item,
+            sessionID,
           });
         } else if (supplierName === 'ug' || supplierName === 'patriot') {
           /*используем один сервис для ЮГ и Патриот так как
@@ -198,20 +247,23 @@ export const initializeSocket = (server: HTTPServer) => {
             supplier: supplierName,
             count,
             item,
+            sessionID,
           });
         }
 
         if (result?.success) {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, result);
+          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, result, sessionID);
         } else {
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
             message: result?.message,
+            sessionID,
           });
         }
       } catch (error) {
         console.error(`Error in ADD_TO_CART_REQUEST:`, error);
         socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
           message: (error as Error).message,
+          sessionID,
         });
       }
     });

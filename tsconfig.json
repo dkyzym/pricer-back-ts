@@ -27,7 +27,8 @@
   "include": [
     "src/**/*.ts",
     "src/controllers/data/autocompleteController.ts",
-    "logger/logger.ts"
+    "logger/logger.ts",
+    "some.ts"
   ],
   "exclude": ["node_modules", "dist"],
   "ts-node": {

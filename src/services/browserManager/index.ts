@@ -7,14 +7,14 @@ import { SupplierName } from 'types';
 puppeteer.use(StealthPlugin());
 
 let browser: Browser | null = null;
-const contexts: Map<SupplierName, BrowserContext> = new Map();
-const pages: Map<SupplierName, Page> = new Map();
+const contexts: Map<string, BrowserContext> = new Map();
+const pages: Map<string, Page> = new Map();
 
 export const initBrowser = async (): Promise<Browser> => {
   if (!browser || !browser.connected) {
     logger.info(`Launching new browser`);
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -38,12 +38,14 @@ export const initBrowser = async (): Promise<Browser> => {
 
 export const getPage = async (
   supplier: SupplierName,
-  url: string
+  url: string,
+  sessionID: string
 ): Promise<Page> => {
   const browser = await initBrowser();
   const waitTimeOutPeriod = 60_000;
+  const key = `${supplier}-${sessionID}`;
 
-  let page = pages.get(supplier);
+  let page = pages.get(key);
   if (page && !page.isClosed()) {
     logger.info(`Reusing existing page for supplier: ${supplier}`);
     await page.bringToFront();
@@ -51,10 +53,10 @@ export const getPage = async (
     logger.info(`Opening page for supplier: ${supplier}, URL: ${url}`);
 
     // Создаём или получаем существующий контекст
-    let context = contexts.get(supplier);
+    let context = contexts.get(key);
     if (!context) {
       context = await browser.createBrowserContext();
-      contexts.set(supplier, context);
+      contexts.set(key, context);
     }
 
     page = await context.newPage();
@@ -148,11 +150,11 @@ export const getPage = async (
       logger.error(`Error during waitForFunction: ${error}`);
     }
 
-    pages.set(supplier, page);
+    pages.set(key, page);
 
     // Добавляем обработчик закрытия страницы
     page.on('close', () => {
-      pages.delete(supplier);
+      pages.delete(key);
       logger.info(`Page closed for supplier: ${supplier}`);
     });
   }

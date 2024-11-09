@@ -37,35 +37,43 @@ type PageAction =
   | {
       action: 'init';
       supplier: SupplierName;
+
+      // Экшен 'init' не требует sessionID
     }
   | {
       action: 'login';
+      sessionID: string;
+      supplier: SupplierName;
       username: string;
       password: string;
-      supplier: SupplierName;
     }
   | {
       action: 'logout';
+      sessionID: string;
       supplier: SupplierName;
     }
   | {
       action: 'autocomplete';
+      sessionID: string;
       supplier: SupplierName;
       query: string;
     }
   | {
       action: 'clarifyBrand';
+      sessionID: string;
       supplier: SupplierName;
       query: string;
     }
   | {
       action: 'addToCart';
+      sessionID: string;
       supplier: SupplierName;
       item: SearchResultsParsed;
       count: number;
     }
   | {
       action: 'pick';
+      sessionID: string;
       supplier: SupplierName;
       item: ItemToParallelSearch;
     };

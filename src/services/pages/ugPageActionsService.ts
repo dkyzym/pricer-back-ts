@@ -19,7 +19,7 @@ export const ugPageActionsService = async (
   const { loginURL, credentials, selectors } = getSupplierData(supplier);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
-  const page = await getPage(supplier, loginURL);
+  const page = await getPage(supplier, loginURL, 'sessionID');
 
   try {
     switch (action) {

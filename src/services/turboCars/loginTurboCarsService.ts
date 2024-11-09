@@ -6,7 +6,7 @@ import { logger } from 'config/logger';
 import { Dialog } from 'puppeteer';
 import { LoginServiceParams, pageActionsResult } from 'types';
 
-export const loginTurboCars = async ({
+export const loginTurboCarsService = async ({
   page,
   username,
   password,

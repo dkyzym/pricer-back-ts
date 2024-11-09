@@ -11,9 +11,9 @@ import { logoutPatriotService } from '../patriot/logoutPatriotService';
 export const patriotPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier } = actionParams;
+  const { action, supplier, sessionID } = actionParams;
   const { loginURL, credentials, selectors } = getSupplierData(supplier);
-  const page = await getPage(supplier, loginURL);
+  const page = await getPage(supplier, loginURL, sessionID);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   try {

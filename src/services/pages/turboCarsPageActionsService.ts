@@ -7,16 +7,22 @@ import { NotLoggedInError } from '../../utils/errors';
 import { getPage } from '../browserManager';
 import { addToCartTurboCarsService } from '../turboCars/addToCartTurboCarsService';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
-import { loginTurboCars } from '../turboCars/loginTurboCarsService';
+import { loginTurboCarsService } from '../turboCars/loginTurboCarsService';
 import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
+import { sessionManager } from '../../session/sessionManager';
 
 export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier } = actionParams;
+  const { action, supplier, sessionID } = actionParams;
   const { loginURL, credentials, selectors } = getSupplierData(supplier);
 
-  const page = await getPage(supplier, loginURL);
+  const session = sessionManager.getSession(sessionID);
+  if (!session) {
+    throw new Error(`Session with ID ${sessionID} not found`);
+  }
+
+  const { page } = session;
 
   try {
     logger.info(`[${supplier}] Выполнение действия: ${action}`);
@@ -24,7 +30,8 @@ export const turboCarsPageActionsService = async (
     switch (action) {
       case 'login': {
         const { username, password } = actionParams;
-        return await loginTurboCars({
+
+        return await loginTurboCarsService({
           page,
           username,
           password,
