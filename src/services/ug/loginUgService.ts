@@ -29,6 +29,19 @@ export const loginUgService = async ({
       message: `${supplier}: Already logged in`,
     };
   }
+  const modalElement = await page.$('.wVisualFormLogin');
+
+  if (modalElement) {
+    await modalElement.evaluate((el: HTMLDivElement) => {
+      (el as HTMLElement).style.display = 'block';
+    });
+  } else {
+    logger.error(chalk.red(`${supplier}: Модальное окно не найдено`));
+    return {
+      success: false,
+      message: `${supplier}: Modal window not found`,
+    };
+  }
 
   await fillField(page, selectors.emailUsernameField, username);
 

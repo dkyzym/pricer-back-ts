@@ -35,9 +35,9 @@ export const SUPPLIERS_DATA: SuppliersData = {
     selectors: {
       loginForm: '.loginForm',
       credentialsEl: '#modalFormLogin',
-      emailUsernameField: '#login_modal',
-      passwordField: '#pass_modal',
-      loginBtn: '.submitButton',
+      emailUsernameField: 'input[name="login"]',
+      passwordField: 'input[name="pass"]',
+      loginBtn: 'input[name="go"]',
       logoutBtn: '.exit',
       input: '.ui-autocomplete-input',
     },

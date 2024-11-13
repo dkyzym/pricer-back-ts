@@ -2,9 +2,9 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
+import { sessionManager } from '../../session/sessionManager';
 import { checkElementTextForAuthorization } from '../../utils/auth/checkIsAuth';
 import { NotLoggedInError } from '../../utils/errors';
-import { getPage } from '../browserManager';
 import { addToCartUgService } from '../ug/addToCartUgService';
 import { autocompleteUgService } from '../ug/autocompleteUgService';
 import { clarifyBrandService } from '../ug/clarifyBrandService';
@@ -15,17 +15,18 @@ import { logoutUgService } from '../ug/logoutUgService';
 export const ugPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier } = actionParams;
-  const { loginURL, credentials, selectors } = getSupplierData(supplier);
+  const { action, supplier, sessionID } = actionParams;
+  const { credentials, selectors } = getSupplierData(supplier);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
-  const page = await getPage(supplier, loginURL, 'sessionID');
+  const session = sessionManager.getSession(sessionID);
+  if (!session) {
+    throw new Error('Session not found');
+  }
+  const { page } = session;
 
   try {
     switch (action) {
-      case 'init': {
-        return { success: true, message: `${supplier} page opened` };
-      }
       case 'login': {
         const { username, password } = actionParams;
         return await loginUgService({

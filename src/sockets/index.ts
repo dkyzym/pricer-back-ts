@@ -9,6 +9,7 @@ import { getItemsListByArticleService } from 'services/profit/getItemsListByArti
 import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
 import {
+  accountAlias,
   ItemToParallelSearch,
   PageAction,
   pageActionsResult,
@@ -17,7 +18,6 @@ import {
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
-import { logResultCount } from 'utils/stdLogs';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { sessionManager } from '../session/sessionManager';
 
@@ -44,23 +44,27 @@ export const initializeSocket = (server: HTTPServer) => {
 
     try {
       const sessions = await sessionManager.createSessionsForSocket(socket.id);
-      // Отправляем клиенту информацию о созданных сессиях
+      logger.info(`Sessions created for socket ${socket.id}:`, sessions);
       socket.emit(
         SOCKET_EVENTS.SESSIONS_CREATED,
         sessions.map((session) => ({
           sessionID: session.sessionID,
           supplier: session.supplier,
+          accountAlias:
+            session.supplier === 'turboCars' ? session.accountAlias : undefined,
         }))
       );
     } catch (error) {
       logger.error(
         `Error creating sessions for socket ${socket.id}: ${(error as Error).message}`
       );
+
       socket.emit(SOCKET_EVENTS.SESSIONS_ERROR, {
         message: 'Error creating sessions',
       });
     }
 
+    // AUTOCOMPLETE Handler
     socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
       const { sessionID, query } = data;
 
@@ -80,21 +84,34 @@ export const initializeSocket = (server: HTTPServer) => {
           supplier: 'ug',
           sessionID,
         });
-        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, { query, results });
+        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
+          query,
+          results,
+          sessionID,
+        });
       } catch (error) {
         logger.error('Autocomplete error:', error);
+        console.error(`Autocomplete error for session ${sessionID}:`, error);
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
           query,
-          message: error,
+          message: (error as Error).message,
           sessionID,
         });
       }
     });
 
+    // BRAND_CLARIFICATION Handler
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
+      console.log(
+        `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
+        data
+      );
       const { sessionID, query } = data;
 
       if (!query || query.trim() === '') {
+        console.log(
+          `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}, sessionID: ${sessionID}`
+        );
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
           query: '',
           results: [],
@@ -104,6 +121,9 @@ export const initializeSocket = (server: HTTPServer) => {
       }
 
       try {
+        console.log(
+          `Processing BRAND_CLARIFICATION for query "${query}" in session ${sessionID}`
+        );
         const result = await ugPageActionsService({
           action: 'clarifyBrand',
           query,
@@ -112,12 +132,20 @@ export const initializeSocket = (server: HTTPServer) => {
         });
 
         if (result.success) {
+          console.log(
+            `BRAND_CLARIFICATION success for session ${sessionID}:`,
+            result.data
+          );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.data,
             message: result.message,
             sessionID,
           });
         } else {
+          console.log(
+            `BRAND_CLARIFICATION failed for session ${sessionID}:`,
+            result.message
+          );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
             message: result.message,
             sessionID,
@@ -125,6 +153,10 @@ export const initializeSocket = (server: HTTPServer) => {
         }
       } catch (error) {
         logger.error('Brand Clarification error:', error);
+        console.error(
+          `Brand Clarification error for session ${sessionID}:`,
+          error
+        );
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
           message: `Error clarifying brand: ${(error as Error).message}`,
           sessionID,
@@ -132,42 +164,58 @@ export const initializeSocket = (server: HTTPServer) => {
       }
     });
 
+    // GET_ITEM_RESULTS Handler
     interface getItemResultsParams {
-      sessionID: string;
+      sessionID?: string;
       item: ItemToParallelSearch;
+      accountAlias?: accountAlias;
+      supplier?: SupplierName;
     }
     socket.on(
       SOCKET_EVENTS.GET_ITEM_RESULTS,
       async (data: getItemResultsParams) => {
-        const { sessionID, item } = data as getItemResultsParams;
-        logger.info(
-          chalk.bgGreenBright(
-            `${'[supplierDataFetchStarted] - Искали это: \n'}${JSON.stringify(item, null, 2)})`
-          )
+        console.log(
+          `Received GET_ITEM_RESULTS event from socket ${socket.id}:`,
+          data
         );
-        const fetchProfitData = async () => {
+        const { sessionID, item, supplier } = data;
+
+        let sessionAccountAlias = undefined;
+
+        if (sessionID) {
+          const session = sessionManager.getSession(sessionID);
+          sessionAccountAlias =
+            session?.supplier === 'turboCars'
+              ? session.accountAlias
+              : undefined;
+        }
+
+        if (supplier === 'profit') {
+          // Handle 'profit' supplier without session
           try {
+            console.log(`Fetching data from 'profit' for item:`, item);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'profit',
+              article: item.article,
             });
+
+            // Fetch data from 'profit' API
             const data = await getItemsListByArticleService(item.article);
             const itemsWithRest = await getItemsWithRest(data);
             const relevantItems = itemsWithRest.filter(({ brand }: any) =>
               isBrandMatch(item.brand, brand)
             );
+
             const profitParsedData = parseProfitApiResponse(
               relevantItems,
               item.brand
             );
-
-            logResultCount(item, 'profit', profitParsedData);
 
             const profitResult: pageActionsResult = {
               success: profitParsedData.length > 0,
               message: `Profit data fetched: ${profitParsedData.length > 0}`,
               data: profitParsedData,
             };
-
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
               supplier: 'profit',
               result: profitResult,
@@ -179,69 +227,86 @@ export const initializeSocket = (server: HTTPServer) => {
               error: (error as Error).message,
             });
           }
-        };
+        } else {
+          // Handle other suppliers
+          try {
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier,
+              sessionID,
+              accountAlias:
+                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+            });
 
-        const fetchSuppliersData = async () => {
-          const suppliers: PuppeteerSupplierName[] = [
-            'ug',
-            'turboCars',
-            'patriot',
-          ];
+            const result = await supplierServices[supplier]({
+              action: 'pick',
+              item,
+              supplier,
+              sessionID,
+              accountAlias:
+                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+            });
 
-          const supplierPromises = suppliers.map(async (supplier) => {
-            try {
-              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
-                supplier,
-              });
-              const result = await supplierServices[supplier]({
-                action: 'pick',
-                item,
-                supplier,
-                sessionID,
-              });
-              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-                supplier,
-                result,
-                sessionID,
-              });
-            } catch (error) {
-              logger.error(`Error fetching from ${supplier}: ${error}`);
-              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-                supplier,
-                error: (error as Error).message,
-                sessionID,
-              });
-            }
-          });
-
-          await Promise.allSettled(supplierPromises);
-        };
-
-        fetchProfitData();
-        fetchSuppliersData();
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier,
+              result,
+              sessionID,
+              accountAlias:
+                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+            });
+          } catch (error) {
+            logger.error(`Error fetching from ${supplier}: ${error}`);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier,
+              error: (error as Error).message,
+              sessionID,
+              accountAlias:
+                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+            });
+          }
+        }
       }
     );
 
+    // ADD_TO_CART_REQUEST Handler
     socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
-      const { count, item, sessionID } = data;
+      // console.log(
+      //   `Received ADD_TO_CART_REQUEST event from socket ${socket.id}:`,
+      //   data
+      // );
+      const { count, item, sessionID, accountAlias } = data;
+      const session = sessionManager.getSession(sessionID);
+      const sessionAccountAlias =
+        session?.supplier === 'turboCars' ? session.accountAlias : undefined;
       const supplier = item.supplier;
+
+      // console.log(
+      //   `Session data for ADD_TO_CART_REQUEST, sessionID ${sessionID}:`,
+      //   session
+      // );
 
       try {
         let result;
         const supplierName = supplier as SupplierName;
+        // console.log(
+        //   `Processing ADD_TO_CART for supplier ${supplierName} in session ${sessionID}`
+        // );
 
         if (supplierName === 'turboCars') {
+          // console.log(
+          //   `Calling turboCarsPageActionsService for session ${sessionID}`
+          // );
           result = await turboCarsPageActionsService({
             action: 'addToCart',
             supplier: supplierName,
             count,
             item,
             sessionID,
+            accountAlias: sessionAccountAlias,
           });
         } else if (supplierName === 'ug' || supplierName === 'patriot') {
-          /*используем один сервис для ЮГ и Патриот так как
-           функции парсинга и добавления в корзину идентичны
-           и чтобы пока не создавать карту и усложнять не код */
+          // console.log(
+          //   `Calling ugPageActionsService for supplier ${supplierName} in session ${sessionID}`
+          // );
           result = await ugPageActionsService({
             action: 'addToCart',
             supplier: supplierName,
@@ -251,25 +316,51 @@ export const initializeSocket = (server: HTTPServer) => {
           });
         }
 
+        // console.log(
+        //   `Result of ADD_TO_CART for supplier ${supplierName} in session ${sessionID}:`,
+        //   result
+        // );
+
         if (result?.success) {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, result, sessionID);
+          // console.log(`ADD_TO_CART_SUCCESS emitted for session ${sessionID}`);
+          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, {
+            result,
+            sessionID,
+            accountAlias:
+              supplierName === 'turboCars' ? sessionAccountAlias : undefined,
+          });
         } else {
+          // console.log(
+          //   `ADD_TO_CART_ERROR emitted for session ${sessionID}:`,
+          //   result?.message
+          // );
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
             message: result?.message,
             sessionID,
+            accountAlias:
+              supplierName === 'turboCars' ? sessionAccountAlias : undefined,
           });
         }
       } catch (error) {
-        console.error(`Error in ADD_TO_CART_REQUEST:`, error);
+        logger.error(`Error in ADD_TO_CART_REQUEST:`, error);
+        // console.error(
+        //   `Error in ADD_TO_CART_REQUEST for session ${sessionID}:`,
+        //   error
+        // );
         socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
           message: (error as Error).message,
           sessionID,
+          accountAlias: sessionAccountAlias,
         });
       }
     });
 
+    // Disconnect Handler
     socket.on('disconnect', () => {
       logger.info(chalk.bgCyan(`Client disconnected: ${socket.id}`));
+      console.log(`Socket disconnected: ${socket.id}`);
+      sessionManager.closeSessionsForSocket(socket.id);
+      console.log(`Closed sessions for socket ${socket.id}`);
     });
   });
 };

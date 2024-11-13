@@ -14,10 +14,10 @@ import { turboCarsPageActionsService } from '../services/pages/turboCarsPageActi
 
 export const startServer = async (app: Application) => {
   try {
-    await ugPageActionsService({
-      action: 'init',
-      supplier: 'ug',
-    });
+    // await ugPageActionsService({
+    //   action: 'init',
+    //   supplier: 'ug',
+    // });
 
     const server: HTTPServer = app.listen(PORT, () => {
       logger.info(

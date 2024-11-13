@@ -35,12 +35,6 @@ export interface SessionData {
 
 type PageAction =
   | {
-      action: 'init';
-      supplier: SupplierName;
-
-      // Экшен 'init' не требует sessionID
-    }
-  | {
       action: 'login';
       sessionID: string;
       supplier: SupplierName;
@@ -70,12 +64,14 @@ type PageAction =
       supplier: SupplierName;
       item: SearchResultsParsed;
       count: number;
+      accountAlias?: accountAlias;
     }
   | {
       action: 'pick';
       sessionID: string;
       supplier: SupplierName;
       item: ItemToParallelSearch;
+      accountAlias?: accountAlias;
     };
 
 interface LoginServiceParams {
@@ -199,3 +195,5 @@ interface AddToCartConfig {
   code: string;
   supplier?: SupplierName;
 }
+
+type accountAlias = 'nal' | 'bezNal';

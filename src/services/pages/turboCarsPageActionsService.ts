@@ -2,20 +2,19 @@ import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
+import { sessionManager } from '../../session/sessionManager';
 import { checkTcAuth } from '../../utils/auth/checkIsAuth';
 import { NotLoggedInError } from '../../utils/errors';
-import { getPage } from '../browserManager';
 import { addToCartTurboCarsService } from '../turboCars/addToCartTurboCarsService';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
 import { loginTurboCarsService } from '../turboCars/loginTurboCarsService';
 import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
-import { sessionManager } from '../../session/sessionManager';
 
 export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier, sessionID } = actionParams;
-  const { loginURL, credentials, selectors } = getSupplierData(supplier);
+  const { credentials, selectors } = getSupplierData(supplier);
 
   const session = sessionManager.getSession(sessionID);
   if (!session) {

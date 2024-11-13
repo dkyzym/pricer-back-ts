@@ -1,9 +1,9 @@
 import { logger } from 'config/logger';
 import { PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
+import { sessionManager } from '../../session/sessionManager';
 import { checkElementTextForAuthorization } from '../../utils/auth/checkIsAuth';
 import { NotLoggedInError } from '../../utils/errors';
-import { getPage } from '../browserManager';
 import { itemDataPatriotService } from '../patriot/itemDataPatriotService';
 import { loginPatriotService } from '../patriot/loginPatriotService';
 import { logoutPatriotService } from '../patriot/logoutPatriotService';
@@ -12,8 +12,15 @@ export const patriotPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier, sessionID } = actionParams;
-  const { loginURL, credentials, selectors } = getSupplierData(supplier);
-  const page = await getPage(supplier, loginURL, sessionID);
+  const { credentials, selectors } = getSupplierData(supplier);
+
+  const session = sessionManager.getSession(sessionID);
+  if (!session) {
+    throw new Error(`Session with ID ${sessionID} not found`);
+  }
+
+  const { page } = session;
+
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
   try {
