@@ -236,23 +236,24 @@ export const initializeSocket = (server: HTTPServer) => {
               accountAlias:
                 supplier === 'turboCars' ? sessionAccountAlias : undefined,
             });
+            if (supplier && sessionID) {
+              const result = await supplierServices[supplier]({
+                action: 'pick',
+                item,
+                supplier,
+                sessionID,
+                accountAlias:
+                  supplier === 'turboCars' ? sessionAccountAlias : undefined,
+              });
 
-            const result = await supplierServices[supplier]({
-              action: 'pick',
-              item,
-              supplier,
-              sessionID,
-              accountAlias:
-                supplier === 'turboCars' ? sessionAccountAlias : undefined,
-            });
-
-            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier,
-              result,
-              sessionID,
-              accountAlias:
-                supplier === 'turboCars' ? sessionAccountAlias : undefined,
-            });
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier,
+                result,
+                sessionID,
+                accountAlias:
+                  supplier === 'turboCars' ? sessionAccountAlias : undefined,
+              });
+            }
           } catch (error) {
             logger.error(`Error fetching from ${supplier}: ${error}`);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
@@ -267,34 +268,18 @@ export const initializeSocket = (server: HTTPServer) => {
       }
     );
 
-    // ADD_TO_CART_REQUEST Handler
     socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
-      // console.log(
-      //   `Received ADD_TO_CART_REQUEST event from socket ${socket.id}:`,
-      //   data
-      // );
       const { count, item, sessionID, accountAlias } = data;
       const session = sessionManager.getSession(sessionID);
       const sessionAccountAlias =
         session?.supplier === 'turboCars' ? session.accountAlias : undefined;
       const supplier = item.supplier;
 
-      // console.log(
-      //   `Session data for ADD_TO_CART_REQUEST, sessionID ${sessionID}:`,
-      //   session
-      // );
-
       try {
         let result;
         const supplierName = supplier as SupplierName;
-        // console.log(
-        //   `Processing ADD_TO_CART for supplier ${supplierName} in session ${sessionID}`
-        // );
 
         if (supplierName === 'turboCars') {
-          // console.log(
-          //   `Calling turboCarsPageActionsService for session ${sessionID}`
-          // );
           result = await turboCarsPageActionsService({
             action: 'addToCart',
             supplier: supplierName,
@@ -304,9 +289,6 @@ export const initializeSocket = (server: HTTPServer) => {
             accountAlias: sessionAccountAlias,
           });
         } else if (supplierName === 'ug' || supplierName === 'patriot') {
-          // console.log(
-          //   `Calling ugPageActionsService for supplier ${supplierName} in session ${sessionID}`
-          // );
           result = await ugPageActionsService({
             action: 'addToCart',
             supplier: supplierName,
@@ -316,13 +298,7 @@ export const initializeSocket = (server: HTTPServer) => {
           });
         }
 
-        // console.log(
-        //   `Result of ADD_TO_CART for supplier ${supplierName} in session ${sessionID}:`,
-        //   result
-        // );
-
         if (result?.success) {
-          // console.log(`ADD_TO_CART_SUCCESS emitted for session ${sessionID}`);
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, {
             result,
             sessionID,
@@ -330,10 +306,6 @@ export const initializeSocket = (server: HTTPServer) => {
               supplierName === 'turboCars' ? sessionAccountAlias : undefined,
           });
         } else {
-          // console.log(
-          //   `ADD_TO_CART_ERROR emitted for session ${sessionID}:`,
-          //   result?.message
-          // );
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
             message: result?.message,
             sessionID,
@@ -343,10 +315,7 @@ export const initializeSocket = (server: HTTPServer) => {
         }
       } catch (error) {
         logger.error(`Error in ADD_TO_CART_REQUEST:`, error);
-        // console.error(
-        //   `Error in ADD_TO_CART_REQUEST for session ${sessionID}:`,
-        //   error
-        // );
+
         socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
           message: (error as Error).message,
           sessionID,
