@@ -1,5 +1,7 @@
 import { BrowserContext, Page } from 'puppeteer';
 import { initBrowser } from '../services/browserManager';
+import { loginPatriotService } from '../services/patriot/loginPatriotService';
+import { loginTurboCarsService } from '../services/turboCars/loginTurboCarsService';
 import { loginUgService } from '../services/ug/loginUgService';
 import { accountAlias, SupplierName } from '../types';
 import { getSupplierData } from '../utils/data/getSupplierData';
@@ -31,24 +33,24 @@ class SessionManager {
     const sessions: Session[] = [];
 
     const suppliers: suppliersParams = [
-      // {
-      //   name: 'turboCars',
-      //   username: process.env.TURBOCARS_USERNAME || '',
-      //   password: process.env.TURBOCARS_PASSWORD || '',
-      //   accountAlias: 'nal',
-      // },
-      // {
-      //   name: 'turboCars',
-      //   username: process.env.TURBOCARS_USERNAME_BN || '',
-      //   password: process.env.TURBOCARS_PASSWORD_BN || '',
-      //   accountAlias: 'bezNal',
-      // },
-      // {
-      //   name: 'patriot',
-      //   username: process.env.PATRIOT_USERNAME || '',
-      //   password: process.env.PATRIOT_PASSWORD || '',
-      //   accountAlias: 'nal',
-      // },
+      {
+        name: 'turboCars',
+        username: process.env.TURBOCARS_USERNAME || '',
+        password: process.env.TURBOCARS_PASSWORD || '',
+        accountAlias: 'nal',
+      },
+      {
+        name: 'turboCars',
+        username: process.env.TURBOCARS_USERNAME_BN || '',
+        password: process.env.TURBOCARS_PASSWORD_BN || '',
+        accountAlias: 'bezNal',
+      },
+      {
+        name: 'patriot',
+        username: process.env.PATRIOT_USERNAME || '',
+        password: process.env.PATRIOT_PASSWORD || '',
+        accountAlias: 'nal',
+      },
       {
         name: 'ug',
         username: process.env.UG_USERNAME || '',
@@ -113,23 +115,23 @@ class SessionManager {
       });
     }
 
-    // if (supplier === 'patriot') {
-    //   await loginPatriotService({
-    //     page,
-    //     username,
-    //     password,
-    //     supplier,
-    //   });
-    // }
+    if (supplier === 'patriot') {
+      await loginPatriotService({
+        page,
+        username,
+        password,
+        supplier,
+      });
+    }
 
-    // if (supplier === 'turboCars') {
-    //   await loginTurboCarsService({
-    //     page,
-    //     username,
-    //     password,
-    //     supplier,
-    //   });
-    // }
+    if (supplier === 'turboCars') {
+      await loginTurboCarsService({
+        page,
+        username,
+        password,
+        supplier,
+      });
+    }
   }
 }
 

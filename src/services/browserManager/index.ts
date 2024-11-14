@@ -18,7 +18,7 @@ export const initBrowser = async (): Promise<Browser> => {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--window-size=1440,576',
+        '--window-size=1440,900',
         '--disable-blink-features=AutomationControlled',
         '--lang=ru-RU,ru',
       ],
@@ -89,7 +89,7 @@ export const getPage = async (
 
     await page.setViewport({
       width: 1440,
-      height: 576,
+      height: 900,
       deviceScaleFactor: 1,
     });
 
