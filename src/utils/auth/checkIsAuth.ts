@@ -1,5 +1,4 @@
 import { logger } from 'config/logger/index.js';
-import { SUPPLIERS_DATA } from 'constants/index.js';
 import { Page } from 'puppeteer';
 import { Selectors, SupplierData } from 'types';
 import { UnAuthorizedError } from '../errors.js';
@@ -27,7 +26,7 @@ export const checkElementTextForAuthorization = async (
 export const checkTcAuth = async (
   page: Page,
   selector: Selectors['credentialsEl'],
-  expectedText: SupplierData['credentials']
+  username: string
 ): Promise<boolean> => {
   // Проверяем наличие формы логина
   const loginFormExists = (await page.$('#formLOGIN')) !== null;
@@ -41,10 +40,10 @@ export const checkTcAuth = async (
   try {
     const elementText = await page.$eval(
       selector,
-      (element) => element.textContent?.trim().toLowerCase() || ''
+      (element) => element.textContent?.trim() || ''
     );
 
-    return elementText.includes(expectedText.toLowerCase());
+    return elementText.includes(username);
   } catch (error) {
     // Элемент credentialsEl не найден, значит, пользователь не залогинен
     return false;

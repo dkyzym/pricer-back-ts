@@ -45,16 +45,19 @@ export const turboCarsPageActionsService = async (
 
       case 'pick': {
         const { item, supplier, action } = actionParams;
+        const { TURBOCARS_USERNAME, TURBOCARS_USERNAME_BN } = process.env;
+        const username =
+          accountAlias === 'nal' ? TURBOCARS_USERNAME : TURBOCARS_USERNAME_BN;
 
         const isLoggedIn = await checkTcAuth(
           page,
           selectors.credentialsEl,
-          credentials
+          username as string
         );
         if (!isLoggedIn) {
           const notLoggedInMessage = `${supplier}: ${action} не залогинен`;
           logger.error(notLoggedInMessage);
-          throw new NotLoggedInError(notLoggedInMessage); // Бросаем пользовательскую ошибку
+          throw new NotLoggedInError(notLoggedInMessage);
         }
         const result = await itemDataTurboCarsService({ page, item, supplier });
         logResultCount(item, supplier, result);

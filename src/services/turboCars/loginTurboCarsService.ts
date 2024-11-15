@@ -19,11 +19,7 @@ export const loginTurboCarsService = async ({
     await dialog.accept();
   });
 
-  const isLoggedIn = await checkTcAuth(
-    page,
-    selectors.credentialsEl,
-    credentials
-  );
+  const isLoggedIn = await checkTcAuth(page, selectors.credentialsEl, username);
 
   if (isLoggedIn) {
     return {
