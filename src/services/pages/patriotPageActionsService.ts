@@ -11,10 +11,11 @@ import { logoutPatriotService } from '../patriot/logoutPatriotService';
 export const patriotPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier, sessionID } = actionParams;
+  const { action, supplier, sessionID, accountAlias } = actionParams;
   const { credentials, selectors } = getSupplierData(supplier);
 
-  const session = sessionManager.getSession(sessionID);
+  const sessionKey = accountAlias ? `${supplier}_${accountAlias}` : supplier;
+  const session = sessionManager.getSession(sessionKey);
   if (!session) {
     throw new Error(`Session with ID ${sessionID} not found`);
   }

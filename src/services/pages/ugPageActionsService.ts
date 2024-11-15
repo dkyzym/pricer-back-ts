@@ -1,5 +1,5 @@
 import { logger } from 'config/logger';
-import { PageAction, pageActionsResult } from 'types';
+import { accountAlias, PageAction, pageActionsResult } from 'types';
 import { getSupplierData } from 'utils/data/getSupplierData';
 import { logResultCount } from 'utils/stdLogs';
 import { sessionManager } from '../../session/sessionManager';
@@ -90,7 +90,7 @@ export const ugPageActionsService = async (
         }
 
         const result = await itemDataUgService({ page, item, supplier });
-        logResultCount(item, supplier, result);
+        logResultCount(item, supplier, result, accountAlias as accountAlias);
 
         return {
           success: true,

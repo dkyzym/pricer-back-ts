@@ -20,6 +20,7 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { sessionManager } from '../session/sessionManager';
+import { logResultCount } from '../utils/stdLogs';
 
 const supplierServices: {
   [key in PuppeteerSupplierName]: (
@@ -224,11 +225,14 @@ export const initializeSocket = (server: HTTPServer) => {
               item.brand
             );
 
+            logResultCount(item, supplier, profitParsedData);
+
             const profitResult: pageActionsResult = {
               success: profitParsedData.length > 0,
               message: `Profit data fetched: ${profitParsedData.length > 0}`,
               data: profitParsedData,
             };
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
               supplier: 'profit',
               result: profitResult,
