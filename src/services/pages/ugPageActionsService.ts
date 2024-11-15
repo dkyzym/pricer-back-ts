@@ -10,18 +10,23 @@ import { autocompleteUgService } from '../ug/autocompleteUgService';
 import { clarifyBrandService } from '../ug/clarifyBrandService';
 import { itemDataUgService } from '../ug/itemDataUgService';
 import { loginUgService } from '../ug/loginUgService';
-import { logoutUgService } from '../ug/logoutUgService';
 
 export const ugPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier, sessionID } = actionParams;
+  const { action, supplier, sessionID, accountAlias } = actionParams;
+  if (!supplier) {
+    throw new Error('Supplier is undefined in ugPageActionsService');
+  }
+
   const { credentials, selectors } = getSupplierData(supplier);
   logger.info(`[${supplier}] Выполнение действия: ${action}`);
 
-  const session = sessionManager.getSession(sessionID);
+  const sessionKey = accountAlias ? `${supplier}_${accountAlias}` : supplier;
+
+  const session = sessionManager.getSession(sessionKey);
   if (!session) {
-    throw new Error('Session not found');
+    throw new Error(`Session with id: ${sessionID} not found, ${supplier}`);
   }
   const { page } = session;
 
@@ -36,8 +41,6 @@ export const ugPageActionsService = async (
           supplier,
         });
       }
-      case 'logout':
-        return await logoutUgService(page, supplier);
       case 'autocomplete': {
         const { query } = actionParams;
 

@@ -13,10 +13,12 @@ import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
 export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
-  const { action, supplier, sessionID } = actionParams;
+  const { action, supplier, sessionID, accountAlias } = actionParams;
   const { credentials, selectors } = getSupplierData(supplier);
 
-  const session = sessionManager.getSession(sessionID);
+  const sessionKey = `${supplier}_${accountAlias}`;
+
+  const session = sessionManager.getSession(sessionKey);
   if (!session) {
     throw new Error(`Session with ID ${sessionID} not found`);
   }

@@ -40,23 +40,27 @@ type PageAction =
       supplier: SupplierName;
       username: string;
       password: string;
+      accountAlias?: accountAlias;
     }
   | {
       action: 'logout';
       sessionID: string;
       supplier: SupplierName;
+      accountAlias?: accountAlias;
     }
   | {
       action: 'autocomplete';
       sessionID: string;
       supplier: SupplierName;
       query: string;
+      accountAlias?: accountAlias;
     }
   | {
       action: 'clarifyBrand';
       sessionID: string;
       supplier: SupplierName;
       query: string;
+      accountAlias?: accountAlias;
     }
   | {
       action: 'addToCart';

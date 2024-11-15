@@ -50,8 +50,7 @@ export const initializeSocket = (server: HTTPServer) => {
         sessions.map((session) => ({
           sessionID: session.sessionID,
           supplier: session.supplier,
-          accountAlias:
-            session.supplier === 'turboCars' ? session.accountAlias : undefined,
+          accountAlias: session.accountAlias,
         }))
       );
     } catch (error) {
@@ -66,13 +65,15 @@ export const initializeSocket = (server: HTTPServer) => {
 
     // AUTOCOMPLETE Handler
     socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
-      const { sessionID, query } = data;
+      console.log(chalk.cyan(JSON.stringify(data)));
+      const { sessionID, query, accountAlias } = data;
 
       if (!query || query.trim() === '') {
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
           query: '',
           results: [],
           sessionID,
+          accountAlias,
         });
         return;
       }
@@ -83,11 +84,13 @@ export const initializeSocket = (server: HTTPServer) => {
           query,
           supplier: 'ug',
           sessionID,
+          accountAlias,
         });
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
           query,
           results,
           sessionID,
+          accountAlias,
         });
       } catch (error) {
         logger.error('Autocomplete error:', error);
@@ -96,6 +99,7 @@ export const initializeSocket = (server: HTTPServer) => {
           query,
           message: (error as Error).message,
           sessionID,
+          accountAlias,
         });
       }
     });
@@ -178,16 +182,25 @@ export const initializeSocket = (server: HTTPServer) => {
           `Received GET_ITEM_RESULTS event from socket ${socket.id}:`,
           data
         );
-        const { sessionID, item, supplier } = data;
+        const { sessionID, item, supplier, accountAlias } = data;
 
-        let sessionAccountAlias = undefined;
+        if (!supplier) {
+          console.error('Supplier is undefined in GET_ITEM_RESULTS');
+          return;
+        }
 
-        if (sessionID) {
-          const session = sessionManager.getSession(sessionID);
-          sessionAccountAlias =
-            session?.supplier === 'turboCars'
-              ? session.accountAlias
-              : undefined;
+        // let sessionAccountAlias = accountAlias;
+
+        if (sessionID && supplier) {
+          const sessionKey = accountAlias
+            ? `${supplier}_${accountAlias}`
+            : supplier;
+
+          const session = sessionManager.getSession(sessionKey);
+          // sessionAccountAlias =
+          //   session?.supplier === 'turboCars'
+          //     ? session.accountAlias
+          //     : undefined;
         }
 
         if (supplier === 'profit') {
@@ -228,13 +241,11 @@ export const initializeSocket = (server: HTTPServer) => {
             });
           }
         } else {
-          // Handle other suppliers
           try {
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier,
               sessionID,
-              accountAlias:
-                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+              accountAlias,
             });
             if (supplier && sessionID) {
               const result = await supplierServices[supplier]({
@@ -242,16 +253,14 @@ export const initializeSocket = (server: HTTPServer) => {
                 item,
                 supplier,
                 sessionID,
-                accountAlias:
-                  supplier === 'turboCars' ? sessionAccountAlias : undefined,
+                accountAlias,
               });
 
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
                 supplier,
                 result,
                 sessionID,
-                accountAlias:
-                  supplier === 'turboCars' ? sessionAccountAlias : undefined,
+                accountAlias,
               });
             }
           } catch (error) {
@@ -260,8 +269,7 @@ export const initializeSocket = (server: HTTPServer) => {
               supplier,
               error: (error as Error).message,
               sessionID,
-              accountAlias:
-                supplier === 'turboCars' ? sessionAccountAlias : undefined,
+              accountAlias,
             });
           }
         }
@@ -270,10 +278,13 @@ export const initializeSocket = (server: HTTPServer) => {
 
     socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
       const { count, item, sessionID, accountAlias } = data;
-      const session = sessionManager.getSession(sessionID);
+
+      const supplier = item.supplier;
+      const sessionKey = `${supplier}_${accountAlias}`;
+
+      const session = sessionManager.getSession(sessionKey);
       const sessionAccountAlias =
         session?.supplier === 'turboCars' ? session.accountAlias : undefined;
-      const supplier = item.supplier;
 
       try {
         let result;
@@ -295,6 +306,7 @@ export const initializeSocket = (server: HTTPServer) => {
             count,
             item,
             sessionID,
+            accountAlias,
           });
         }
 

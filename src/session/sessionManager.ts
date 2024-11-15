@@ -13,7 +13,7 @@ interface Session {
   context: BrowserContext;
   page: Page;
   socketID: string;
-  accountAlias?: accountAlias;
+  accountAlias: accountAlias;
 }
 
 interface supplierParams {
@@ -33,24 +33,24 @@ class SessionManager {
     const sessions: Session[] = [];
 
     const suppliers: suppliersParams = [
-      {
-        name: 'turboCars',
-        username: process.env.TURBOCARS_USERNAME || '',
-        password: process.env.TURBOCARS_PASSWORD || '',
-        accountAlias: 'nal',
-      },
-      {
-        name: 'turboCars',
-        username: process.env.TURBOCARS_USERNAME_BN || '',
-        password: process.env.TURBOCARS_PASSWORD_BN || '',
-        accountAlias: 'bezNal',
-      },
-      {
-        name: 'patriot',
-        username: process.env.PATRIOT_USERNAME || '',
-        password: process.env.PATRIOT_PASSWORD || '',
-        accountAlias: 'nal',
-      },
+      // {
+      //   name: 'turboCars',
+      //   username: process.env.TURBOCARS_USERNAME || '',
+      //   password: process.env.TURBOCARS_PASSWORD || '',
+      //   accountAlias: 'nal',
+      // },
+      // {
+      //   name: 'turboCars',
+      //   username: process.env.TURBOCARS_USERNAME_BN || '',
+      //   password: process.env.TURBOCARS_PASSWORD_BN || '',
+      //   accountAlias: 'bezNal',
+      // },
+      // {
+      //   name: 'patriot',
+      //   username: process.env.PATRIOT_USERNAME || '',
+      //   password: process.env.PATRIOT_PASSWORD || '',
+      //   accountAlias: 'nal',
+      // },
       {
         name: 'ug',
         username: process.env.UG_USERNAME || '',
@@ -73,8 +73,8 @@ class SessionManager {
         socketID,
         accountAlias,
       };
-
-      this.sessions.set(sessionID, session);
+      const sessionKey = accountAlias ? `${name}_${accountAlias}` : name;
+      this.sessions.set(sessionKey, session);
       sessions.push(session);
 
       await this.login(session, username, password);
@@ -82,8 +82,8 @@ class SessionManager {
     return sessions;
   }
 
-  getSession(sessionID: string): Session | undefined {
-    return this.sessions.get(sessionID);
+  getSession(sessionKey: string): Session | undefined {
+    return this.sessions.get(sessionKey);
   }
 
   async closeSessionsForSocket(socketID: string): Promise<void> {
