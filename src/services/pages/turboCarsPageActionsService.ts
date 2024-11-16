@@ -8,13 +8,12 @@ import { NotLoggedInError } from '../../utils/errors';
 import { addToCartTurboCarsService } from '../turboCars/addToCartTurboCarsService';
 import { itemDataTurboCarsService } from '../turboCars/itemDataTurboCarsService';
 import { loginTurboCarsService } from '../turboCars/loginTurboCarsService';
-import { logoutTurboCarsService } from '../turboCars/logoutTurboCarsService';
 
 export const turboCarsPageActionsService = async (
   actionParams: PageAction
 ): Promise<pageActionsResult> => {
   const { action, supplier, sessionID, accountAlias } = actionParams;
-  const { credentials, selectors } = getSupplierData(supplier);
+  const { selectors } = getSupplierData(supplier);
 
   const sessionKey = `${supplier}_${accountAlias}`;
 
@@ -39,9 +38,6 @@ export const turboCarsPageActionsService = async (
           supplier,
         });
       }
-
-      case 'logout':
-        return await logoutTurboCarsService(page, supplier);
 
       case 'pick': {
         const { item, supplier, action } = actionParams;

@@ -62,11 +62,7 @@ export const loginTurboCarsService = async ({
     });
   }
 
-  const loggedIn = await checkTcAuth(
-    page,
-    selectors.credentialsEl,
-    credentials
-  );
+  const loggedIn = await checkTcAuth(page, selectors.credentialsEl, username);
 
   logger.info(chalk.blue(`${supplier} Залогинен?: ${loggedIn}`));
 

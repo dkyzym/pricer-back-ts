@@ -287,8 +287,8 @@ export const initializeSocket = (server: HTTPServer) => {
       const sessionKey = `${supplier}_${accountAlias}`;
 
       const session = sessionManager.getSession(sessionKey);
-      const sessionAccountAlias =
-        session?.supplier === 'turboCars' ? session.accountAlias : undefined;
+      // const sessionAccountAlias =
+      //   session?.supplier === 'turboCars' ? session.accountAlias : undefined;
 
       try {
         let result;
@@ -301,7 +301,7 @@ export const initializeSocket = (server: HTTPServer) => {
             count,
             item,
             sessionID,
-            accountAlias: sessionAccountAlias,
+            accountAlias,
           });
         } else if (supplierName === 'ug' || supplierName === 'patriot') {
           result = await ugPageActionsService({
@@ -318,15 +318,13 @@ export const initializeSocket = (server: HTTPServer) => {
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, {
             result,
             sessionID,
-            accountAlias:
-              supplierName === 'turboCars' ? sessionAccountAlias : undefined,
+            accountAlias,
           });
         } else {
           socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
             message: result?.message,
             sessionID,
-            accountAlias:
-              supplierName === 'turboCars' ? sessionAccountAlias : undefined,
+            accountAlias,
           });
         }
       } catch (error) {
@@ -335,7 +333,7 @@ export const initializeSocket = (server: HTTPServer) => {
         socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
           message: (error as Error).message,
           sessionID,
-          accountAlias: sessionAccountAlias,
+          accountAlias,
         });
       }
     });
