@@ -12,7 +12,7 @@ export const loginTurboCarsService = async ({
   password,
   supplier,
 }: LoginServiceParams): Promise<pageActionsResult> => {
-  const { credentials, selectors, dashboardURL } = getSupplierData(supplier);
+  const { selectors, dashboardURL } = getSupplierData(supplier);
 
   page.on('dialog', async (dialog: Dialog) => {
     logger.warn(`${supplier} Dialog message:`, dialog.message());
