@@ -190,18 +190,12 @@ export const initializeSocket = (server: HTTPServer) => {
           return;
         }
 
-        // let sessionAccountAlias = accountAlias;
-
         if (sessionID && supplier) {
           const sessionKey = accountAlias
             ? `${supplier}_${accountAlias}`
             : supplier;
 
           const session = sessionManager.getSession(sessionKey);
-          // sessionAccountAlias =
-          //   session?.supplier === 'turboCars'
-          //     ? session.accountAlias
-          //     : undefined;
         }
 
         if (supplier === 'profit') {

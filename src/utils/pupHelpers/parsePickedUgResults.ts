@@ -3,7 +3,6 @@ import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { calculateDeliveryDate } from '../calculateDates';
 import { filterEqualResults } from '../data/filterEqualResults';
 
-// Функция для парсинга данных с страницы
 export const parseData = async (
   page: Page
 ): Promise<Omit<SearchResultsParsed, 'supplier'>[]> => {
@@ -82,7 +81,7 @@ export const parseData = async (
         allow_return,
       };
 
-      data.push(product);
+      price && data.push(product); // не возвращаем если нет цены
     });
 
     return data;
@@ -98,7 +97,7 @@ export const parsePickedUgResults = async ({
   // Ожидаем, пока результаты поиска загрузятся
   await page.waitForSelector('#searchInProgress', {
     hidden: true,
-    timeout: 60000,
+    timeout: 60_000,
   });
 
   // Дополнительная задержка для гарантии полной загрузки данных

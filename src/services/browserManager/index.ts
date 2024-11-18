@@ -14,7 +14,7 @@ export const initBrowser = async (): Promise<Browser> => {
   if (!browser || !browser.connected) {
     logger.info(`Launching new browser`);
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',

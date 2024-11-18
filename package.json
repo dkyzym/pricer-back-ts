@@ -29,7 +29,7 @@
     "express": "^4.19.2",
     "luxon": "^3.5.0",
     "morgan": "^1.10.0",
-    "puppeteer": "^23.1.1",
+    "puppeteer": "^23.8.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "socket.io": "^4.7.5",
