@@ -26,7 +26,7 @@ interface supplierParams {
 type SuppliersParams = supplierParams[];
 
 class SessionManager {
-  private sessions: Map<string, Session> = new Map();
+  private sessions = new Map<string, Map<string, Session>>();
 
   async createSessionsForSocket(socketID: string): Promise<Session[]> {
     const browser = await initBrowser();
@@ -126,23 +126,43 @@ class SessionManager {
       },
       sessionKey = accountAlias ? `${name}_${accountAlias}` : name;
 
-    this.sessions.set(sessionKey, session);
-    await this.login(session, username, password);
+    let socketSessions = this.sessions.get(socketID);
+    if (!socketSessions) {
+      socketSessions = new Map<string, Session>();
+      this.sessions.set(socketID, socketSessions);
+    }
 
+    // Store the session under sessionKey
+    socketSessions.set(sessionKey, session);
+
+    await this.login(session, username, password);
     return session;
   }
 
-  getSession(sessionKey: string): Session | undefined {
-    return this.sessions.get(sessionKey);
+  getSession(socketID: string, sessionKey: string): Session | undefined {
+    const socketSessions = this.sessions.get(socketID);
+    return socketSessions ? socketSessions.get(sessionKey) : undefined;
+  }
+
+  getSessionBySessionID(sessionID: string): Session | undefined {
+    for (const socketSessions of this.sessions.values()) {
+      for (const session of socketSessions.values()) {
+        if (session.sessionID === sessionID) {
+          return session;
+        }
+      }
+    }
+    return undefined;
   }
 
   async closeSessionsForSocket(socketID: string): Promise<void> {
-    for (const [sessionID, session] of this.sessions.entries()) {
-      if (session.socketID === socketID) {
+    const socketSessions = this.sessions.get(socketID);
+    if (socketSessions) {
+      for (const session of socketSessions.values()) {
         await session.page.close();
         await session.context.close();
-        this.sessions.delete(sessionID);
       }
+      this.sessions.delete(socketID);
     }
   }
 

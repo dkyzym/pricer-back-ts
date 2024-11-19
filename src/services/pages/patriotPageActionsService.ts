@@ -15,7 +15,7 @@ export const patriotPageActionsService = async (
   const { credentials, selectors } = getSupplierData(supplier);
 
   const sessionKey = accountAlias ? `${supplier}_${accountAlias}` : supplier;
-  const session = sessionManager.getSession(sessionKey);
+  const session = sessionManager.getSessionBySessionID(sessionID);
   if (!session) {
     throw new Error(`Session with ID ${sessionID} not found`);
   }

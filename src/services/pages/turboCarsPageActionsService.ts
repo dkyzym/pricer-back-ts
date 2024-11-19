@@ -17,7 +17,7 @@ export const turboCarsPageActionsService = async (
 
   const sessionKey = `${supplier}_${accountAlias}`;
 
-  const session = sessionManager.getSession(sessionKey);
+  const session = sessionManager.getSessionBySessionID(sessionID);
   if (!session) {
     throw new Error(`Session with ID ${sessionID} not found`);
   }

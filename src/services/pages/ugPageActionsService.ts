@@ -24,7 +24,7 @@ export const ugPageActionsService = async (
 
   const sessionKey = accountAlias ? `${supplier}_${accountAlias}` : supplier;
 
-  const session = sessionManager.getSession(sessionKey);
+  const session = sessionManager.getSessionBySessionID(sessionID);
   if (!session) {
     throw new Error(`Session with id: ${sessionID} not found, ${supplier}`);
   }

@@ -68,6 +68,7 @@ export const initializeSocket = (server: HTTPServer) => {
     socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
       console.log(chalk.cyan(JSON.stringify(data)));
       const { sessionID, query, accountAlias } = data;
+      const sessionKey = accountAlias ? `ug_${accountAlias}` : 'ug';
 
       if (!query || query.trim() === '') {
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
@@ -80,17 +81,22 @@ export const initializeSocket = (server: HTTPServer) => {
       }
 
       try {
+        const session = sessionManager.getSession(socket.id, sessionKey);
+        if (!session) {
+          throw new Error('Session not found');
+        }
+
         const results = await ugPageActionsService({
           action: SOCKET_EVENTS.AUTOCOMPLETE,
           query,
           supplier: 'ug',
-          sessionID,
+          sessionID: session.sessionID,
           accountAlias,
         });
         socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
           query,
           results,
-          sessionID,
+          sessionID: session.sessionID,
           accountAlias,
         });
       } catch (error) {
@@ -195,7 +201,7 @@ export const initializeSocket = (server: HTTPServer) => {
             ? `${supplier}_${accountAlias}`
             : supplier;
 
-          const session = sessionManager.getSession(sessionKey);
+          const session = sessionManager.getSession(socket.id, sessionKey);
         }
 
         if (supplier === 'profit') {
@@ -280,9 +286,10 @@ export const initializeSocket = (server: HTTPServer) => {
       const supplier = item.supplier;
       const sessionKey = `${supplier}_${accountAlias}`;
 
-      const session = sessionManager.getSession(sessionKey);
-      // const sessionAccountAlias =
-      //   session?.supplier === 'turboCars' ? session.accountAlias : undefined;
+      const session = sessionManager.getSession(socket.id, sessionKey);
+      if (!session) {
+        throw new Error('Session not found');
+      }
 
       try {
         let result;
