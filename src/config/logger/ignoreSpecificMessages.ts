@@ -22,6 +22,8 @@ export const ignoreSpecificMessages = format((info) => {
     '302',
     '301',
     'fonts',
+    'has already been declared',
+    'Cannot set properties of null',
   ];
 
   if (messagesToIgnore.some((msg) => info.message.includes(msg))) {

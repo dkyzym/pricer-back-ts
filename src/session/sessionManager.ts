@@ -1,4 +1,4 @@
-import { Browser, BrowserContext, Page } from 'puppeteer';
+import { Browser, BrowserContext, HTTPRequest, Page } from 'puppeteer';
 import { logger } from '../config/logger';
 import { initBrowser } from '../services/browserManager';
 import { loginPatriotService } from '../services/patriot/loginPatriotService';
@@ -112,11 +112,13 @@ class SessionManager {
     socketID: string
   ): Promise<Session> {
     const { name, username, password, accountAlias } = supplierParams;
+    const sessionID = generateSessionID();
+    const context = await browser.createBrowserContext();
+    const page = await context.newPage();
 
-    const sessionID = generateSessionID(),
-      context = await browser.createBrowserContext(),
-      page = await context.newPage(),
-      session: Session = {
+    await this.setupPage(page);
+
+    const session: Session = {
         sessionID,
         supplier: name,
         context,
@@ -137,6 +139,62 @@ class SessionManager {
 
     await this.login(session, username, password);
     return session;
+  }
+
+  private async setupPage(page: Page): Promise<void> {
+    const waitTimeOutPeriod = 60_000;
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+    );
+    await page.setExtraHTTPHeaders({ 'Accept-Language': 'ru-RU,ru;q=0.9' });
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      // @ts-ignore
+      window.chrome = { runtime: {} };
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['ru-RU', 'ru'],
+      });
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5],
+      });
+    });
+    await page.setRequestInterception(true);
+    page.on('request', (request: HTTPRequest) => {
+      const resourceType = request.resourceType();
+      const headers = {
+        ...request.headers(),
+        'Accept-Language': 'ru-RU,ru;q=0.9',
+      };
+      if (['image', 'font'].includes(resourceType)) {
+        request.abort();
+      } else {
+        request.continue({ headers });
+      }
+    });
+    page.on('pageerror', (err) => logger.error(`${page?.url()}, ${err}`));
+    page.on('error', (err) =>
+      logger.error(`Page crashed ${page?.url()}: ${err}`)
+    );
+    page.on('requestfailed', (request) =>
+      logger.warn(
+        `Request failed: ${request.url()} ${request.failure()?.errorText}`
+      )
+    );
+    page.on('response', (response) => {
+      if (!response.ok()) {
+        logger.warn(
+          `Response warn: ${response.url()} Status: ${response.status()}`
+        );
+      }
+    });
+
+    try {
+      await page.waitForFunction(() => document.readyState === 'complete', {
+        timeout: waitTimeOutPeriod,
+      });
+    } catch (error) {
+      logger.error(`Error during waitForFunction: ${error}`);
+    }
   }
 
   getSession(socketID: string, sessionKey: string): Session | undefined {
