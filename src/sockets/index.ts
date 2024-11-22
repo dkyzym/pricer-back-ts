@@ -20,6 +20,7 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { sessionManager } from '../session/sessionManager';
+import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { logResultCount } from '../utils/stdLogs';
 
 const supplierServices: {
@@ -241,6 +242,57 @@ export const initializeSocket = (server: HTTPServer) => {
             logger.error('Profit error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'profit',
+              error: (error as Error).message,
+            });
+          }
+        } else if (supplier === 'autosputnik') {
+          try {
+            console.log(`Fetching data from 'autosputnik' for item:`, item);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier: 'autosputnik',
+              article: item.article,
+            });
+
+            const data = await parseAutosputnikData(item);
+
+            const autosputnikResult: pageActionsResult = {
+              success: true,
+              message: `Autosputnik data fetched: ${data?.length}`,
+              data: [
+                {
+                  id: '123456',
+                  article: 'ART123',
+                  brand: 'BrandX',
+                  description: 'High-quality car part for optimal performance.',
+                  availability: 25,
+                  price: 99.99,
+                  warehouse: 'Main Warehouse',
+                  imageUrl: 'https://example.com/image.jpg',
+                  deadline: 2,
+                  deadLineMax: 5,
+                  supplier: 'autosputnik',
+                  probability: 0.85,
+                  needToCheckBrand: true,
+                  innerId: 'INNER123',
+                  deadLineTimeToOrder: '2024-11-25T12:00:00Z',
+                  deliveryDate: '2024-11-30',
+                  returnable: 1,
+                  multi: 5,
+                  allow_return: 'yes',
+                  warehouse_id: 'WH123',
+                  inner_product_code: 'PRD456',
+                },
+              ],
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier: 'autosputnik',
+              result: autosputnikResult,
+            });
+          } catch (error) {
+            logger.error('Autosputnik error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'autosputnik',
               error: (error as Error).message,
             });
           }

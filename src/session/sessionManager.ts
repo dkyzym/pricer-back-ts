@@ -34,24 +34,24 @@ class SessionManager {
     const sessions: Session[] = [];
 
     const suppliers: SuppliersParams = [
-      {
-        name: 'turboCars',
-        username: process.env.TURBOCARS_USERNAME || '',
-        password: process.env.TURBOCARS_PASSWORD || '',
-        accountAlias: 'nal',
-      },
-      {
-        name: 'turboCars',
-        username: process.env.TURBOCARS_USERNAME_BN || '',
-        password: process.env.TURBOCARS_PASSWORD_BN || '',
-        accountAlias: 'bezNal',
-      },
-      {
-        name: 'patriot',
-        username: process.env.PATRIOT_USERNAME || '',
-        password: process.env.PATRIOT_PASSWORD || '',
-        accountAlias: 'nal',
-      },
+      // {
+      //   name: 'turboCars',
+      //   username: process.env.TURBOCARS_USERNAME || '',
+      //   password: process.env.TURBOCARS_PASSWORD || '',
+      //   accountAlias: 'nal',
+      // },
+      // {
+      //   name: 'turboCars',
+      //   username: process.env.TURBOCARS_USERNAME_BN || '',
+      //   password: process.env.TURBOCARS_PASSWORD_BN || '',
+      //   accountAlias: 'bezNal',
+      // },
+      // {
+      //   name: 'patriot',
+      //   username: process.env.PATRIOT_USERNAME || '',
+      //   password: process.env.PATRIOT_PASSWORD || '',
+      //   accountAlias: 'nal',
+      // },
       {
         name: 'ug',
         username: process.env.UG_USERNAME || '',

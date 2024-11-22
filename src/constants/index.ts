@@ -74,6 +74,22 @@ export const SUPPLIERS_DATA: SuppliersData = {
       firstRowWrapper: '',
     },
   },
+  autosputnik: {
+    credentials: '',
+    cookieName: '',
+    loginURL: '',
+    logoutURL: '',
+    selectors: {
+      loginForm: '',
+      credentialsEl: '',
+      emailUsernameField: '',
+      passwordField: '',
+      loginBtn: '',
+      logoutBtn: '',
+      input: '',
+      firstRowWrapper: '',
+    },
+  },
   // armtek: {
   //   credentials: 'Кизим',
   //   cookieName: 'arCookies',

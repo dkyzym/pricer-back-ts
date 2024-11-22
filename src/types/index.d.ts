@@ -1,6 +1,14 @@
-export type SupplierName = 'turboCars' | 'ug' | 'patriot' | 'profit';
+export type SupplierName =
+  | 'turboCars'
+  | 'ug'
+  | 'patriot'
+  | 'profit'
+  | 'autosputnik';
 
-export type PuppeteerSupplierName = Exclude<SupplierName, 'profit'>;
+export type PuppeteerSupplierName = Exclude<
+  SupplierName,
+  'profit' | 'autosputnik'
+>;
 
 export interface Selectors {
   loginForm: string;

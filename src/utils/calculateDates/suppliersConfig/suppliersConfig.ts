@@ -154,4 +154,21 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+  {
+    supplierName: 'autosputnik',
+    workingDays: [1, 2, 3, 4, 5, 6],
+    cutoffTimes: {},
+    processingTime: {},
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime | '';
+
+      if (result.deliveryDate) {
+        deliveryDate = DateTime.fromISO(result.deliveryDate);
+      } else {
+        deliveryDate = '';
+      }
+
+      return deliveryDate;
+    },
+  },
 ];
