@@ -1,5 +1,5 @@
-// apiClient.ts
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import {
   PROXY_AUTH,
@@ -7,22 +7,27 @@ import {
   PROXY_PORT,
   suppliers,
 } from '../config/api/config';
-import { generateMD5 } from '../utils/generateMD5';
 import { SupplierName } from '../types';
+import { generateMD5 } from '../utils/generateMD5';
 
-const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
-const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
-const agent = new HttpsProxyAgent(proxyUrl);
-
-export const createAxiosInstance = (
+export const createAxiosInstance = async (
   supplierKey: SupplierName
-): AxiosInstance => {
+): Promise<AxiosInstance> => {
   const supplier = suppliers[supplierKey];
-
   if (!supplier) {
     throw new Error(
       `Не найдена конфигурация поставщика с ключом: ${supplierKey}`
     );
+  }
+
+  const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
+  const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
+  const agent = new HttpsProxyAgent(proxyUrl);
+
+  // Проверка доступности прокси
+  const isProxyWorking = await checkProxy(agent);
+  if (!isProxyWorking) {
+    throw new Error('Прокси недоступен. Запросы не будут отправлены.');
   }
 
   const axiosInstance = axios.create({
@@ -56,4 +61,23 @@ export const createAxiosInstance = (
   );
 
   return axiosInstance;
+};
+
+// Функция для проверки работы прокси
+const checkProxy = async (agent: any) => {
+  try {
+    const testInstance = axios.create({
+      httpAgent: agent,
+      httpsAgent: agent,
+      timeout: 5000, // Установите тайм-аут для проверки
+    });
+    const response = await testInstance.get('http://api.ipify.org?format=json');
+    console.log(
+      chalk.cyan.italic('IP через прокси:', JSON.stringify(response.data))
+    );
+    return true;
+  } catch (error) {
+    console.error('Ошибка прокси:', (error as AxiosError).message);
+    return false;
+  }
 };
