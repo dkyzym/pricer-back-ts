@@ -5,10 +5,7 @@ export type SupplierName =
   | 'profit'
   | 'autosputnik';
 
-export type PuppeteerSupplierName = Exclude<
-  SupplierName,
-  'profit' | 'autosputnik'
->;
+export type PuppeteerSupplierName = 'patriot';
 
 export interface Selectors {
   loginForm: string;

@@ -28,8 +28,8 @@ const supplierServices: {
     actionParams: PageAction
   ) => Promise<pageActionsResult>;
 } = {
-  ug: ugPageActionsService,
-  turboCars: turboCarsPageActionsService,
+  // ug: ugPageActionsService,
+  // turboCars: turboCarsPageActionsService,
   patriot: patriotPageActionsService,
 };
 
@@ -66,51 +66,51 @@ export const initializeSocket = (server: HTTPServer) => {
     }
 
     // AUTOCOMPLETE Handler
-    socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
-      console.log(chalk.cyan(JSON.stringify(data)));
-      const { sessionID, query, accountAlias } = data;
-      const sessionKey = accountAlias ? `ug_${accountAlias}` : 'ug';
+    // socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
+    //   console.log(chalk.cyan(JSON.stringify(data)));
+    //   const { sessionID, query, accountAlias } = data;
+    //   const sessionKey = accountAlias ? `ug_${accountAlias}` : 'ug';
 
-      if (!query || query.trim() === '') {
-        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-          query: '',
-          results: [],
-          sessionID,
-          accountAlias,
-        });
-        return;
-      }
+    //   if (!query || query.trim() === '') {
+    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
+    //       query: '',
+    //       results: [],
+    //       sessionID,
+    //       accountAlias,
+    //     });
+    //     return;
+    //   }
 
-      try {
-        const session = sessionManager.getSession(socket.id, sessionKey);
-        if (!session) {
-          throw new Error('Session not found');
-        }
+    //   try {
+    //     const session = sessionManager.getSession(socket.id, sessionKey);
+    //     if (!session) {
+    //       throw new Error('Session not found');
+    //     }
 
-        const results = await ugPageActionsService({
-          action: SOCKET_EVENTS.AUTOCOMPLETE,
-          query,
-          supplier: 'ug',
-          sessionID: session.sessionID,
-          accountAlias,
-        });
-        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-          query,
-          results,
-          sessionID: session.sessionID,
-          accountAlias,
-        });
-      } catch (error) {
-        logger.error('Autocomplete error:', error);
-        console.error(`Autocomplete error for session ${sessionID}:`, error);
-        socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
-          query,
-          message: (error as Error).message,
-          sessionID,
-          accountAlias,
-        });
-      }
-    });
+    //     const results = await ugPageActionsService({
+    //       action: SOCKET_EVENTS.AUTOCOMPLETE,
+    //       query,
+    //       supplier: 'ug',
+    //       sessionID: session.sessionID,
+    //       accountAlias,
+    //     });
+    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
+    //       query,
+    //       results,
+    //       sessionID: session.sessionID,
+    //       accountAlias,
+    //     });
+    //   } catch (error) {
+    //     logger.error('Autocomplete error:', error);
+    //     console.error(`Autocomplete error for session ${sessionID}:`, error);
+    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
+    //       query,
+    //       message: (error as Error).message,
+    //       sessionID,
+    //       accountAlias,
+    //     });
+    //   }
+    // });
 
     // BRAND_CLARIFICATION Handler
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
@@ -206,7 +206,6 @@ export const initializeSocket = (server: HTTPServer) => {
         }
 
         if (supplier === 'profit') {
-          // Handle 'profit' supplier without session
           try {
             console.log(`Fetching data from 'profit' for item:`, item);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
@@ -296,6 +295,45 @@ export const initializeSocket = (server: HTTPServer) => {
               error: (error as Error).message,
             });
           }
+        } else if (supplier === 'ug') {
+          try {
+            console.log(`Fetching data from 'ug' for item:`, item);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier: 'ug',
+              article: item.article,
+            });
+
+            // Fetch data from 'UG' API
+            const data = await getItemsListByArticleService(item.article);
+            const itemsWithRest = await getItemsWithRest(data);
+            const relevantItems = itemsWithRest.filter(({ brand }: any) =>
+              isBrandMatch(item.brand, brand)
+            );
+
+            const profitParsedData = parseProfitApiResponse(
+              relevantItems,
+              item.brand
+            );
+
+            logResultCount(item, supplier, profitParsedData);
+
+            const profitResult: pageActionsResult = {
+              success: profitParsedData.length > 0,
+              message: `Profit data fetched: ${profitParsedData.length > 0}`,
+              data: profitParsedData,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier: 'profit',
+              result: profitResult,
+            });
+          } catch (error) {
+            logger.error('Profit error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'ug',
+              error: (error as Error).message,
+            });
+          }
         } else {
           try {
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
@@ -304,7 +342,7 @@ export const initializeSocket = (server: HTTPServer) => {
               accountAlias,
             });
             if (supplier && sessionID) {
-              const result = await supplierServices[supplier]({
+              const result = await supplierServices['patriot']({
                 action: 'pick',
                 item,
                 supplier,

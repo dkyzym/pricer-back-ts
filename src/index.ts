@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use('/', authRoutes);
-app.use('/', dataRoutes);
+app.use('/api', dataRoutes);
 
 app.use(() => {
   throw new RouteNotFoundError();
