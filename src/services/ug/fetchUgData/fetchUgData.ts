@@ -1,8 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { SearchResultsParsed, ugArticleSearchResult } from '../../../types';
-import { calculateDeliveryDate } from '../../../utils/calculateDates';
-import { isBrandMatch } from '../../../utils/data/isBrandMatch';
+import { ugArticleSearchResult } from '../../../types';
 import { createAxiosInstance } from '../../apiClient';
 
 export const fetchUgData = async (
