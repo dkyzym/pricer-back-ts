@@ -1,26 +1,28 @@
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { SearchResultsParsed, ugArticleSearchResult } from '../../../types';
+import { calculateDeliveryDate } from '../../../utils/calculateDates';
+import { isBrandMatch } from '../../../utils/data/isBrandMatch';
 import { createAxiosInstance } from '../../apiClient';
 
 export const fetchUgData = async (
   article: string,
   brand: string,
-  useOnlineStocks?: 0,
-  withOutAnalogs?: 0
+  useOnlineStocks?: number,
+  withOutAnalogs?: number
 ) => {
   try {
     const axiosInstance = await createAxiosInstance('ug');
 
-    const response = await axiosInstance.get('/search/articles/', {
-      params: {
-        number: article,
-        brand,
-        useOnlineStocks,
-        withOutAnalogs,
-      },
-    });
-
-    console.log(response.data?.length);
-    console.log(response.data[0]);
+    const response: AxiosResponse<ugArticleSearchResult[]> =
+      await axiosInstance.get('/search/articles/', {
+        params: {
+          number: article,
+          brand,
+          useOnlineStocks: 1,
+          withOutAnalogs: 1,
+        },
+      });
 
     return response.data;
   } catch (error) {
@@ -28,5 +30,6 @@ export const fetchUgData = async (
       'Ошибка при получении данных:',
       (error as AxiosError).message
     );
+    throw error;
   }
 };

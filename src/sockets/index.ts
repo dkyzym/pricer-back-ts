@@ -19,6 +19,8 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
+import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
+import { mapUgResponseData } from '../services/ug/mapUgResponseData';
 import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { logResultCount } from '../utils/stdLogs';
@@ -197,13 +199,13 @@ export const initializeSocket = (server: HTTPServer) => {
           return;
         }
 
-        if (sessionID && supplier) {
-          const sessionKey = accountAlias
-            ? `${supplier}_${accountAlias}`
-            : supplier;
+        // if (sessionID && supplier) {
+        //   const sessionKey = accountAlias
+        //     ? `${supplier}_${accountAlias}`
+        //     : supplier;
 
-          const session = sessionManager.getSession(socket.id, sessionKey);
-        }
+        //   const session = sessionManager.getSession(socket.id, sessionKey);
+        // }
 
         if (supplier === 'profit') {
           try {
@@ -304,31 +306,24 @@ export const initializeSocket = (server: HTTPServer) => {
             });
 
             // Fetch data from 'UG' API
-            const data = await getItemsListByArticleService(item.article);
-            const itemsWithRest = await getItemsWithRest(data);
-            const relevantItems = itemsWithRest.filter(({ brand }: any) =>
-              isBrandMatch(item.brand, brand)
-            );
+            const data = await fetchUgData(item.article, item.brand);
 
-            const profitParsedData = parseProfitApiResponse(
-              relevantItems,
-              item.brand
-            );
+            const mappedUgResponseData = mapUgResponseData(data, item.brand);
 
-            logResultCount(item, supplier, profitParsedData);
+            logResultCount(item, supplier, mappedUgResponseData);
 
-            const profitResult: pageActionsResult = {
-              success: profitParsedData.length > 0,
-              message: `Profit data fetched: ${profitParsedData.length > 0}`,
-              data: profitParsedData,
+            const ugResult: pageActionsResult = {
+              success: mappedUgResponseData.length > 0,
+              message: `Ug data fetched: ${mappedUgResponseData.length > 0}`,
+              data: mappedUgResponseData,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier: 'profit',
-              result: profitResult,
+              supplier: 'ug',
+              result: ugResult,
             });
           } catch (error) {
-            logger.error('Profit error:', error);
+            logger.error('Ug error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'ug',
               error: (error as Error).message,
@@ -341,7 +336,7 @@ export const initializeSocket = (server: HTTPServer) => {
               sessionID,
               accountAlias,
             });
-            if (supplier && sessionID) {
+            if (supplier === 'patriot' && sessionID) {
               const result = await supplierServices['patriot']({
                 action: 'pick',
                 item,
