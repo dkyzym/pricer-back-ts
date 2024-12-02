@@ -1,12 +1,16 @@
 import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
+import chalk from 'chalk';
 import { CookieJar } from 'tough-cookie';
+import { logger } from '../../config/logger';
 import { ugHeaders } from '../../constants/headers';
 import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn';
 
 // Создаем общий cookieJar и клиент
-const cookieJar = new CookieJar();
-const client = wrapper(axios.create({ jar: cookieJar, withCredentials: true }));
+const cookieJarPatriot = new CookieJar();
+const clientPatriot = wrapper(
+  axios.create({ jar: cookieJarPatriot, withCredentials: true })
+);
 
 export const loginPatriot = async () => {
   const PATRIOT_LOGIN_URL = 'https://optautotorg.com/';
@@ -23,20 +27,24 @@ export const loginPatriot = async () => {
   data.append('pass', password);
 
   const headers = ugHeaders;
-  const response = await client.post(PATRIOT_LOGIN_URL, data, { headers });
+  const response = await clientPatriot.post(PATRIOT_LOGIN_URL, data, {
+    headers,
+  });
 
   // Куки автоматически сохраняются в cookieJar
-  const cookies = await cookieJar.getCookies(PATRIOT_LOGIN_URL);
+  const cookies = await cookieJarPatriot.getCookies(PATRIOT_LOGIN_URL);
   if (!cookies.some((cookie) => cookie.key === 'ABCPUser')) {
     throw new Error('Missing ABCPUser cookie');
   }
 
   checkIsLoggedIn(response.data, PATRIOT_CREDENTIALS);
+
+  logger.info(chalk.blue(`${'Patriot'} Залогинен?: ${true}`));
   return true;
 };
 
 // Экспортируем cookieJar и клиент для использования в других модулях
-export { client, cookieJar };
+export { clientPatriot, cookieJarPatriot };
 
 // import { client, cookieJar } from 'путь-к-модулю-loginPatriot';
 
