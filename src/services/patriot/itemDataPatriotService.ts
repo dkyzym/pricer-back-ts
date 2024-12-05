@@ -3,11 +3,9 @@ import { ParallelSearchParams, SearchResultsParsed } from 'types';
 
 import * as cheerio from 'cheerio';
 
-import { logResultCount } from 'utils/stdLogs';
 import { ugHeaders } from '../../constants/headers';
-import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults';
-import { clientPatriot } from './loginPartiot';
 import { makePatriotRequest } from '../../utils/makePatriotRequest';
+import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults';
 
 export const itemDataPatriotService = async ({
   item,
@@ -43,7 +41,7 @@ export const itemDataPatriotService = async ({
       item,
       supplier,
     });
-    logResultCount(item, supplier, allResults);
+
     return allResults;
   } else {
     logger.info(
@@ -55,7 +53,7 @@ export const itemDataPatriotService = async ({
       item,
       supplier,
     });
-    logResultCount(item, supplier, allResults);
+
     return allResults;
   }
 };
