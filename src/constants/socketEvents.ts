@@ -1,5 +1,5 @@
 interface SOCKET_EVENTS {
-  CONNECT: 'connect';
+  CONNECT: 'connected';
   // AUTOCOMPLETE: 'autocomplete';
   // AUTOCOMPLETE_RESULTS: 'autocompleteResults';
   // AUTOCOMPLETE_ERROR: 'autocompleteError';
@@ -18,7 +18,7 @@ interface SOCKET_EVENTS {
 }
 
 export const SOCKET_EVENTS: SOCKET_EVENTS = {
-  CONNECT: 'connect',
+  CONNECT: 'connected',
   // AUTOCOMPLETE: 'autocomplete',
   // AUTOCOMPLETE_RESULTS: 'autocompleteResults',
   // AUTOCOMPLETE_ERROR: 'autocompleteError',

@@ -1,6 +1,5 @@
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { waitForPageNavigation } from 'utils/pupHelpers/pageHelpers';
-import { parsePickedUgResults } from 'utils/pupHelpers/parsePickedUgResults';
 
 export const itemDataUgService = async ({
   page,
@@ -26,7 +25,7 @@ export const itemDataUgService = async ({
     timeout: 60_000,
   });
 
-  const allResults = await parsePickedUgResults({ page, item, supplier });
+  // const allResults = await parsePickedUgResults({ page, item, supplier });
 
-  return allResults;
+  return [];
 };

@@ -18,7 +18,6 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
     id: uuidv4(),
     ...element,
   }));
-  console.log('dataWithId', dataWithId);
 
   res.json({ success: true, results: dataWithId });
 };

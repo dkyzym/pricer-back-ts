@@ -99,7 +99,7 @@ export interface ItemToParallelSearch {
 }
 
 interface ParallelSearchParams {
-  page: Page;
+  page?: Page;
   item: ItemToParallelSearch;
   supplier: SupplierName;
 }

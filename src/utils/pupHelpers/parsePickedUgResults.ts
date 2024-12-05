@@ -1,135 +1,100 @@
-import { Page } from 'puppeteer';
+import * as cheerio from 'cheerio';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import { calculateDeliveryDate } from '../calculateDates';
 import { filterEqualResults } from '../data/filterEqualResults';
 
+interface ParseParams extends ParallelSearchParams {
+  html: string;
+}
+
 export const parseData = async (
-  page: Page
+  $: cheerio.CheerioAPI
 ): Promise<Omit<SearchResultsParsed, 'supplier'>[]> => {
-  return await page.evaluate(() => {
-    // Выбираем все строки с результатами
-    const rows = document.querySelectorAll('[class^="resultTr2"]');
-    const data: Omit<SearchResultsParsed, 'supplier'>[] = [];
+  const data: Omit<SearchResultsParsed, 'supplier'>[] = [];
 
-    rows.forEach((row) => {
-      // Извлекаем элементы для каждого поля
-      const articleElement = row.querySelector(
-        '.resultPartCode a'
-      ) as HTMLElement;
-      const brandElement = row.querySelector('.resultBrand a') as HTMLElement;
-      const descriptionElement = row.querySelector(
-        '.resultDescription'
-      ) as HTMLElement;
-      const warehouseElement = row.querySelector(
-        '.resultWarehouse'
-      ) as HTMLElement;
-      const imageElement = row.querySelector('.resultImage img');
-      const probabilityElement = row.querySelector('.resultProbability');
-      const quantityInputElement = row.querySelector('input.quantityInputFake');
-      const addToBasketElement = row.querySelector('input.addToBasketLinkFake');
-      const allowReturnElement = row.querySelector(
-        '.fr-icon2-minus-circled.fr-text-danger'
-      );
+  $('[class^="resultTr2"]').each((_, row) => {
+    const $row = $(row);
 
-      // Получаем текст или атрибуты из элементов
-      const article = articleElement?.innerText.trim() || '';
-      const brand = brandElement?.innerText.trim() || '';
-      const description = descriptionElement?.innerText.trim() || '';
-      const warehouse = warehouseElement?.innerText.trim() || '';
-      const imageUrl = imageElement?.getAttribute('src') || '';
-      const probabilityText =
-        probabilityElement?.textContent?.replace('%', '').trim() || '';
-      const probability = parseFloat(probabilityText) || '';
-      const id =
-        quantityInputElement?.getAttribute('searchresultuniqueid') || '';
-      const multiText = addToBasketElement?.getAttribute('packing') || '1';
-      const multi = Number(multiText);
+    const article = $row.find('.resultPartCode a').text().trim();
+    const brand = $row.find('.resultBrand a').text().trim();
+    const description = $row.find('.resultDescription').text().trim();
+    const warehouse = $row.find('.resultWarehouse').text().trim();
+    const imageUrl = $row.find('.resultImage img').attr('src') || '';
+    const probabilityText = $row
+      .find('.resultProbability')
+      .text()
+      .replace('%', '')
+      .trim();
+    const probability = parseFloat(probabilityText) || 0;
+    const id =
+      $row.find('input.quantityInputFake').attr('searchresultuniqueid') || '';
+    const multiText =
+      $row.find('input.addToBasketLinkFake').attr('packing') || '1';
+    const multi = Number(multiText);
+    const allowReturnTitle =
+      $row.find('.fr-icon2-minus-circled.fr-text-danger').attr('title') || '';
+    const allow_return = allowReturnTitle.includes(
+      'не подлежит возврату или обмену'
+    )
+      ? '0'
+      : '1';
 
-      // Определяем возможность возврата товара
-      const allowReturnTitle = allowReturnElement?.getAttribute('title') || '';
-      const allow_return = allowReturnTitle.includes(
-        'не подлежит возврату или обмену'
-      )
-        ? '0'
-        : '1';
+    const availabilityText = $row.attr('data-availability') || '0';
+    const priceText = $row.attr('data-output-price') || '0';
+    const deadlineText = $row.attr('data-deadline') || '0';
+    const deadLineMaxText = $row.attr('data-deadline-max') || '0';
 
-      // Извлекаем атрибуты из элемента строки
-      const availabilityText = row.getAttribute('data-availability') || '0';
-      const priceText = row.getAttribute('data-output-price') || '0';
-      const deadlineText = row.getAttribute('data-deadline') || '0';
-      const deadLineMaxText = row.getAttribute('data-deadline-max') || '0';
+    const availability = parseInt(availabilityText, 10) || 0;
+    const price = parseFloat(priceText) || 0;
+    const deadline = parseInt(deadlineText, 10) || 0;
+    const deadLineMax = parseInt(deadLineMaxText, 10) || 0;
 
-      const availability = parseInt(availabilityText, 10) || 0;
-      const price = parseFloat(priceText) || 0;
-      const deadline = parseInt(deadlineText, 10) || 0;
-      const deadLineMax = parseInt(deadLineMaxText, 10) || 0;
+    const product: Omit<SearchResultsParsed, 'supplier'> = {
+      article,
+      brand,
+      description,
+      availability,
+      price,
+      warehouse,
+      imageUrl,
+      deadline,
+      deadLineMax,
+      probability,
+      id,
+      multi,
+      allow_return,
+    };
 
-      // Формируем объект продукта
-      const product: Omit<SearchResultsParsed, 'supplier'> = {
-        article,
-        brand,
-        description,
-        availability,
-        price,
-        warehouse,
-        imageUrl,
-        deadline,
-        deadLineMax,
-        probability,
-        id,
-        multi,
-        allow_return,
-      };
-
-      price && data.push(product); // не возвращаем если нет цены
-    });
-
-    return data;
+    if (price) {
+      data.push(product);
+    }
   });
+
+  return data;
 };
 
-// Функция для обработки и возврата  результатов поиска
 export const parsePickedUgResults = async ({
-  page,
+  html,
   item,
   supplier,
-}: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  // Ожидаем, пока результаты поиска загрузятся
-  await page.waitForSelector('#searchInProgress', {
-    hidden: true,
-    timeout: 60_000,
-  });
+}: ParseParams): Promise<SearchResultsParsed[]> => {
+  const $ = cheerio.load(html);
 
-  // Дополнительная задержка для гарантии полной загрузки данных
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Wait for any dynamic content if necessary (simulate wait)
+  // Since we're dealing with server-rendered HTML, this may not be necessary
 
-  // Парсим данные со страницы
-  const currentData = await parseData(page);
+  const currentData = await parseData($);
 
   if (currentData.length > 0) {
-    // Добавляем информацию о поставщике к каждому продукту
     const resultsWithSupplier = currentData
-      .map((product) => ({
-        ...product,
-        supplier,
-      }))
+      .map((product) => ({ ...product, supplier }))
       .filter((product) => product.warehouse !== 'Внешний склад');
-
-    // Фильтруем результаты на основе заданных критериев
     const filteredResults = filterEqualResults(resultsWithSupplier, item);
-
-    // Вычисляем дату доставки для каждого продукта
-    const resultsWithDeliveryDate = filteredResults.map((result) => {
-      const deliveryDate = calculateDeliveryDate(result);
-      return {
-        ...result,
-        deliveryDate,
-      };
-    });
-
+    const resultsWithDeliveryDate = filteredResults.map((result) => ({
+      ...result,
+      deliveryDate: calculateDeliveryDate(result),
+    }));
     return resultsWithDeliveryDate;
   }
-
-  // Возвращаем пустой массив, если данных нет
   return [];
 };
