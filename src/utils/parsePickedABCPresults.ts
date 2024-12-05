@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
-import { calculateDeliveryDate } from '../calculateDates';
-import { filterEqualResults } from '../data/filterEqualResults';
+import { calculateDeliveryDate } from './calculateDates';
+import { filterEqualResults } from './data/filterEqualResults';
 
 interface ParseParams extends ParallelSearchParams {
   html: string;
@@ -73,7 +73,7 @@ export const parseData = async (
   return data;
 };
 
-export const parsePickedUgResults = async ({
+export const parsePickedABCPresults = async ({
   html,
   item,
   supplier,

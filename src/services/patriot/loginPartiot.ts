@@ -43,6 +43,35 @@ export const loginPatriot = async () => {
   return true;
 };
 
+let isLoggingIn = false;
+const loginQueue: (() => void)[] = [];
+
+export const ensurePatriotLoggedIn = async () => {
+  const PATRIOT_LOGIN_URL = 'https://optautotorg.com/';
+  const cookies = await cookieJarPatriot.getCookies(PATRIOT_LOGIN_URL);
+  const abcUserCookie = cookies.find((cookie) => cookie.key === 'ABCPUser');
+
+  if (!abcUserCookie) {
+    if (isLoggingIn) {
+      // If already logging in, wait for the login to complete
+      await new Promise<void>((resolve) => loginQueue.push(resolve));
+    } else {
+      isLoggingIn = true;
+      try {
+        logger.info('Session cookie missing, logging in...');
+        await loginPatriot();
+      } finally {
+        isLoggingIn = false;
+        // Resolve all queued promises
+        loginQueue.forEach((resolve) => resolve());
+        loginQueue.length = 0;
+      }
+    }
+  } else {
+    logger.info('Session cookie found, proceeding with request.');
+  }
+};
+
 // Экспортируем cookieJar и клиент для использования в других модулях
 export { clientPatriot, cookieJarPatriot };
 

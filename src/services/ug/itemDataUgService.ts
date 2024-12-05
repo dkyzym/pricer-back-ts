@@ -25,7 +25,7 @@ export const itemDataUgService = async ({
     timeout: 60_000,
   });
 
-  // const allResults = await parsePickedUgResults({ page, item, supplier });
+  // const allResults = await parsePickedABCPresults({ page, item, supplier });
 
   return [];
 };

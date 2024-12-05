@@ -1,4 +1,3 @@
-import { SUPPLIERS_DATA } from '@constants/index';
 import { logger } from 'config/logger';
 import { ParallelSearchParams, SearchResultsParsed } from 'types';
 
@@ -6,19 +5,20 @@ import * as cheerio from 'cheerio';
 
 import { logResultCount } from 'utils/stdLogs';
 import { ugHeaders } from '../../constants/headers';
-import { parsePickedUgResults } from '../../utils/pupHelpers/parsePickedUgResults';
+import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults';
 import { clientPatriot } from './loginPartiot';
+import { makePatriotRequest } from '../../utils/makePatriotRequest';
 
 export const itemDataPatriotService = async ({
   item,
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  const { selectors } = SUPPLIERS_DATA['patriot'];
+  // const { selectors } = SUPPLIERS_DATA['patriot'];
   const searchUrl = `https://optautotorg.com/search?pcode=${encodeURIComponent(item.article)}`;
   const headers = ugHeaders; // Import your headers
 
   // First GET request
-  const response = await clientPatriot.get(searchUrl, { headers });
+  const response = await makePatriotRequest(searchUrl, { headers });
   const $ = cheerio.load(response.data);
 
   const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
@@ -34,10 +34,11 @@ export const itemDataPatriotService = async ({
 
   if (elements.length > 0) {
     logger.info(`[${supplier}] Элемент существует, выполняем второй запрос.`);
-    // Second GET request
+
     const detailUrl = `https://optautotorg.com/search/${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
-    const detailResponse = await clientPatriot.get(detailUrl, { headers });
-    const allResults = await parsePickedUgResults({
+    const detailResponse = await makePatriotRequest(detailUrl, { headers });
+
+    const allResults = await parsePickedABCPresults({
       html: detailResponse.data,
       item,
       supplier,
@@ -49,7 +50,7 @@ export const itemDataPatriotService = async ({
       `${supplier} Элемент не найден. Продолжаем без второго запроса.`
     );
     // Optionally, you can parse results from the initial response if applicable
-    const allResults = await parsePickedUgResults({
+    const allResults = await parsePickedABCPresults({
       html: response.data,
       item,
       supplier,

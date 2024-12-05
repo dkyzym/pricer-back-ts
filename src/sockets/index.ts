@@ -311,7 +311,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             logResultCount(item, supplier, data);
 
-            const ugResult: pageActionsResult = {
+            const patriotResult: pageActionsResult = {
               success: data.length > 0,
               message: `Patriot data fetched: ${data.length > 0}`,
               data: data,
@@ -319,7 +319,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
               supplier: 'patriot',
-              result: ugResult,
+              result: patriotResult,
             });
           } catch (error) {
             logger.error('Patriot error:', error);
