@@ -1,4 +1,12 @@
+import { DateTime } from 'luxon';
 import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService';
+import { v4 as uuidV4 } from 'uuid';
+import {
+  SearchResultsParsed,
+  SupplierName,
+  TovarAutosputnik,
+} from '../../../types';
+import { calculateDeliveryDate } from '../../calculateDates';
 import { isBrandMatch } from '../isBrandMatch';
 
 export const parseAutosputnikData = async (item: {
@@ -42,15 +50,50 @@ export const parseAutosputnikData = async (item: {
       .map((result) => (result as PromiseFulfilledResult<any>).value);
 
     // Шаг 4: Объединяем данные
-    const combinedData = fulfilledResults.reduce((acc: any[], data: any) => {
-      if (data.requestAnswer && Array.isArray(data.requestAnswer)) {
-        acc.push(...data.requestAnswer);
-      }
-      return acc;
-    }, []);
+    const combinedData = fulfilledResults.reduce(
+      (acc: TovarAutosputnik[], data: any) => {
+        if (data.requestAnswer && Array.isArray(data.requestAnswer)) {
+          acc.push(...data.requestAnswer);
+        }
+        return acc;
+      },
+      []
+    );
 
-    // Возвращаем объединенные данные
-    return combinedData;
+    const mapAutosputnikData: SearchResultsParsed[] = combinedData.map(
+      (item) => {
+        const newItem = {
+          id: uuidV4(),
+          article: item.ARTICUL,
+          availability: item.STOCK,
+          brand: item.BRA_BRAND,
+          price: Number(item.NEW_COST),
+          allow_return: item.RETURNS_POSIBL,
+          supplier: 'autosputnik' as SupplierName,
+          warehouse: item.PRICE_NAME,
+          imageUrl: '',
+          deliveryDate: DateTime.fromFormat(
+            item.DAYOFF2,
+            'yyyy-MM-dd HH:mm:ss'
+          ).toFormat('yyyy-MM-dd'),
+
+          multi: Number(item.CRATN),
+          probability: Number(item.SHIPPING_PROC),
+          warehouse_id: item.ID_SHOP_PRICES,
+          description: item.NAME_TOVAR,
+          autosputnik: {
+            brand: item.BRA_ID,
+            id_shop_prices: item.ID_SHOP_PRICES,
+          },
+          deadline: Number(item.DAYOFF) * 24,
+          deadLineMax: Number(item.DAYOFF) * 24,
+        };
+
+        return { ...newItem, deliveryDate: calculateDeliveryDate(newItem) };
+      }
+    );
+
+    return mapAutosputnikData;
   } catch (error) {
     console.error('Error in parseAutosputnikData:', error);
     throw error;

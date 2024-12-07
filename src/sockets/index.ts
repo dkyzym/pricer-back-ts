@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
 import { logger } from 'config/logger';
+// import fs from 'fs/promises';
 import { Server as HTTPServer } from 'http';
 import { turboCarsPageActionsService } from 'services/pages/turboCarsPageActionsService';
 import { ugPageActionsService } from 'services/pages/ugPageActionsService';
@@ -227,34 +228,12 @@ export const initializeSocket = (server: HTTPServer) => {
 
             const data = await parseAutosputnikData(item);
 
+            // fs.writeFile('sputnik.json', JSON.stringify(data));
+
             const autosputnikResult: pageActionsResult = {
               success: true,
               message: `Autosputnik data fetched: ${data?.length}`,
-              data: [
-                // {
-                //   id: '123456',
-                //   article: 'ART123',
-                //   brand: 'BrandX',
-                //   description: 'High-quality car part for optimal performance.',
-                //   availability: 25,
-                //   price: 99.99,
-                //   warehouse: 'Main Warehouse',
-                //   imageUrl: 'https://example.com/image.jpg',
-                //   deadline: 2,
-                //   deadLineMax: 5,
-                //   supplier: 'autosputnik',
-                //   probability: 0.85,
-                //   needToCheckBrand: true,
-                //   innerId: 'INNER123',
-                //   deadLineTimeToOrder: '2024-12-25T12:00:00Z',
-                //   deliveryDate: '2024-12-30',
-                //   returnable: 1,
-                //   multi: 5,
-                //   allow_return: 'yes',
-                //   warehouse_id: 'WH123',
-                //   inner_product_code: 'PRD456',
-                // },
-              ],
+              data: data,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {

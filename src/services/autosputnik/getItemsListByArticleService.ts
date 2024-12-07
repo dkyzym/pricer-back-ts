@@ -1,6 +1,5 @@
 import axios from 'axios';
-import chalk from 'chalk';
-import { logger } from '../../config/logger';
+// import { logger } from '../../config/logger';
 
 export const getAutosputnikItemsListByArticleService = async (
   article: string,
@@ -38,7 +37,7 @@ export const getAutosputnikItemsListByArticleService = async (
       throw new Error(response.data.error);
     }
 
-    logger.info(chalk.yellow(JSON.stringify(response?.data)));
+    // logger.info(chalk.yellow(JSON.stringify(response?.data)));
     return response.data;
   } catch (error) {
     console.error('Error fetching data from Autosputnik API:', error);
