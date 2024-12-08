@@ -24,7 +24,7 @@ export const fetchUgData = async (
     return response.data;
   } catch (error) {
     console.error(
-      'Ошибка при получении данных:',
+      'Ошибка при получении данных UG:',
       (error as AxiosError).message
     );
     throw error;
