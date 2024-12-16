@@ -1,12 +1,12 @@
 import { AxiosError } from 'axios';
-import { TURBOCARS_SERVICE_PATH } from '../../../config/api/config';
+import { TURBOCARS_SERVICE_PATHS } from '../../../config/api/config';
 import { createAxiosInstance } from '../../apiClient';
 
 export const searchTurbocarsCode = async (searchCode: string) => {
   try {
     const api = await createAxiosInstance('turboCars');
 
-    const response = await api.get(TURBOCARS_SERVICE_PATH, {
+    const response = await api.get(TURBOCARS_SERVICE_PATHS.Code_search, {
       params: {
         Search_Code: searchCode,
       },

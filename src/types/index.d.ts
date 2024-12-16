@@ -133,6 +133,11 @@ export interface SearchResultsParsed {
     id_shop_prices: string;
   };
 
+  //** Свойства для TurboCars*/
+  turboCars?: {
+    stock_id: string;
+  };
+
   // //** Дополнительное свойство */
   // [key: string]: any; // 'any' дополнительное свойство
 }

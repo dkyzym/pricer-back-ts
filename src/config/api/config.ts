@@ -26,4 +26,13 @@ export const PROXY_HOST = process.env.PROXY_HOST!;
 export const PROXY_PORT = Number(process.env.PROXY_PORT);
 export const PROXY_AUTH = process.env.PROXY_AUTH || '';
 
-export const TURBOCARS_SERVICE_PATH = '/ws1/service.asmx/Code_Search';
+// export const TURBOCARS_SERVICE_PATH = '/ws1/service.asmx/Code_Search';
+/**
+ * Пути сервисов поставщика Turbo-cars
+ */
+export const TURBOCARS_SERVICE_PATHS = {
+  /**
+   * Возвращает данные включая аналоги
+   */
+  Code_search: '/ws1/service.asmx/Code_Search',
+};

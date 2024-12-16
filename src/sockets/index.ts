@@ -18,10 +18,12 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
+import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData';
 import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
+import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
 
 // const supplierServices: {
@@ -308,7 +310,40 @@ export const initializeSocket = (server: HTTPServer) => {
             });
           }
         } else if (supplier === 'turboCars') {
-          console.log('тут будет код turboCars');
+          try {
+            console.log(`Fetching data from ${supplier}' for item:`, item);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier: supplier,
+              article: item.article,
+            });
+
+            const withAnalogs = 0;
+            const codeSearchResult = await searchTurbocarsCode(item.article);
+            const data = parseXmlToSearchResults(
+              codeSearchResult,
+              item.brand,
+              withAnalogs
+            );
+
+            logResultCount(item, supplier, data);
+
+            const turboCarsResult: pageActionsResult = {
+              success: data.length > 0,
+              message: `Patriot data fetched: ${data.length > 0}`,
+              data: data,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier: 'turboCars',
+              result: turboCarsResult,
+            });
+          } catch (error) {
+            logger.error('TurboCars error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'turboCars',
+              error: (error as Error).message,
+            });
+          }
         }
       }
     );
