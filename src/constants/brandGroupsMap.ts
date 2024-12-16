@@ -10,6 +10,7 @@ export const brandGroupsMap = [
   ['total', 'TotalEnergies'],
   ['gaz', 'g-part'],
   ['general motors', 'gm', 'opel'],
+  ['sct', 'sct germany'],
 ];
 
 // 2389901318
