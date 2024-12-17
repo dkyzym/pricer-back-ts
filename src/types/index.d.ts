@@ -3,7 +3,8 @@ export type SupplierName =
   | 'ug'
   | 'patriot'
   | 'profit'
-  | 'autosputnik';
+  | 'autosputnik'
+  | 'autoImpulse';
 
 export type PuppeteerSupplierName = 'patriot';
 

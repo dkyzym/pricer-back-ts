@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
+import chalk from 'chalk';
 import { CookieJar } from 'tough-cookie';
 import { ugHeaders } from '../constants/headers';
 
@@ -15,7 +16,7 @@ const initializeCookies = async (): Promise<void> => {
       headers: ugHeaders,
     });
     cookiesInitialized = true;
-    console.log('Куки успешно инициализированы');
+    console.log(chalk.green('Куки Автокомплита ЮГ успешно инициализированы'));
   } catch (error) {
     console.error('Ошибка при инициализации куки:', error);
     throw error; // Пробрасываем ошибку выше

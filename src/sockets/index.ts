@@ -17,6 +17,7 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
+import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
 import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
@@ -306,6 +307,35 @@ export const initializeSocket = (server: HTTPServer) => {
             logger.error('Patriot error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'patriot',
+              error: (error as Error).message,
+            });
+          }
+        } else if (supplier === 'autoImpulse') {
+          try {
+            console.log(`Fetching data from ${supplier}' for item:`, item);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier,
+              article: item.article,
+            });
+
+            const data = await itemDataAutoImpulseService({ item, supplier });
+
+            logResultCount(item, supplier, data);
+
+            const autoImpulseResult: pageActionsResult = {
+              success: data.length > 0,
+              message: `AutoImpulse data fetched: ${data.length > 0}`,
+              data: data,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier,
+              result: autoImpulseResult,
+            });
+          } catch (error) {
+            logger.error('AutoImpulse error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier,
               error: (error as Error).message,
             });
           }

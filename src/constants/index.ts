@@ -90,6 +90,22 @@ export const SUPPLIERS_DATA: SuppliersData = {
       firstRowWrapper: '',
     },
   },
+  autoImpulse: {
+    credentials: 'Кизим',
+    cookieName: 'aiCookies',
+    loginURL: 'https://lnr-auto-impulse.ru//',
+    logoutURL: 'https://lnr-auto-impulse.ru/?logout',
+    selectors: {
+      loginForm: '#logInModal[href="#modalFormLogin"]',
+      credentialsEl: '.headAuth',
+      emailUsernameField: '#login_modal',
+      passwordField: '#pass_modal',
+      loginBtn: 'input[type="submit"].modalWindowSubmitBtn',
+      logoutBtn: 'a[href="/?logout"]',
+      input: '#pcode',
+      firstRowWrapper: 'tbody > tr:nth-child(1)',
+    },
+  },
   // armtek: {
   //   credentials: 'Кизим',
   //   cookieName: 'arCookies',
