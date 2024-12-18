@@ -1,8 +1,8 @@
 interface SOCKET_EVENTS {
-  CONNECT: 'connect';
-  AUTOCOMPLETE: 'autocomplete';
-  AUTOCOMPLETE_RESULTS: 'autocompleteResults';
-  AUTOCOMPLETE_ERROR: 'autocompleteError';
+  CONNECT: 'connected';
+  // AUTOCOMPLETE: 'autocomplete';
+  // AUTOCOMPLETE_RESULTS: 'autocompleteResults';
+  // AUTOCOMPLETE_ERROR: 'autocompleteError';
   GET_ITEM_RESULTS: 'getItemResults';
   BRAND_CLARIFICATION: 'getBrandClarification';
   BRAND_CLARIFICATION_RESULTS: 'brandClarificationResults';
@@ -18,10 +18,10 @@ interface SOCKET_EVENTS {
 }
 
 export const SOCKET_EVENTS: SOCKET_EVENTS = {
-  CONNECT: 'connect',
-  AUTOCOMPLETE: 'autocomplete',
-  AUTOCOMPLETE_RESULTS: 'autocompleteResults',
-  AUTOCOMPLETE_ERROR: 'autocompleteError',
+  CONNECT: 'connected',
+  // AUTOCOMPLETE: 'autocomplete',
+  // AUTOCOMPLETE_RESULTS: 'autocompleteResults',
+  // AUTOCOMPLETE_ERROR: 'autocompleteError',
   GET_ITEM_RESULTS: 'getItemResults',
   BRAND_CLARIFICATION: 'getBrandClarification',
   BRAND_CLARIFICATION_RESULTS: 'brandClarificationResults',

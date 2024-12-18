@@ -49,5 +49,9 @@ export const calculateDeliveryDate = (
     );
   }
 
+  if (deliveryDate.weekday === 7) {
+    deliveryDate = deliveryDate.plus({ days: 1 });
+  }
+
   return deliveryDate.toFormat('yyyy-MM-dd');
 };

@@ -4,9 +4,7 @@ import { logger } from 'config/logger';
 import type { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
-import { initializeSocket } from 'sockets';
-
-// В файле, где вы инициализируете сервер
+import { initializeSocket } from '../sockets';
 
 export const startServer = async (app: Application) => {
   try {

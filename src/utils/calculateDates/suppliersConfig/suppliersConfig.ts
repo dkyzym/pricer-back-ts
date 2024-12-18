@@ -154,4 +154,80 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+  {
+    supplierName: 'autosputnik',
+    workingDays: [1, 2, 3, 4, 5, 6],
+    cutoffTimes: {},
+    processingTime: {},
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime | '';
+
+      if (result.deliveryDate) {
+        deliveryDate = DateTime.fromISO(result.deliveryDate);
+      } else {
+        deliveryDate = '';
+      }
+
+      return deliveryDate;
+    },
+  },
+  {
+    supplierName: 'autoImpulse',
+    workingDays: [2, 5], // Вторник и пятница
+    cutoffTimes: {
+      default: '15:00', // Крайний срок 15:00
+    },
+    processingTime: { days: 0 },
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime;
+      const weekday = currentTime.weekday; // 1 = Monday, ..., 7 = Sunday
+      const hour = currentTime.hour;
+      const minute = currentTime.minute;
+
+      // Функция для получения следующего определенного дня недели
+      const getNextWeekday = (
+        current: DateTime,
+        targetWeekday: number
+      ): DateTime => {
+        let daysToAdd = (targetWeekday - current.weekday + 7) % 7;
+        if (daysToAdd === 0) {
+          daysToAdd = 7; // Если сегодня целевой день, выбрать следующий
+        }
+        return current.plus({ days: daysToAdd });
+      };
+
+      if (weekday === 2) {
+        // Вторник
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 во вторник — доставка в среду
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 во вторник — доставка в субботу
+          deliveryDate = getNextWeekday(currentTime, 6); // 6 = Saturday
+        }
+      } else if (weekday === 5) {
+        // Пятница
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 в пятницу — доставка в субботу
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 в пятницу — доставка в следующую среду
+          deliveryDate = getNextWeekday(currentTime, 3); // 3 = Wednesday
+        }
+      } else {
+        // В остальные дни — доставка на ближайшую среду или субботу
+        const nextWednesday = getNextWeekday(currentTime, 3);
+        const nextSaturday = getNextWeekday(currentTime, 6);
+
+        // Выбрать ближайший из двух дней
+        if (nextWednesday < nextSaturday) {
+          deliveryDate = nextWednesday;
+        } else {
+          deliveryDate = nextSaturday;
+        }
+      }
+
+      return deliveryDate;
+    },
+  },
 ];

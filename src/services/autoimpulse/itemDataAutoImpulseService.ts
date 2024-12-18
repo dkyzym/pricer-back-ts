@@ -4,19 +4,20 @@ import { ParallelSearchParams, SearchResultsParsed } from 'types';
 import * as cheerio from 'cheerio';
 
 import { ugHeaders } from '../../constants/headers';
-import { makePatriotRequest } from '../../utils/makePatriotRequest';
+import { makeAutoImpulseRequest } from '../../utils/makeAutoimpulseRequest';
 import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults';
 
-export const itemDataPatriotService = async ({
+export const itemDataAutoImpulseService = async ({
   item,
   supplier,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  // const { selectors } = SUPPLIERS_DATA['patriot'];
-  const searchUrl = `https://optautotorg.com/search?pcode=${encodeURIComponent(item.article)}`;
+  // const { selectors } = SUPPLIERS_DATA['autoImpulse'];
+  const BASE_URL = 'https://lnr-auto-impulse.ru';
+  const searchUrl = `${BASE_URL}/search?pcode=${encodeURIComponent(item.article)}`;
   const headers = ugHeaders; // Import your headers
 
   // First GET request
-  const response = await makePatriotRequest(searchUrl, { headers });
+  const response = await makeAutoImpulseRequest(searchUrl, { headers });
   const $ = cheerio.load(response.data);
 
   const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
@@ -33,8 +34,8 @@ export const itemDataPatriotService = async ({
   if (elements.length > 0) {
     logger.info(`[${supplier}] Элемент существует, выполняем второй запрос.`);
 
-    const detailUrl = `https://optautotorg.com/search/${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
-    const detailResponse = await makePatriotRequest(detailUrl, { headers });
+    const detailUrl = `${BASE_URL}/search/${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
+    const detailResponse = await makeAutoImpulseRequest(detailUrl, { headers });
 
     const allResults = await parsePickedABCPresults({
       html: detailResponse.data,
