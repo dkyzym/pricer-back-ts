@@ -1,19 +1,13 @@
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
 import { logger } from 'config/logger';
-// import fs from 'fs/promises';
 import { Server as HTTPServer } from 'http';
 import { turboCarsPageActionsService } from 'services/pages/turboCarsPageActionsService';
 import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService';
 import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
-import {
-  ItemToParallelSearch,
-  pageActionsResult,
-  // PuppeteerSupplierName,
-  SupplierName,
-} from 'types';
+import { ItemToParallelSearch, pageActionsResult, SupplierName } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
@@ -27,16 +21,6 @@ import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnik
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
 
-// const supplierServices: {
-//   [key in PuppeteerSupplierName]: (
-//     actionParams: PageAction
-//   ) => Promise<pageActionsResult>;
-// } = {
-//   // ug: ugPageActionsService,
-//   // turboCars: turboCarsPageActionsService,
-//   patriot: patriotPageActionsService,
-// };
-
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
     cors: {
@@ -49,53 +33,6 @@ export const initializeSocket = (server: HTTPServer) => {
     logger.info(chalk.cyan(`New client connected: ${socket.id}`));
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
-
-    // AUTOCOMPLETE Handler
-    // socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
-    //   console.log(chalk.cyan(JSON.stringify(data)));
-    //   const { sessionID, query, accountAlias } = data;
-    //   const sessionKey = accountAlias ? `ug_${accountAlias}` : 'ug';
-
-    //   if (!query || query.trim() === '') {
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-    //       query: '',
-    //       results: [],
-    //       sessionID,
-    //       accountAlias,
-    //     });
-    //     return;
-    //   }
-
-    //   try {
-    //     const session = sessionManager.getSession(socket.id, sessionKey);
-    //     if (!session) {
-    //       throw new Error('Session not found');
-    //     }
-
-    //     const results = await ugPageActionsService({
-    //       action: SOCKET_EVENTS.AUTOCOMPLETE,
-    //       query,
-    //       supplier: 'ug',
-    //       sessionID: session.sessionID,
-    //       accountAlias,
-    //     });
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-    //       query,
-    //       results,
-    //       sessionID: session.sessionID,
-    //       accountAlias,
-    //     });
-    //   } catch (error) {
-    //     logger.error('Autocomplete error:', error);
-    //     console.error(`Autocomplete error for session ${sessionID}:`, error);
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
-    //       query,
-    //       message: (error as Error).message,
-    //       sessionID,
-    //       accountAlias,
-    //     });
-    //   }
-    // });
 
     // BRAND_CLARIFICATION Handler
     // socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
@@ -163,9 +100,8 @@ export const initializeSocket = (server: HTTPServer) => {
 
     // GET_ITEM_RESULTS Handler
     interface getItemResultsParams {
-      // sessionID?: string;
       item: ItemToParallelSearch;
-      // accountAlias?: accountAlias;
+
       supplier: SupplierName;
     }
     socket.on(

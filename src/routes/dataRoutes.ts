@@ -1,5 +1,4 @@
 import { addToCartController } from 'controllers/data/addToCartController';
-// import { autocompleteController } from 'controllers/data/autocompleteController';
 import { Router } from 'express';
 import { ctrlWrapper } from 'middleware/ctrlWrapper';
 import { autocompleteUgController } from '../controllers/data/autocompleteUgController';
