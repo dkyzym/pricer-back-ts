@@ -139,6 +139,14 @@ export interface SearchResultsParsed {
     stock_id: string;
   };
 
+  //** Свойства для TurboCars*/
+  ug?: {
+    //**itemKey Для добавления товара в корзину.*/
+    itemKey: string;
+    //** supplierCode Для добавления товара в корзину.   */
+    supplierCode: string;
+  };
+
   // //** Дополнительное свойство */
   // [key: string]: any; // 'any' дополнительное свойство
 }
@@ -320,4 +328,13 @@ interface TovarAutosputnik {
 
   /** Вероятность поставки в срок. В процентах (0 - нет заказов по поставщику) */
   SHIPPING_PROC: string;
+}
+
+//** Параметры для добавления в корзину ЮГ */
+interface BasketPositionUG {
+  number: string;
+  brand: string;
+  supplierCode: string;
+  itemKey: string;
+  quantity: number;
 }

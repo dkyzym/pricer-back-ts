@@ -26,6 +26,11 @@ export const mapUgResponseData = (
     allow_return: String(!item.noReturn),
     warehouse_id: String(item.supplierCode), //supplierCode
     inner_product_code: item.itemKey, //itemKey
+
+    ug: {
+      itemKey: item.itemKey,
+      supplierCode: String(item.supplierCode),
+    },
   }));
 
   const ugResultsWithDeliveryDate = mappedResponseData.map((result) => {

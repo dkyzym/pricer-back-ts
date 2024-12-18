@@ -3,7 +3,7 @@ import {
   clientAutoImpulse,
   ensureAutoImpulseLoggedIn,
   loginAutoImpulse,
-} from '../services/autoimpulse/loginAutoimpulse';
+} from '../services/autoimpulse/loginAutoImpulse';
 
 export const makeAutoImpulseRequest = async (
   url: string,
