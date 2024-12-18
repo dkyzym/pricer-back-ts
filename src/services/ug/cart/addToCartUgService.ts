@@ -1,38 +1,18 @@
 import { AxiosError, AxiosResponse } from 'axios';
 
-import { BasketPositionUG } from '../../../types';
+import { BasketPositionUG, UgCartResponse } from '../../../types';
 import { createAxiosInstance } from '../../apiClient';
-
-interface AddToCartResponse {
-  status: 1 | 0;
-  errorMessage?: string;
-  positions: [
-    {
-      number: string;
-      brand: string;
-      supplierCode: string;
-      quantity: string;
-      numberFix: string;
-      deadline: number;
-      deadlineMax: number;
-      description: string;
-      status: 1 | 0;
-      errorMessage?: string;
-    },
-  ];
-}
+import { removeFromCartUgService } from './removeFromCartUgService ';
 
 export const addToCartUgService = async (
   positions: BasketPositionUG[]
-): Promise<AddToCartResponse> => {
+): Promise<UgCartResponse> => {
   try {
     const axiosInstance = await createAxiosInstance('ug');
-
     const params = new URLSearchParams();
 
     positions.forEach((position, index) => {
       const prefix = `positions[${index}]`;
-
       params.append(`${prefix}[number]`, position.number);
       params.append(`${prefix}[brand]`, position.brand);
       params.append(`${prefix}[supplierCode]`, position.supplierCode);
@@ -40,7 +20,7 @@ export const addToCartUgService = async (
       params.append(`${prefix}[quantity]`, position.quantity.toString());
     });
 
-    const response: AxiosResponse<AddToCartResponse> = await axiosInstance.post(
+    const response: AxiosResponse<UgCartResponse> = await axiosInstance.post(
       '/basket/add',
       params.toString(),
       {
@@ -49,6 +29,27 @@ export const addToCartUgService = async (
         },
       }
     );
+
+    if (
+      response.data.status === 0 &&
+      response.data.errorMessage ===
+        'Такой товар уже есть в корзине с этого online поставщика'
+    ) {
+      console.warn('Товар уже в корзине. Пытаемся обновить количество.');
+
+      // Удаляем существующий товар
+      await removeFromCartUgService(positions);
+
+      // Повторно добавляем товар с новым количеством
+      const retryResponse: AxiosResponse<UgCartResponse> =
+        await axiosInstance.post('/basket/add', params.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        });
+
+      return retryResponse.data;
+    }
 
     return response.data;
   } catch (error) {

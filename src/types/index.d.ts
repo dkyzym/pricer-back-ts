@@ -338,3 +338,20 @@ interface BasketPositionUG {
   itemKey: string;
   quantity: number;
 }
+
+interface UgCartResponse {
+  status: 1 | 0;
+  errorMessage?: string;
+  positions: Array<{
+    number: string;
+    brand: string;
+    supplierCode: string;
+    quantity: string;
+    numberFix: string;
+    deadline: number;
+    deadlineMax: number;
+    description: string;
+    status: 1 | 0;
+    errorMessage?: string;
+  }>;
+}
