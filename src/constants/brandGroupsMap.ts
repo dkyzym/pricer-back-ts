@@ -11,6 +11,7 @@ export const brandGroupsMap = [
   ['gaz', 'g-part'],
   ['general motors', 'gm', 'opel'],
   ['sct', 'sct germany'],
+  ['вмп', 'вмп авто', 'вмпавто', 'vmp', 'vmpauto'],
 ];
 
 // 2389901318
