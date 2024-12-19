@@ -1,7 +1,13 @@
 import { Request, Response } from 'express';
 import { addToCartProfitService } from 'services/profit/addToCartProfitService';
+import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService';
+import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart';
 import { addToCartUgService } from '../../services/ug/cart/addToCartUgService';
-import { BasketPositionUG, SupplierName } from '../../types';
+import {
+  addToCartAutosputnikData,
+  BasketPositionUG,
+  SupplierName,
+} from '../../types';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier }: { supplier: SupplierName } = req.body;
@@ -48,7 +54,7 @@ export const addToCartController = async (req: Request, res: Response) => {
 
     try {
       const result = await addToCartUgService([position]);
-      console.log(result);
+
       res.status(200).json({
         success: Boolean(result.status),
         message: result.positions[0]?.errorMessage || 'Товар добавлен',
@@ -60,6 +66,41 @@ export const addToCartController = async (req: Request, res: Response) => {
         message: 'Ошибка при добавлении в корзину',
       });
     }
+  } else if (supplier === 'autosputnik') {
+    const { amount, articul, brand, id_shop_prices, price } = req.body;
+
+    if (!amount || !articul || !brand || !id_shop_prices || !price) {
+      return res.status(400).json({
+        success: false,
+        message: `${supplier} Некоторые обязательные поля отсутствуют`,
+      });
+    }
+
+    const data: addToCartAutosputnikData = {
+      amount,
+      articul,
+      brand,
+      id_shop_prices,
+      price,
+    };
+    try {
+      const result = await addToCartAutosputnikService(data);
+      console.log(result);
+      const cart = await getAutosputnikCart();
+      console.log(cart);
+
+      res.status(200).json({
+        success: result.requestInfo.Status === 'ok' ? true : false,
+        message: result.requestAnswer.added,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка при добавлении в корзину',
+      });
+    }
+    //
   } else {
     res.status(400).json({
       success: false,

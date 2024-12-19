@@ -21,7 +21,6 @@ export const getAutosputnikItemsListByArticleService = async (
         login,
         pass,
         datatyp: 'json',
-        storage: 'tranzit',
       },
       data: {
         brand: brandId || '',
