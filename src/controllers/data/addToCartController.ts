@@ -85,7 +85,7 @@ export const addToCartController = async (req: Request, res: Response) => {
     };
     try {
       const result = await addToCartAutosputnikService(data);
-      console.log(result);
+      // console.log(result);
       const cart = await getAutosputnikCart();
       console.log(cart);
 
