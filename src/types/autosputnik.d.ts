@@ -131,3 +131,17 @@ export interface CartContentAutosputnik {
    */
   requestAnswer: OrderLine[];
 }
+
+interface addToCartAutosputnikData {
+  /** ID Бренда по автоспутник у нас по ключу autosputnik.brand */
+  brand: string;
+
+  /** ВНИМАНИЕ! Не Article */
+  articul: string;
+
+  //** ID Склада по autosputnik.id_shop_prices */
+  id_shop_prices: string;
+
+  amount: string;
+  price: string;
+}

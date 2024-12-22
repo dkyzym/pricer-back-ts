@@ -137,6 +137,7 @@ export interface SearchResultsParsed {
   //** Свойства для TurboCars*/
   turboCars?: {
     stock_id: string;
+    zakazCode: string;
   };
 
   //** Свойства для TurboCars*/
@@ -356,81 +357,23 @@ interface UgCartResponse {
   }>;
 }
 
-interface addToCartAutosputnikData {
-  /** ID Бренда по автоспутник у нас по ключу autosputnik.brand */
-  brand: string;
-
-  /** ВНИМАНИЕ! Не Article */
-  articul: string;
-
-  //** ID Склада по autosputnik.id_shop_prices */
-  id_shop_prices: string;
-
-  amount: string;
-  price: string;
+interface BasketTurboCarsFrontendData {
+  ZakazCode: string;
+  QTY: string;
+  StockID: string;
 }
 
-/**
- * Интерфейс для ответа API при добавлении товара в корзину поставщика Autosputnik.
- */
-// interface AddToCardAutosputnik {
-//   /**
-//    * Информация о запросе.
-//    */
-//   requestInfo: {
-//     /**
-//      * Статус запроса.
-//      * Возможные значения:
-//      * - 'ok' — запрос выполнен успешно
-//      * - 'err' — произошла ошибка при выполнении запроса
-//      */
-//     Status: 'ok' | 'err';
+interface BasketPositionTurboCars extends BasketTurboCarsFrontendData {
+  DeliveryType?: '0'; //DeliveryType нужен для оригинальных запчастей, доделать бы
+  Notes?: string;
+  ExpressID?: '0';
+}
 
-//     /**
-//      * Идентификатор пользователя в системе Autosputnik, выполнившего запрос.
-//      */
-//     CustomerID: string;
-
-//     /**
-//      * Лимит API (опционально, если присутствует в ответе).
-//      */
-//     api_limit?: string;
-
-//     /**
-//      * Признак ошибки.
-//      * Возможные значения:
-//      * - 'no' — запрос выполнен без ошибок
-//      * - 'yes' — произошла ошибка
-//      */
-//     Error: 'no' | 'yes';
-
-//     /**
-//      * Описание ошибки, если она есть.
-//      */
-//     ErrorDescript: string;
-//   };
-
-//   /**
-//    * Ответ на запрос добавления товара в корзину.
-//    */
-//   requestAnswer: {
-//     /**
-//      * Статус добавления товара.
-//      * Возможные значения:
-//      * - 'ok' — товар успешно добавлен
-//      * - 'err' — произошла ошибка при добавлении товара
-//      */
-//     added: 'ok' | 'err';
-
-//     /**
-//      * Идентификатор строки в корзине.
-//      * В случае успешного добавления возвращает строку ID, в случае ошибки — 0.
-//      */
-//     valid: string | number;
-
-//     /**
-//      * Дополнительная информация о результате добавления.
-//      */
-//     info: string;
-//   };
-// }
+interface AddResultXML {
+  AddResult: {
+    Message: string;
+    ID: string;
+    OrderedQTY: string;
+    OrderedCode: string;
+  };
+}

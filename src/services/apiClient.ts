@@ -36,7 +36,7 @@ export const createAxiosInstance = async (
     baseURL: supplier.baseUrl,
     httpAgent: agent,
     httpsAgent: agent,
-    timeout: 10000, // Можно увеличить таймаут для длительных запросов
+    timeout: 20000, // Можно увеличить таймаут для длительных запросов
   });
 
   axiosInstance.interceptors.request.use(

@@ -1,6 +1,9 @@
 import axios from 'axios';
-import { addToCartAutosputnikData } from '../../../types';
-import { AddToCardAutosputnik } from '../../../types/autosputnik';
+
+import {
+  AddToCardAutosputnik,
+  addToCartAutosputnikData,
+} from '../../../types/autosputnik';
 
 export const addToCartAutosputnikService = async (
   data: addToCartAutosputnikData

@@ -35,4 +35,5 @@ export const TURBOCARS_SERVICE_PATHS = {
    * Возвращает данные включая аналоги
    */
   Code_search: '/ws1/service.asmx/Code_Search',
+  Basket_Add: '/ws1/basket.asmx/Basket_Add',
 };

@@ -51,12 +51,13 @@ export const parseXmlToSearchResults = (
     if (codeType === 'Analog' && withAnalogsFlag === 0) {
       continue;
     }
-
+    const zakazCode = row.ZakazCode as string;
     const producerBrand = row.ProducerBrand as string;
     const producerCode = row.ProducerCode as string;
     const nameValue = row.Name as string;
     const parsedPrice = parseFloat(row.PriceRUR);
-    const minOrderQuantity = parseFloat(row.MinZakazQTY);
+
+    const minOrderQuantity = row.MinZakazQTY ? parseFloat(row.MinZakazQTY) : 1;
 
     // Проверка бренда аналогично той, что была в старом коде:
     // Нормализуем бренд производителя:
@@ -100,6 +101,7 @@ export const parseXmlToSearchResults = (
         multi: minOrderQuantity,
         turboCars: {
           stock_id: stockID,
+          zakazCode: zakazCode,
         },
         // По условию, needToCheckBrand – это инверсия isBrandMatch(brandToMatch, producerBrand)
         // Но поскольку мы тут уже отсеяли неподходящие бренды, можно просто использовать старую логику:
