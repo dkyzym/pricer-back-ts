@@ -106,7 +106,8 @@ export const addToCartController = async (req: Request, res: Response) => {
     }
     //
   } else if (supplier === 'turboCars') {
-    const { QTY, StockID, ZakazCode }: BasketTurboCarsFrontendData = req.body;
+    const { QTY, StockID, ZakazCode, nal }: BasketTurboCarsFrontendData =
+      req.body;
 
     try {
       const params: BasketPositionTurboCars = {
@@ -116,6 +117,7 @@ export const addToCartController = async (req: Request, res: Response) => {
         DeliveryType: '0',
         ExpressID: '0',
         Notes: '',
+        nal,
       };
       console.log(JSON.stringify(params));
 
@@ -125,8 +127,6 @@ export const addToCartController = async (req: Request, res: Response) => {
         success: result.AddResult.Message === 'OK' ? true : false,
         message: result.AddResult.Message,
       });
-
-      console.log(result);
     } catch (error) {
       console.log(error as AxiosError);
       res.status(500).json({

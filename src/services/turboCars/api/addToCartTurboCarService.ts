@@ -9,7 +9,10 @@ export const addToCartTurboCarService = async (
   params: BasketPositionTurboCars
 ) => {
   try {
-    const api = await createAxiosInstance('turboCars');
+    const turboCarsInstanceKey =
+      params.nal === true ? 'turboCars' : 'turboCarsBN';
+
+    const api = await createAxiosInstance(turboCarsInstanceKey);
     const response = await api.get<ArrayBuffer>(
       TURBOCARS_SERVICE_PATHS.Basket_Add,
       {

@@ -20,6 +20,11 @@ export const suppliers: Record<string, SupplierConfig> = {
     password: process.env.TURBOCARS_PASSWORD || '',
     baseUrl: 'https://www.mikado-parts.ru',
   },
+  turboCarsBN: {
+    username: process.env.TURBOCARS_USERNAME_BN || '',
+    password: process.env.TURBOCARS_PASSWORD_BN || '',
+    baseUrl: 'https://www.mikado-parts.ru',
+  },
 };
 
 export const PROXY_HOST = process.env.PROXY_HOST!;

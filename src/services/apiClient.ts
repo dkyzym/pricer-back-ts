@@ -11,8 +11,10 @@ import { SupplierName } from '../types';
 import { checkProxy } from '../utils/api/checkProxy';
 import { generateMD5 } from '../utils/generateMD5';
 
+type AxiosInstanceSupplierName = SupplierName | 'turboCarsBN';
+
 export const createAxiosInstance = async (
-  supplierKey: SupplierName
+  supplierKey: AxiosInstanceSupplierName
 ): Promise<AxiosInstance> => {
   const supplier = suppliers[supplierKey];
   if (!supplier)
@@ -47,7 +49,7 @@ export const createAxiosInstance = async (
           userlogin: supplier.username,
           userpsw: generateMD5(supplier.password),
         };
-      } else if (supplierKey === 'turboCars') {
+      } else if (supplierKey === 'turboCars' || supplierKey === 'turboCarsBN') {
         config.params = {
           ...config.params,
           ClientID: supplier.username,

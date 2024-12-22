@@ -138,6 +138,7 @@ export interface SearchResultsParsed {
   turboCars?: {
     stock_id: string;
     zakazCode: string;
+    nal?: boolean;
   };
 
   //** Свойства для TurboCars*/
@@ -361,6 +362,7 @@ interface BasketTurboCarsFrontendData {
   ZakazCode: string;
   QTY: string;
   StockID: string;
+  nal: boolean;
 }
 
 interface BasketPositionTurboCars extends BasketTurboCarsFrontendData {
