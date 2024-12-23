@@ -23,7 +23,7 @@ export const createAxiosInstance = async (
   const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
   const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
 
-  const agent = new HttpsProxyAgent(proxyUrl);
+  const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
 
   // Проверка прокси
   console.log(
@@ -38,7 +38,9 @@ export const createAxiosInstance = async (
     baseURL: supplier.baseUrl,
     httpAgent: agent,
     httpsAgent: agent,
-    timeout: 20000, // Можно увеличить таймаут для длительных запросов
+    timeout: 15000, // Можно увеличить таймаут для длительных запросов
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
   });
 
   axiosInstance.interceptors.request.use(
