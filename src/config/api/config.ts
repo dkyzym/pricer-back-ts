@@ -42,3 +42,8 @@ export const TURBOCARS_SERVICE_PATHS = {
   Code_search: '/ws1/service.asmx/Code_Search',
   Basket_Add: '/ws1/basket.asmx/Basket_Add',
 };
+
+export const US_SERVICE_PATHS = {
+  Brand_search: '/search/brands/',
+  Article_search: '/search/articles/',
+};
