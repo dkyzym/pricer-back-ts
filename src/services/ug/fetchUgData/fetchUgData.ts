@@ -1,6 +1,7 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { ugArticleSearchResult } from '../../../types';
 import { createAxiosInstance } from '../../apiClient';
+import { logger } from '../../../config/logger';
 
 export const fetchUgData = async (
   article: string,
@@ -27,6 +28,7 @@ export const fetchUgData = async (
       'Ошибка при получении данных UG:',
       (error as AxiosError).message
     );
+    logger.error(error);
     throw error;
   }
 };
