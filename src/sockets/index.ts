@@ -2,8 +2,6 @@ import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
 import { logger } from 'config/logger';
 import { Server as HTTPServer } from 'http';
-import { turboCarsPageActionsService } from 'services/pages/turboCarsPageActionsService';
-import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService';
 import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
@@ -22,7 +20,6 @@ import { itemDataPatriotService } from '../services/patriot/itemDataPatriotServi
 import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData';
-import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
@@ -300,65 +297,6 @@ export const initializeSocket = (server: HTTPServer) => {
         }
       }
     );
-
-    socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
-      const { count, item, sessionID, accountAlias } = data;
-
-      const supplier = item.supplier;
-      const sessionKey = `${supplier}_${accountAlias}`;
-
-      const session = sessionManager.getSession(socket.id, sessionKey);
-      if (!session) {
-        throw new Error('Session not found');
-      }
-
-      try {
-        let result;
-        const supplierName = supplier as SupplierName;
-
-        if (supplierName === 'turboCars') {
-          result = await turboCarsPageActionsService({
-            action: 'addToCart',
-            supplier: supplierName,
-            count,
-            item,
-            sessionID,
-            accountAlias,
-          });
-        } else if (supplierName === 'ug' || supplierName === 'patriot') {
-          result = await ugPageActionsService({
-            action: 'addToCart',
-            supplier: supplierName,
-            count,
-            item,
-            sessionID,
-            accountAlias,
-          });
-        }
-
-        if (result?.success) {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, {
-            result,
-            sessionID,
-            accountAlias,
-          });
-        } else {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
-            message: result?.message,
-            sessionID,
-            accountAlias,
-          });
-        }
-      } catch (error) {
-        logger.error(`Error in ADD_TO_CART_REQUEST:`, error);
-
-        socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
-          message: (error as Error).message,
-          sessionID,
-          accountAlias,
-        });
-      }
-    });
 
     // Disconnect Handler
     socket.on('disconnect', () => {
