@@ -63,10 +63,7 @@ type PageAction =
     }
   | {
       action: 'clarifyBrand';
-      sessionID: string;
-      supplier: SupplierName;
       query: string;
-      accountAlias?: accountAlias;
     }
   | {
       action: 'addToCart';
@@ -378,4 +375,18 @@ interface AddResultXML {
     OrderedQTY: string;
     OrderedCode: string;
   };
+}
+
+interface ItemAutocompleteRow {
+  brand: string;
+  number: string;
+  descr: string;
+  url: string;
+  id?: string;
+}
+
+interface ClarifyBrandResult {
+  success: boolean;
+  brands: ItemAutocompleteRow[];
+  message: string;
 }

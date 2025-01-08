@@ -7,7 +7,12 @@ import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService';
 import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
-import { ItemToParallelSearch, pageActionsResult, SupplierName } from 'types';
+import {
+  ClarifyBrandResult,
+  ItemToParallelSearch,
+  pageActionsResult,
+  SupplierName,
+} from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
@@ -20,6 +25,7 @@ import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
+import { clarifyBrand } from '../services/clarifyBrand';
 
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
@@ -35,68 +41,49 @@ export const initializeSocket = (server: HTTPServer) => {
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
     // BRAND_CLARIFICATION Handler
-    // socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
-    //   console.log(
-    //     `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
-    //     data
-    //   );
-    //   const { sessionID, query } = data;
+    socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
+      console.log(
+        `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
+        data
+      );
+      const { query } = data;
 
-    //   if (!query || query.trim() === '') {
-    //     console.log(
-    //       `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}, sessionID: ${sessionID}`
-    //     );
-    //     socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-    //       query: '',
-    //       results: [],
-    //       sessionID,
-    //     });
-    //     return;
-    //   }
+      if (!query || query.trim() === '') {
+        console.log(
+          `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}`
+        );
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+          query: '',
+          results: [],
+        });
+        return;
+      }
 
-    //   try {
-    //     console.log(
-    //       `Processing BRAND_CLARIFICATION for query "${query}" in session ${sessionID}`
-    //     );
-    //     const result = await ugPageActionsService({
-    //       action: 'clarifyBrand',
-    //       query,
-    //       supplier: 'ug',
-    //       sessionID,
-    //     });
+      try {
+        console.log(`Processing BRAND_CLARIFICATION for query "${query}"`);
 
-    //     if (result.success) {
-    //       console.log(
-    //         `BRAND_CLARIFICATION success for session ${sessionID}:`,
-    //         result.data
-    //       );
-    //       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-    //         brands: result.data,
-    //         message: result.message,
-    //         sessionID,
-    //       });
-    //     } else {
-    //       console.log(
-    //         `BRAND_CLARIFICATION failed for session ${sessionID}:`,
-    //         result.message
-    //       );
-    //       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
-    //         message: result.message,
-    //         sessionID,
-    //       });
-    //     }
-    //   } catch (error) {
-    //     logger.error('Brand Clarification error:', error);
-    //     console.error(
-    //       `Brand Clarification error for session ${sessionID}:`,
-    //       error
-    //     );
-    //     socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
-    //       message: `Error clarifying brand: ${(error as Error).message}`,
-    //       sessionID,
-    //     });
-    //   }
-    // });
+        const result: ClarifyBrandResult = await clarifyBrand(query);
+        console.log(result);
+
+        if (result.success) {
+          console.log(`BRAND_CLARIFICATION success`, result.brands.length);
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+            brands: result.brands,
+            message: result.message,
+          });
+        } else {
+          console.log(`BRAND_CLARIFICATION failed `, result.message);
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
+            message: result.message,
+          });
+        }
+      } catch (error) {
+        logger.error('Brand Clarification error:', error);
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
+          message: `Error clarifying brand: ${(error as Error).message}`,
+        });
+      }
+    });
 
     // GET_ITEM_RESULTS Handler
     interface getItemResultsParams {
@@ -126,7 +113,6 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            // Fetch data from 'profit' API
             const data = await getItemsListByArticleService(item.article);
             const itemsWithRest = await getItemsWithRest(data);
             const relevantItems = itemsWithRest.filter(({ brand }: any) =>
@@ -165,14 +151,14 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await parseAutosputnikData(item);
+            const autoSputnikData = await parseAutosputnikData(item);
 
-            // fs.writeFile('sputnik.json', JSON.stringify(data));
+            logResultCount(item, supplier, autoSputnikData);
 
             const autosputnikResult: pageActionsResult = {
               success: true,
-              message: `Autosputnik data fetched: ${data?.length}`,
-              data: data,
+              message: `Autosputnik data fetched: ${autoSputnikData?.length}`,
+              data: autoSputnikData,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
