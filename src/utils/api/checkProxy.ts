@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { logger } from '../../config/logger';
 
@@ -49,7 +50,11 @@ export const checkProxy = async (
       retries: 3,
       delay: 2000,
     });
-    logger.info('IP through proxy:', response.data);
+
+    logger.info(
+      chalk.yellow(`IP through proxy: ${JSON.stringify(response.data)}`)
+    );
+
     return true;
   } catch (error) {
     logger.error(
