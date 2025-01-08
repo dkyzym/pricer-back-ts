@@ -1,41 +1,28 @@
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
 import { logger } from 'config/logger';
-// import fs from 'fs/promises';
 import { Server as HTTPServer } from 'http';
-import { turboCarsPageActionsService } from 'services/pages/turboCarsPageActionsService';
-import { ugPageActionsService } from 'services/pages/ugPageActionsService';
 import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService';
 import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
 import {
+  ClarifyBrandResult,
   ItemToParallelSearch,
   pageActionsResult,
-  // PuppeteerSupplierName,
   SupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService';
+import { clarifyBrand } from '../services/clarifyBrand';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
-import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
+import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData';
-import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
-
-// const supplierServices: {
-//   [key in PuppeteerSupplierName]: (
-//     actionParams: PageAction
-//   ) => Promise<pageActionsResult>;
-// } = {
-//   // ug: ugPageActionsService,
-//   // turboCars: turboCarsPageActionsService,
-//   patriot: patriotPageActionsService,
-// };
 
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
@@ -50,122 +37,56 @@ export const initializeSocket = (server: HTTPServer) => {
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
-    // AUTOCOMPLETE Handler
-    // socket.on(SOCKET_EVENTS.AUTOCOMPLETE, async (data) => {
-    //   console.log(chalk.cyan(JSON.stringify(data)));
-    //   const { sessionID, query, accountAlias } = data;
-    //   const sessionKey = accountAlias ? `ug_${accountAlias}` : 'ug';
-
-    //   if (!query || query.trim() === '') {
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-    //       query: '',
-    //       results: [],
-    //       sessionID,
-    //       accountAlias,
-    //     });
-    //     return;
-    //   }
-
-    //   try {
-    //     const session = sessionManager.getSession(socket.id, sessionKey);
-    //     if (!session) {
-    //       throw new Error('Session not found');
-    //     }
-
-    //     const results = await ugPageActionsService({
-    //       action: SOCKET_EVENTS.AUTOCOMPLETE,
-    //       query,
-    //       supplier: 'ug',
-    //       sessionID: session.sessionID,
-    //       accountAlias,
-    //     });
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_RESULTS, {
-    //       query,
-    //       results,
-    //       sessionID: session.sessionID,
-    //       accountAlias,
-    //     });
-    //   } catch (error) {
-    //     logger.error('Autocomplete error:', error);
-    //     console.error(`Autocomplete error for session ${sessionID}:`, error);
-    //     socket.emit(SOCKET_EVENTS.AUTOCOMPLETE_ERROR, {
-    //       query,
-    //       message: (error as Error).message,
-    //       sessionID,
-    //       accountAlias,
-    //     });
-    //   }
-    // });
-
     // BRAND_CLARIFICATION Handler
-    // socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
-    //   console.log(
-    //     `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
-    //     data
-    //   );
-    //   const { sessionID, query } = data;
+    socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
+      logger.info(
+        `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
+        data
+      );
+      const { query } = data;
 
-    //   if (!query || query.trim() === '') {
-    //     console.log(
-    //       `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}, sessionID: ${sessionID}`
-    //     );
-    //     socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-    //       query: '',
-    //       results: [],
-    //       sessionID,
-    //     });
-    //     return;
-    //   }
+      if (!query || query.trim() === '') {
+        console.log(
+          `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}`
+        );
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+          query: '',
+          results: [],
+        });
+        return;
+      }
 
-    //   try {
-    //     console.log(
-    //       `Processing BRAND_CLARIFICATION for query "${query}" in session ${sessionID}`
-    //     );
-    //     const result = await ugPageActionsService({
-    //       action: 'clarifyBrand',
-    //       query,
-    //       supplier: 'ug',
-    //       sessionID,
-    //     });
+      try {
+        logger.info(`Processing BRAND_CLARIFICATION for query "${query}"`);
 
-    //     if (result.success) {
-    //       console.log(
-    //         `BRAND_CLARIFICATION success for session ${sessionID}:`,
-    //         result.data
-    //       );
-    //       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-    //         brands: result.data,
-    //         message: result.message,
-    //         sessionID,
-    //       });
-    //     } else {
-    //       console.log(
-    //         `BRAND_CLARIFICATION failed for session ${sessionID}:`,
-    //         result.message
-    //       );
-    //       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
-    //         message: result.message,
-    //         sessionID,
-    //       });
-    //     }
-    //   } catch (error) {
-    //     logger.error('Brand Clarification error:', error);
-    //     console.error(
-    //       `Brand Clarification error for session ${sessionID}:`,
-    //       error
-    //     );
-    //     socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
-    //       message: `Error clarifying brand: ${(error as Error).message}`,
-    //       sessionID,
-    //     });
-    //   }
-    // });
+        const result: ClarifyBrandResult = await clarifyBrand(query);
+
+        if (result.success) {
+          console.log(
+            `BRAND_CLARIFICATION success, found:`,
+            result.brands.length
+          );
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+            brands: result.brands,
+            message: result.message,
+          });
+        } else {
+          logger.error(`BRAND_CLARIFICATION failed `, result.message);
+          socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
+            message: result.message,
+          });
+        }
+      } catch (error) {
+        logger.error('Brand Clarification error:', error);
+        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
+          message: `Error clarifying brand: ${(error as Error).message}`,
+        });
+      }
+    });
 
     // GET_ITEM_RESULTS Handler
     interface getItemResultsParams {
-      // sessionID?: string;
       item: ItemToParallelSearch;
-      // accountAlias?: accountAlias;
       supplier: SupplierName;
     }
     socket.on(
@@ -190,7 +111,6 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            // Fetch data from 'profit' API
             const data = await getItemsListByArticleService(item.article);
             const itemsWithRest = await getItemsWithRest(data);
             const relevantItems = itemsWithRest.filter(({ brand }: any) =>
@@ -229,14 +149,14 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await parseAutosputnikData(item);
+            const autoSputnikData = await parseAutosputnikData(item);
 
-            // fs.writeFile('sputnik.json', JSON.stringify(data));
+            logResultCount(item, supplier, autoSputnikData);
 
             const autosputnikResult: pageActionsResult = {
               success: true,
-              message: `Autosputnik data fetched: ${data?.length}`,
-              data: data,
+              message: `Autosputnik data fetched: ${autoSputnikData?.length}`,
+              data: autoSputnikData,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -377,65 +297,6 @@ export const initializeSocket = (server: HTTPServer) => {
         }
       }
     );
-
-    socket.on(SOCKET_EVENTS.ADD_TO_CART_REQUEST, async (data) => {
-      const { count, item, sessionID, accountAlias } = data;
-
-      const supplier = item.supplier;
-      const sessionKey = `${supplier}_${accountAlias}`;
-
-      const session = sessionManager.getSession(socket.id, sessionKey);
-      if (!session) {
-        throw new Error('Session not found');
-      }
-
-      try {
-        let result;
-        const supplierName = supplier as SupplierName;
-
-        if (supplierName === 'turboCars') {
-          result = await turboCarsPageActionsService({
-            action: 'addToCart',
-            supplier: supplierName,
-            count,
-            item,
-            sessionID,
-            accountAlias,
-          });
-        } else if (supplierName === 'ug' || supplierName === 'patriot') {
-          result = await ugPageActionsService({
-            action: 'addToCart',
-            supplier: supplierName,
-            count,
-            item,
-            sessionID,
-            accountAlias,
-          });
-        }
-
-        if (result?.success) {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_SUCCESS, {
-            result,
-            sessionID,
-            accountAlias,
-          });
-        } else {
-          socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
-            message: result?.message,
-            sessionID,
-            accountAlias,
-          });
-        }
-      } catch (error) {
-        logger.error(`Error in ADD_TO_CART_REQUEST:`, error);
-
-        socket.emit(SOCKET_EVENTS.ADD_TO_CART_ERROR, {
-          message: (error as Error).message,
-          sessionID,
-          accountAlias,
-        });
-      }
-    });
 
     // Disconnect Handler
     socket.on('disconnect', () => {

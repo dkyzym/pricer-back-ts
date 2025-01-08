@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getAutocomplete } from '../../services/getAutocomplete';
+import { ItemAutocompleteRow } from '../../types';
 
 export const autocompleteUgController = async (req: Request, res: Response) => {
   const term = req.query.term as string;
@@ -14,10 +15,18 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
 
   const data = await getAutocomplete(trimmedTerm);
 
-  const dataWithId = data.map((element: any) => ({
-    id: uuidv4(),
-    ...element,
-  }));
+  const filteredData = data.filter(
+    (item: ItemAutocompleteRow) => item.brand !== 'Найти по описанию'
+  );
+
+  const dataWithId: ItemAutocompleteRow = filteredData.map(
+    (element: ItemAutocompleteRow) => {
+      return {
+        id: uuidv4(),
+        ...element,
+      };
+    }
+  );
 
   res.json({ success: true, results: dataWithId });
 };

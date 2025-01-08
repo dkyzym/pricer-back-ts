@@ -63,10 +63,7 @@ type PageAction =
     }
   | {
       action: 'clarifyBrand';
-      sessionID: string;
-      supplier: SupplierName;
       query: string;
-      accountAlias?: accountAlias;
     }
   | {
       action: 'addToCart';
@@ -137,6 +134,16 @@ export interface SearchResultsParsed {
   //** Свойства для TurboCars*/
   turboCars?: {
     stock_id: string;
+    zakazCode: string;
+    nal?: boolean;
+  };
+
+  //** Свойства для TurboCars*/
+  ug?: {
+    //**itemKey Для добавления товара в корзину.*/
+    itemKey: string;
+    //** supplierCode Для добавления товара в корзину.   */
+    supplierCode: string;
   };
 
   // //** Дополнительное свойство */
@@ -320,4 +327,66 @@ interface TovarAutosputnik {
 
   /** Вероятность поставки в срок. В процентах (0 - нет заказов по поставщику) */
   SHIPPING_PROC: string;
+}
+
+//** Параметры для добавления в корзину ЮГ */
+interface BasketPositionUG {
+  number: string;
+  brand: string;
+  supplierCode: string;
+  itemKey: string;
+  quantity: number;
+}
+
+interface UgCartResponse {
+  status: 1 | 0;
+  errorMessage?: string;
+  positions: Array<{
+    number: string;
+    brand: string;
+    supplierCode: string;
+    quantity: string;
+    numberFix: string;
+    deadline: number;
+    deadlineMax: number;
+    description: string;
+    status: 1 | 0;
+    errorMessage?: string;
+  }>;
+}
+
+interface BasketTurboCarsFrontendData {
+  ZakazCode: string;
+  QTY: string;
+  StockID: string;
+  nal: boolean;
+}
+
+interface BasketPositionTurboCars extends BasketTurboCarsFrontendData {
+  DeliveryType?: '0'; //DeliveryType нужен для оригинальных запчастей, доделать бы
+  Notes?: string;
+  ExpressID?: '0';
+}
+
+interface AddResultXML {
+  AddResult: {
+    Message: string;
+    ID: string;
+    OrderedQTY: string;
+    OrderedCode: string;
+  };
+}
+
+interface ItemAutocompleteRow {
+  brand: string;
+  number: string;
+  descr: string;
+  url: string;
+  id?: string;
+}
+
+interface ClarifyBrandResult {
+  success: boolean;
+  brands: ItemAutocompleteRow[];
+  message: string;
 }

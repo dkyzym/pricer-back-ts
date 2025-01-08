@@ -5,12 +5,14 @@ export const brandGroupsMap = [
   ['KNECHT', 'MAHLE', 'mahle/knecht', 'mahle original'],
   ['Белебей', 'БЗАК'],
   ['змз', 'дайдо металл русь', 'дайдо метал'],
-  ['lada', 'ваз', 'вис', 'оат'],
+  ['lada', 'ваз', 'вис', 'оат', 'лада-имидж', 'lada image'],
   ['HYUNDAI', 'KIA', 'MOBIS'],
   ['total', 'TotalEnergies'],
   ['gaz', 'g-part'],
   ['general motors', 'gm', 'opel'],
   ['sct', 'sct germany'],
+  ['вмп', 'вмп авто', 'вмпавто', 'vmp', 'vmpauto'],
+  ['pmc', 'x2', 'parts-mall', 'pm'],
 ];
 
 // 2389901318
@@ -18,3 +20,4 @@ export const brandGroupsMap = [
 // 40821 - автодело
 // oc195
 // 906-523
+//13-1004062-СБ

@@ -20,6 +20,11 @@ export const suppliers: Record<string, SupplierConfig> = {
     password: process.env.TURBOCARS_PASSWORD || '',
     baseUrl: 'https://www.mikado-parts.ru',
   },
+  turboCarsBN: {
+    username: process.env.TURBOCARS_USERNAME_BN || '',
+    password: process.env.TURBOCARS_PASSWORD_BN || '',
+    baseUrl: 'https://www.mikado-parts.ru',
+  },
 };
 
 export const PROXY_HOST = process.env.PROXY_HOST!;
@@ -35,4 +40,10 @@ export const TURBOCARS_SERVICE_PATHS = {
    * Возвращает данные включая аналоги
    */
   Code_search: '/ws1/service.asmx/Code_Search',
+  Basket_Add: '/ws1/basket.asmx/Basket_Add',
+};
+
+export const US_SERVICE_PATHS = {
+  Brand_search: '/search/brands/',
+  Article_search: '/search/articles/',
 };

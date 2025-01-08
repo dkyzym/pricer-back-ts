@@ -1,4 +1,6 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
+import { US_SERVICE_PATHS } from '../../../config/api/config';
+// import { logger } from '../../../config/logger';
 import { ugArticleSearchResult } from '../../../types';
 import { createAxiosInstance } from '../../apiClient';
 
@@ -12,7 +14,7 @@ export const fetchUgData = async (
     const axiosInstance = await createAxiosInstance('ug');
 
     const response: AxiosResponse<ugArticleSearchResult[]> =
-      await axiosInstance.get('/search/articles/', {
+      await axiosInstance.get(US_SERVICE_PATHS.Article_search, {
         params: {
           number: article,
           brand,
@@ -23,10 +25,6 @@ export const fetchUgData = async (
 
     return response.data;
   } catch (error) {
-    console.error(
-      'Ошибка при получении данных UG:',
-      (error as AxiosError).message
-    );
     throw error;
   }
 };

@@ -50,6 +50,7 @@ export const ensurePatriotLoggedIn = async () => {
   const PATRIOT_LOGIN_URL = 'https://optautotorg.com/';
   const cookies = await cookieJarPatriot.getCookies(PATRIOT_LOGIN_URL);
   const abcUserCookie = cookies.find((cookie) => cookie.key === 'ABCPUser');
+  const supplier = 'Patriot';
 
   if (!abcUserCookie) {
     if (isLoggingIn) {
@@ -58,7 +59,7 @@ export const ensurePatriotLoggedIn = async () => {
     } else {
       isLoggingIn = true;
       try {
-        logger.info('Session cookie missing, logging in...');
+        logger.info(`Session cookie missing ${supplier}, logging in...`);
         await loginPatriot();
       } finally {
         isLoggingIn = false;
@@ -68,7 +69,9 @@ export const ensurePatriotLoggedIn = async () => {
       }
     }
   } else {
-    logger.info('Session cookie found, proceeding with request.');
+    logger.info(
+      `Session cookie found - ${supplier} , proceeding with request.`
+    );
   }
 };
 

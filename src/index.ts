@@ -1,5 +1,5 @@
 import { error } from '@middleware/errorsMiddleware';
-import authRoutes from '@routes/authRoutes';
+
 import dataRoutes from '@routes/dataRoutes';
 import { RouteNotFoundError } from '@utils/errors';
 import cookieParser from 'cookie-parser';
@@ -20,7 +20,6 @@ app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use('/', authRoutes);
 app.use('/api', dataRoutes);
 
 app.use(() => {

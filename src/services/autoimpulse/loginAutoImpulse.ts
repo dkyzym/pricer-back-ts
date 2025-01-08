@@ -19,6 +19,7 @@ export const loginAutoImpulse = async () => {
   const data = new URLSearchParams();
   const username = process.env.AUTOIMPULSE_USERNAME;
   const password = process.env.AUTOIMPULSE_PASSWORD;
+  const supplier = 'AutoImpulse';
 
   if (!username || !password) {
     throw new Error('AutoImpulse credentials not found');
@@ -42,7 +43,7 @@ export const loginAutoImpulse = async () => {
 
   checkIsLoggedIn(response.data, AUTOIMPULSE_CREDENTIALS);
 
-  logger.info(chalk.blue(`${'AutoImpulse'} Залогинен?: ${true}`));
+  logger.info(chalk.blue(`${supplier} Залогинен?: ${true}`));
   return true;
 };
 
@@ -53,6 +54,7 @@ export const ensureAutoImpulseLoggedIn = async () => {
   const AUTOIMPULSE_LOGIN_URL = 'https://lnr-auto-impulse.ru/';
   const cookies = await cookieJarAutoImpulse.getCookies(AUTOIMPULSE_LOGIN_URL);
   const abcUserCookie = cookies.find((cookie) => cookie.key === 'ABCPUser');
+  const supplier = 'AutoImpulse';
 
   if (!abcUserCookie) {
     if (isLoggingIn) {
@@ -61,7 +63,7 @@ export const ensureAutoImpulseLoggedIn = async () => {
     } else {
       isLoggingIn = true;
       try {
-        logger.info('Session cookie missing, logging in...');
+        logger.info(`Session cookie missing - ${supplier}, logging in...`);
         await loginAutoImpulse();
       } finally {
         isLoggingIn = false;
@@ -71,7 +73,9 @@ export const ensureAutoImpulseLoggedIn = async () => {
       }
     }
   } else {
-    logger.info('Session cookie found, proceeding with request.');
+    logger.info(
+      `Session cookie found - ${supplier} , proceeding with request.`
+    );
   }
 };
 

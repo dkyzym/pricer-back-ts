@@ -1,28 +1,65 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { logger } from '../../config/logger';
 
-/**
- * checkProxy - Checks if the proxy is working by requesting an IP check service.
- * @param agent - The proxy agent instance
- * @returns boolean - true if proxy works, otherwise false
- */
+interface RetryOptions {
+  retries: number;
+  delay: number;
+}
+
+const defaultRetryOptions: RetryOptions = {
+  retries: 3,
+  delay: 500,
+};
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = defaultRetryOptions
+): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i < options.retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      logger.warn(
+        `Retry ${i + 1} of ${options.retries} failed: ${(error as Error).message}`
+      );
+      if (i < options.retries - 1) {
+        await new Promise((res) => setTimeout(res, options.delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export const checkProxy = async (
-  agent: HttpsProxyAgent<string>
+  agent: HttpsProxyAgent<string>,
+  testUrl = 'https://api.ipify.org?format=json',
+  timeout = 5000
 ): Promise<boolean> => {
-  try {
-    // Creating a test axios instance with the proxy agent
-    const testInstance = axios.create({
-      httpAgent: agent,
-      httpsAgent: agent,
-      timeout: 5000,
-    });
+  const testInstance: AxiosInstance = axios.create({
+    httpAgent: agent,
+    httpsAgent: agent,
+    timeout,
+  });
 
-    // Using a simple IPify service to check what IP is seen through the proxy
-    const response = await testInstance.get('http://api.ipify.org?format=json');
-    console.log('IP through proxy:', response.data);
+  try {
+    const response = await withRetry(() => testInstance.get(testUrl), {
+      retries: 3,
+      delay: 2000,
+    });
+    logger.info('IP through proxy:', response.data);
     return true;
   } catch (error) {
-    console.error('Proxy check error:', (error as AxiosError).message);
+    logger.error(
+      'Proxy check error after retries:',
+      (error as AxiosError).message
+    );
+    logger.error(
+      'Proxy check error after retries:',
+      (error as AxiosError).message
+    );
     return false;
   }
 };
