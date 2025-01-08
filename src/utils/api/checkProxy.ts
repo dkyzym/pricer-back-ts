@@ -9,7 +9,7 @@ interface RetryOptions {
 
 const defaultRetryOptions: RetryOptions = {
   retries: 3,
-  delay: 1000,
+  delay: 500,
 };
 
 async function withRetry<T>(
@@ -22,7 +22,7 @@ async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
-      console.warn(
+      logger.warn(
         `Retry ${i + 1} of ${options.retries} failed: ${(error as Error).message}`
       );
       if (i < options.retries - 1) {
@@ -49,14 +49,14 @@ export const checkProxy = async (
       retries: 3,
       delay: 2000,
     });
-    console.log('IP through proxy:', response.data);
+    logger.info('IP through proxy:', response.data);
     return true;
   } catch (error) {
     logger.error(
       'Proxy check error after retries:',
       (error as AxiosError).message
     );
-    console.error(
+    logger.error(
       'Proxy check error after retries:',
       (error as AxiosError).message
     );

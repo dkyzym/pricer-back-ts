@@ -17,6 +17,7 @@ import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
 import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService';
+import { clarifyBrand } from '../services/clarifyBrand';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
 import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
@@ -25,7 +26,6 @@ import { sessionManager } from '../session/sessionManager';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
-import { clarifyBrand } from '../services/clarifyBrand';
 
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
@@ -42,7 +42,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
     // BRAND_CLARIFICATION Handler
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
-      console.log(
+      logger.info(
         `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
         data
       );
@@ -60,19 +60,21 @@ export const initializeSocket = (server: HTTPServer) => {
       }
 
       try {
-        console.log(`Processing BRAND_CLARIFICATION for query "${query}"`);
+        logger.info(`Processing BRAND_CLARIFICATION for query "${query}"`);
 
         const result: ClarifyBrandResult = await clarifyBrand(query);
-        console.log(result);
 
         if (result.success) {
-          console.log(`BRAND_CLARIFICATION success`, result.brands.length);
+          console.log(
+            `BRAND_CLARIFICATION success, found:`,
+            result.brands.length
+          );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.brands,
             message: result.message,
           });
         } else {
-          console.log(`BRAND_CLARIFICATION failed `, result.message);
+          logger.error(`BRAND_CLARIFICATION failed `, result.message);
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
             message: result.message,
           });
@@ -88,7 +90,6 @@ export const initializeSocket = (server: HTTPServer) => {
     // GET_ITEM_RESULTS Handler
     interface getItemResultsParams {
       item: ItemToParallelSearch;
-
       supplier: SupplierName;
     }
     socket.on(
