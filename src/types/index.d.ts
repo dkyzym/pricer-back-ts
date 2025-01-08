@@ -390,3 +390,9 @@ interface ClarifyBrandResult {
   brands: ItemAutocompleteRow[];
   message: string;
 }
+
+interface ProviderErrorData {
+  errorCode?: number;
+  errorMessage?: string;
+  // могут быть и другие поля, если нужно
+}

@@ -9,6 +9,8 @@ import {
   ClarifyBrandResult,
   ItemToParallelSearch,
   pageActionsResult,
+  ProviderErrorData,
+  // ProviderErrorCodes,
   SupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
@@ -23,6 +25,12 @@ import { mapUgResponseData } from '../services/ug/mapUgResponseData';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
+import axios, { AxiosError } from 'axios';
+
+enum ProviderErrorCodes {
+  ObjectNotFound = 301,
+  // ... доп. коды по необходимости
+}
 
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
@@ -194,11 +202,59 @@ export const initializeSocket = (server: HTTPServer) => {
               supplier: 'ug',
               result: ugResult,
             });
-          } catch (error) {
-            logger.error('Ug error:', error);
+          } catch (err: unknown) {
+            // Сначала проверяем, действительно ли это ошибка Axios
+            if (!axios.isAxiosError(err)) {
+              // Это не Axios-ошибка, значит либо ошибка исполнения, либо вообще что-то ещё
+              logger.error('Non-Axios error occurred:', err);
+              throw err; // или обработать по-своему
+            }
+
+            // Теперь точно AxiosError
+            const axiosError = err as AxiosError<ProviderErrorData>;
+
+            if (!axiosError.response) {
+              // Нет response, значит сетевые проблемы или что-то вообще странное
+              logger.error('Network or unknown error', axiosError);
+              throw axiosError;
+            }
+
+            // HTTP-статус >= 400
+            const { data: providerData, status } = axiosError.response;
+            const errorCode = providerData?.errorCode;
+            const errorMessage = providerData?.errorMessage;
+
+            // Пример: если код 301 (нет объектов)
+            if (errorCode === ProviderErrorCodes.ObjectNotFound) {
+              logger.warn(
+                `Provider responded with "no results" (code=${errorCode}, message="${errorMessage}").`
+              );
+
+              // Допустим, формируем результат
+              const ugResult: pageActionsResult = {
+                success: true,
+                message: 'Ничего не нашли',
+                data: [],
+              };
+
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier: 'ug',
+                result: ugResult,
+              });
+              return; // Завершаем обработку, так как это «не критическая» ошибка
+            }
+
+            // Любая другая ошибка – логируем код и сообщение
+            logger.error(
+              `Ug error: code=${errorCode}, message="${errorMessage}". HTTP status=${status}`,
+              axiosError
+            );
+
+            // Сообщаем на клиент
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'ug',
-              error: (error as Error).message,
+              // Можем отдать клиенту что-то более наглядное, чем просто `(error as Error).message`
+              error: errorMessage || axiosError.message, // берём приоритетно сообщение от поставщика
             });
           }
         } else if (supplier === 'patriot') {
