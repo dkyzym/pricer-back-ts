@@ -17,7 +17,7 @@ import { SOCKET_EVENTS } from '../constants/socketEvents';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService';
 import { clarifyBrand } from '../services/clarifyBrand';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
-import { searchTurbocarsCode } from '../services/turboCars/api/searchTurboCarsCode';
+import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';

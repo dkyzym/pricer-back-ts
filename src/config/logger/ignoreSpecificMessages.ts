@@ -19,8 +19,6 @@ export const ignoreSpecificMessages = format((info) => {
     'png',
     'gif',
     'jpg',
-    '302',
-    '301',
     'fonts',
     'has already been declared',
     'Cannot set properties of null',

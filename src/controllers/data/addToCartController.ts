@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { addToCartProfitService } from 'services/profit/addToCartProfitService';
 import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService';
 import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart';
-import { addToCartTurboCarService } from '../../services/turboCars/api/addToCartTurboCarService';
+import { addToCartTurboCarService } from '../../services/turboCars/addToCartTurboCarService';
 import { addToCartUgService } from '../../services/ug/cart/addToCartUgService';
 import {
   BasketPositionTurboCars,

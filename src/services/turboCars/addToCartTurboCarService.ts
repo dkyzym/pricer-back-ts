@@ -1,9 +1,9 @@
 import { AxiosError } from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import iconv from 'iconv-lite'; // npm install iconv-lite
-import { TURBOCARS_SERVICE_PATHS } from '../../../config/api/config';
-import { AddResultXML, BasketPositionTurboCars } from '../../../types';
-import { createAxiosInstance } from '../../apiClient';
+import { TURBOCARS_SERVICE_PATHS } from '../../config/api/config';
+import { AddResultXML, BasketPositionTurboCars } from '../../types';
+import { createAxiosInstance } from '../apiClient';
 
 export const addToCartTurboCarService = async (
   params: BasketPositionTurboCars
