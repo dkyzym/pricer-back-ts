@@ -396,3 +396,7 @@ interface ProviderErrorData {
   errorMessage?: string;
   // могут быть и другие поля, если нужно
 }
+interface getItemResultsParams {
+  item: ItemToParallelSearch;
+  supplier: SupplierName;
+}

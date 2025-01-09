@@ -8,11 +8,9 @@ import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
 import {
   ClarifyBrandResult,
-  ItemToParallelSearch,
+  getItemResultsParams,
   pageActionsResult,
   ProviderErrorData,
-  // ProviderErrorCodes,
-  SupplierName,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
@@ -45,7 +43,6 @@ export const initializeSocket = (server: HTTPServer) => {
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
-    // BRAND_CLARIFICATION Handler
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
       logger.info(
         `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
@@ -70,9 +67,8 @@ export const initializeSocket = (server: HTTPServer) => {
         const result: ClarifyBrandResult = await clarifyBrand(query);
 
         if (result.success) {
-          console.log(
-            `BRAND_CLARIFICATION success, found:`,
-            result.brands.length
+          logger.info(
+            `BRAND_CLARIFICATION success, found: ${result.brands.length}`
           );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.brands,
@@ -93,27 +89,26 @@ export const initializeSocket = (server: HTTPServer) => {
     });
 
     // GET_ITEM_RESULTS Handler
-    interface getItemResultsParams {
-      item: ItemToParallelSearch;
-      supplier: SupplierName;
-    }
+
     socket.on(
       SOCKET_EVENTS.GET_ITEM_RESULTS,
       async (data: getItemResultsParams) => {
-        console.log(
-          `Received GET_ITEM_RESULTS event from socket ${socket.id}:`,
-          data
-        );
         const { item, supplier } = data;
-        console.log(chalk.bgGreenBright('supplier ', supplier));
+
+        logger.info(
+          `Received GET_ITEM_RESULTS event from socket ${socket.id}: ${JSON.stringify(data)}`
+        );
+
         if (!supplier) {
-          console.error('Supplier is undefined in GET_ITEM_RESULTS');
+          logger.error('Supplier is undefined in GET_ITEM_RESULTS');
           return;
         }
 
         if (supplier === 'profit') {
           try {
-            console.log(`Fetching data from 'profit' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'profit',
               article: item.article,
@@ -151,7 +146,10 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autosputnik') {
           try {
-            console.log(`Fetching data from 'autosputnik' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'autosputnik',
               article: item.article,
@@ -180,7 +178,9 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'ug') {
           try {
-            console.log(`Fetching data from 'ug' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'ug',
@@ -300,7 +300,10 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'patriot') {
           try {
-            console.log(`Fetching data from patriot' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'patriot',
               article: item.article,
@@ -329,7 +332,10 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autoImpulse') {
           try {
-            console.log(`Fetching data from ${supplier}' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier,
               article: item.article,
@@ -358,7 +364,9 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'turboCars') {
           try {
-            console.log(`Fetching data from ${supplier}' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: supplier,
               article: item.article,

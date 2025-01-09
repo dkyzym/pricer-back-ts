@@ -46,7 +46,7 @@ export const createAxiosInstance = async (
     baseURL: supplier.baseUrl,
     httpAgent: agent,
     httpsAgent: agent,
-    timeout: 15_000,
+    timeout: 17_000,
     maxBodyLength: Infinity,
     maxContentLength: Infinity,
   });
