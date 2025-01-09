@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios';
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config';
 import { logger } from 'config/logger';
@@ -7,9 +8,9 @@ import { getItemsWithRest } from 'services/profit/getItemsWithRest';
 import { Server as SocketIOServer } from 'socket.io';
 import {
   ClarifyBrandResult,
-  ItemToParallelSearch,
+  getItemResultsParams,
   pageActionsResult,
-  SupplierName,
+  ProviderErrorData,
 } from 'types';
 import { isBrandMatch } from 'utils/data/isBrandMatch';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
@@ -24,6 +25,11 @@ import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnik
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
 
+enum ProviderErrorCodes {
+  ObjectNotFound = 301,
+  // ... доп. коды по необходимости
+}
+
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
     cors: {
@@ -37,7 +43,6 @@ export const initializeSocket = (server: HTTPServer) => {
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
-    // BRAND_CLARIFICATION Handler
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
       logger.info(
         `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
@@ -62,9 +67,8 @@ export const initializeSocket = (server: HTTPServer) => {
         const result: ClarifyBrandResult = await clarifyBrand(query);
 
         if (result.success) {
-          console.log(
-            `BRAND_CLARIFICATION success, found:`,
-            result.brands.length
+          logger.info(
+            `BRAND_CLARIFICATION success, found: ${result.brands.length}`
           );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
             brands: result.brands,
@@ -85,27 +89,26 @@ export const initializeSocket = (server: HTTPServer) => {
     });
 
     // GET_ITEM_RESULTS Handler
-    interface getItemResultsParams {
-      item: ItemToParallelSearch;
-      supplier: SupplierName;
-    }
+
     socket.on(
       SOCKET_EVENTS.GET_ITEM_RESULTS,
       async (data: getItemResultsParams) => {
-        console.log(
-          `Received GET_ITEM_RESULTS event from socket ${socket.id}:`,
-          data
-        );
         const { item, supplier } = data;
-        console.log(chalk.bgGreenBright('supplier ', supplier));
+
+        logger.info(
+          `Received GET_ITEM_RESULTS event from socket ${socket.id}: ${JSON.stringify(data)}`
+        );
+
         if (!supplier) {
-          console.error('Supplier is undefined in GET_ITEM_RESULTS');
+          logger.error('Supplier is undefined in GET_ITEM_RESULTS');
           return;
         }
 
         if (supplier === 'profit') {
           try {
-            console.log(`Fetching data from 'profit' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'profit',
               article: item.article,
@@ -143,7 +146,10 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autosputnik') {
           try {
-            console.log(`Fetching data from 'autosputnik' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'autosputnik',
               article: item.article,
@@ -172,38 +178,132 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'ug') {
           try {
-            console.log(`Fetching data from 'ug' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'ug',
               article: item.article,
             });
 
+            // 1. Запрашиваем данные у поставщика.
             const data = await fetchUgData(item.article, item.brand);
 
+            // 2. Преобразуем ответ в удобный формат.
             const mappedUgResponseData = mapUgResponseData(data, item.brand);
 
+            // 3. Логируем, сколько результатов получили (вдруг пригодится).
             logResultCount(item, supplier, mappedUgResponseData);
 
-            const ugResult: pageActionsResult = {
+            // 4. Формируем результат.
+            const ugResult = {
               success: mappedUgResponseData.length > 0,
               message: `Ug data fetched: ${mappedUgResponseData.length > 0}`,
               data: mappedUgResponseData,
             };
 
+            // 5. Отправляем клиенту.
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
               supplier: 'ug',
               result: ugResult,
             });
-          } catch (error) {
-            logger.error('Ug error:', error);
+          } catch (err: unknown) {
+            // Чтобы не "уронить" сервер, НЕ выбрасываем (throw) ошибку дальше.
+
+            // 1. Проверяем, является ли это AxiosError.
+            if (!axios.isAxiosError(err)) {
+              // => НЕ Axios-ошибка.
+              logger.error('UG supplier: Non-Axios error occurred.', {
+                message: (err as Error)?.message,
+                stack: (err as Error)?.stack,
+              });
+
+              // Сообщаем клиенту об ошибке
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+                supplier: 'ug',
+                error: (err as Error)?.message || 'Unknown non-Axios error',
+              });
+              return; // Завершаем обработку
+            }
+
+            // 2. Это AxiosError
+            const axiosError = err as AxiosError<ProviderErrorData>;
+
+            // 3. Если нет response, значит это сетевая или «неизвестная» ошибка
+            if (!axiosError.response) {
+              logger.error('UG supplier: Network or unknown error', {
+                message: axiosError.message,
+                stack: axiosError.stack,
+              });
+
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+                supplier: 'ug',
+                error: axiosError.message || 'Unknown network error',
+              });
+              return; // Завершаем обработку
+            }
+
+            // 4. Ответ есть, значит статус >= 400
+            const { data: providerData, status } = axiosError.response;
+            const errorCode = providerData?.errorCode;
+            const errorMessage = providerData?.errorMessage;
+
+            // 5. Проверка «Ожидаемых» ошибок (301 — "ObjectNotFound")
+            if (errorCode === ProviderErrorCodes.ObjectNotFound) {
+              logger.warn(
+                `UG supplier: "no results" from provider (code=${errorCode}, message="${errorMessage}").`
+              );
+
+              const ugResult = {
+                success: true,
+                message: 'Ничего не нашли',
+                data: [],
+              };
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier: 'ug',
+                result: ugResult,
+              });
+              return; // Завершаем обработку
+            }
+
+            // 6. Любая другая ошибка поставщика: логируем выборочно
+            let responseDataSnippet = '';
+            try {
+              if (axiosError.response.data) {
+                const rawData = JSON.stringify(axiosError.response.data);
+                responseDataSnippet = rawData.slice(0, 300); // «отрезаем» большой ответ
+              }
+            } catch (jsonErr) {
+              // На случай, если data вообще не сериализуется
+              responseDataSnippet = '[Failed to serialize response data]';
+            }
+
+            // Логируем на уровне error, но только нужные детали
+            logger.error(
+              `UG supplier error: code=${errorCode}, message="${errorMessage}", httpStatus=${status}`,
+              {
+                stack: axiosError.stack,
+                config: {
+                  url: axiosError.config?.url,
+                  method: axiosError.config?.method,
+                },
+                dataSnippet: responseDataSnippet,
+              }
+            );
+
+            // Отправляем событие об ошибке клиенту
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'ug',
-              error: (error as Error).message,
+              error: errorMessage || axiosError.message,
             });
           }
         } else if (supplier === 'patriot') {
           try {
-            console.log(`Fetching data from patriot' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: 'patriot',
               article: item.article,
@@ -232,7 +332,10 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autoImpulse') {
           try {
-            console.log(`Fetching data from ${supplier}' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier,
               article: item.article,
@@ -261,7 +364,9 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'turboCars') {
           try {
-            console.log(`Fetching data from ${supplier}' for item:`, item);
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
               supplier: supplier,
               article: item.article,
@@ -301,8 +406,8 @@ export const initializeSocket = (server: HTTPServer) => {
     // Disconnect Handler
     socket.on('disconnect', () => {
       logger.info(chalk.bgCyan(`Client disconnected: ${socket.id}`));
-      console.log(`Socket disconnected: ${socket.id}`);
-      console.log(`Closed sessions for socket ${socket.id}`);
+      logger.info(`Socket disconnected: ${socket.id}`);
+      logger.info(`Closed sessions for socket ${socket.id}`);
     });
   });
 };

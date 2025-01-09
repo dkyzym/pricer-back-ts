@@ -2,7 +2,7 @@ import path from 'path';
 import { addColors, createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-const { combine, timestamp, printf, colorize, errors, uncolorize } = format;
+const { combine, colorize, errors, timestamp, printf, uncolorize } = format;
 
 const customLevels = {
   levels: {
@@ -23,78 +23,69 @@ const customLevels = {
 
 type LogLevel = keyof typeof customLevels.levels;
 
-// Подключаем цвета
+// Подключаем цвета для консоли
 addColors(customLevels.colors);
 
 /**
- * Фильтрующий формат (оставляет только нужный уровень).
+ * Фильтрует сообщения, оставляя только указанный уровень.
  */
 const filterOnly = (level: LogLevel) => {
   return format((info) => (info.level === level ? info : false))();
 };
 
 /**
- * Улучшенный формат для ошибок:
- * Позволяет увидеть stack trace, если пишем Error-объекты.
- * Нужно использовать errors({ stack: true }).
+ * Формат для консоли: хотим видеть цвета + красивый вывод + stack trace для ошибок.
  */
-const errorStackFormat = combine(
-  errors({ stack: true }), // перенос stack trace в поле info
-  format((info) => {
-    // Если внутри info есть stack, добавляем её в сообщение
-    if (info.stack) {
-      info.message = `${info.message}\n${info.stack}`;
-    }
-    return info;
-  })()
-);
-
-/**
- * Общий формат для логов:
- *  - Раскраска (для консоли)
- *  - timestamp
- *  - читаемый вывод (printf)
- *  - убираем цветовое оформление при записи в файл (uncolorize)
- */
-const consoleLogFormat = combine(
+const consoleFormat = combine(
   colorize({ all: true }),
+  errors({ stack: true }), // если прокинем Error-объект, выведет stack
   timestamp({ format: 'HH:mm:ss' }),
-  printf((info) => `[${info.timestamp}] [${info.level}]: ${info.message}`)
-);
-
-const fileLogFormat = combine(
-  uncolorize(),
-  timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  printf((info) => `[${info.timestamp}] [${info.level}]: ${info.message}`)
+  printf((info) => {
+    // Если есть stack (ошибки), добавляем в сообщение
+    const msg = info.stack ? `${info.message}\n${info.stack}` : info.message;
+    return `[${info.timestamp}] [${info.level}]: ${msg}`;
+  })
 );
 
 /**
- * Создаём logger
+ * Формат для файлов:
+ *  - убираем цвет (uncolorize())
+ *  - выводим stack trace для ошибок
+ */
+const fileFormat = combine(
+  uncolorize(),
+  errors({ stack: true }),
+  timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  printf((info) => {
+    const msg = info.stack ? `${info.message}\n${info.stack}` : info.message;
+    return `[${info.timestamp}] [${info.level}]: ${msg}`;
+  })
+);
+
+/**
+ * Настраиваем logger с различными DailyRotateFile-транспортами
+ * и одним Console-транспортом (с цветом).
  */
 export const logger = createLogger({
   levels: customLevels.levels,
-  level: 'debug',
-  format: combine(
-    errorStackFormat, // Добавляем форматирование ошибок со stack trace
-    fileLogFormat
-  ),
+  level: 'debug', // по умолчанию логируем всё вплоть до debug
   transports: [
-    // Консоль
+    // ========= Консоль (с цветами) =========
     new transports.Console({
-      format: consoleLogFormat,
+      format: consoleFormat,
     }),
 
-    // —————  Daily Rotate File (сохраняем логи по датам, держим 90 дней) —————
-    // Общий файл
+    // ========= Общий файл (ежедневно новый, хранение 90 дней) =========
     new DailyRotateFile({
       dirname: path.join('logs'),
       filename: 'combined-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d', // хранение 90 дней
-      maxSize: '20m', // опционально: ограничение размера
-      level: 'debug', // пишем все уровни
+      maxFiles: '90d',
+      maxSize: '20m',
+      level: 'debug',
+      format: fileFormat,
     }),
-    // Файл только с ошибками
+    // ========= Отдельные файлы на каждый уровень (по желанию) =========
     new DailyRotateFile({
       dirname: path.join('logs'),
       filename: 'error-%DATE%.log',
@@ -102,9 +93,8 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'error',
-      format: combine(filterOnly('error'), errorStackFormat, fileLogFormat),
+      format: combine(filterOnly('error'), fileFormat),
     }),
-    // Файл только с warn
     new DailyRotateFile({
       dirname: path.join('logs'),
       filename: 'warn-%DATE%.log',
@@ -112,19 +102,8 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'warn',
-      format: combine(filterOnly('warn'), fileLogFormat),
+      format: combine(filterOnly('warn'), fileFormat),
     }),
-    // Файл только с debug
-    new DailyRotateFile({
-      dirname: path.join('logs'),
-      filename: 'debug-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
-      maxSize: '20m',
-      level: 'debug',
-      format: combine(filterOnly('debug'), fileLogFormat),
-    }),
-    // Файл только с info
     new DailyRotateFile({
       dirname: path.join('logs'),
       filename: 'info-%DATE%.log',
@@ -132,7 +111,16 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'info',
-      format: combine(filterOnly('info'), fileLogFormat),
+      format: combine(filterOnly('info'), fileFormat),
+    }),
+    new DailyRotateFile({
+      dirname: path.join('logs'),
+      filename: 'debug-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '90d',
+      maxSize: '20m',
+      level: 'debug',
+      format: combine(filterOnly('debug'), fileFormat),
     }),
   ],
 });

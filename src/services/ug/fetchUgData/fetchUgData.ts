@@ -1,6 +1,5 @@
 import { AxiosResponse } from 'axios';
 import { US_SERVICE_PATHS } from '../../../config/api/config';
-// import { logger } from '../../../config/logger';
 import { ugArticleSearchResult } from '../../../types';
 import { createAxiosInstance } from '../../apiClient';
 

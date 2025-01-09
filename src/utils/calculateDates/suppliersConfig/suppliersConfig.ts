@@ -47,30 +47,40 @@ export const suppliersConfig: SupplierConfig[] = [
   },
   {
     supplierName: 'ug',
-    workingDays: [1, 4], // понедельник и четверг
-    cutoffTimes: {
-      default: '14:00',
-    },
+    workingDays: [1, 4],
+    cutoffTimes: { default: '14:00' },
     processingTime: { days: 0 },
     specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
       let deliveryDate: DateTime;
 
+      /**
+       * Функция ищет ближайший понедельник (weekday=1) или четверг (weekday=4)
+       * СТРОГО ПОСЛЕ переданной даты (т. е. если совпадает день, мы его пропускаем).
+       */
       const getNextDeliveryDateFrom = (date: DateTime): DateTime => {
         let nextDate = date;
         while (true) {
+          // Если это понедельник или четверг
           if (nextDate.weekday === 1 || nextDate.weekday === 4) {
+            // Если день совпадает с исходным (по дате), пропускаем его
+            // (тем самым не даём выбрать «сегодня»).
+            if (nextDate.hasSame(date, 'day')) {
+              nextDate = nextDate.plus({ days: 1 });
+              continue;
+            }
             return nextDate;
           }
           nextDate = nextDate.plus({ days: 1 });
         }
       };
 
+      // Если deadLineMax > 0, сначала прибавляем эти часы к currentTime
+      // (в вашем коде это трактуется просто как "часов" без уточнения выходных/праздников).
       if (result.deadLineMax > 0) {
-        // Добавить deadLineMax часов и найти следующий день доставки
         const tentativeDate = currentTime.plus({ hours: result.deadLineMax });
         deliveryDate = getNextDeliveryDateFrom(tentativeDate);
       } else {
-        // Заказ до или после 14:00
+        // Иначе логика «если до 14:00 – сдвигаем на +1 день, если после 14:00 – на +2 дня»
         if (currentTime.hour < 14) {
           const tentativeDate = currentTime.plus({ days: 1 });
           deliveryDate = getNextDeliveryDateFrom(tentativeDate);
@@ -83,6 +93,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'turboCars',
     workingDays: [1, 2, 3, 4, 5, 6], // понедельник - суббота
