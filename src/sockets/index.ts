@@ -22,6 +22,7 @@ import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode';
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
+import { filterAndSortAllResults } from '../utils/filterAndSortAllResults';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
 import { logResultCount } from '../utils/stdLogs';
 
@@ -125,12 +126,19 @@ export const initializeSocket = (server: HTTPServer) => {
               item.brand
             );
 
+            const filteredItems = filterAndSortAllResults(profitParsedData);
+
             logResultCount(item, supplier, profitParsedData);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
 
             const profitResult: pageActionsResult = {
               success: profitParsedData.length > 0,
-              message: `Profit data fetched: ${profitParsedData.length > 0}`,
-              data: profitParsedData,
+              message: `Profit data fetched: ${filteredItems.length > 0}`,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -159,10 +167,17 @@ export const initializeSocket = (server: HTTPServer) => {
 
             logResultCount(item, supplier, autoSputnikData);
 
+            const filteredItems = filterAndSortAllResults(autoSputnikData);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
+
             const autosputnikResult: pageActionsResult = {
               success: true,
               message: `Autosputnik data fetched: ${autoSputnikData?.length}`,
-              data: autoSputnikData,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -196,11 +211,18 @@ export const initializeSocket = (server: HTTPServer) => {
             // 3. Логируем, сколько результатов получили (вдруг пригодится).
             logResultCount(item, supplier, mappedUgResponseData);
 
+            const filteredItems = filterAndSortAllResults(mappedUgResponseData);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
+
             // 4. Формируем результат.
             const ugResult = {
               success: mappedUgResponseData.length > 0,
-              message: `Ug data fetched: ${mappedUgResponseData.length > 0}`,
-              data: mappedUgResponseData,
+              message: `Ug data fetched: ${filteredItems.length > 0}`,
+              data: filteredItems,
             };
 
             // 5. Отправляем клиенту.
