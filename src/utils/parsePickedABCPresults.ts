@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
-import { ParallelSearchParams, SearchResultsParsed } from 'types';
-import { calculateDeliveryDate } from './calculateDates';
-import { filterEqualResults } from './data/filterEqualResults';
+import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
+import { calculateDeliveryDate } from './calculateDates/index.js';
+import { filterEqualResults } from './data/filterEqualResults.js';
 
 interface ParseParams extends ParallelSearchParams {
   html: string;

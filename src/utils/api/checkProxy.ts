@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { logger } from '../../config/logger';
+import { logger } from '../../config/logger/index.js';
 
 interface RetryOptions {
   retries: number;

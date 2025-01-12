@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { SearchResultsParsed, SupplierConfig } from 'types';
+import { SearchResultsParsed, SupplierConfig } from 'types/index.js';
 
 export const suppliersConfig: SupplierConfig[] = [
   {

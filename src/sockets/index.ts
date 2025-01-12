@@ -1,30 +1,30 @@
 import axios, { AxiosError } from 'axios';
 import chalk from 'chalk';
-import { CLIENT_URL } from 'config';
-import { logger } from 'config/logger';
+import { CLIENT_URL } from 'config/index.js';
+import { logger } from 'config/logger/index.js';
 import { Server as HTTPServer } from 'http';
-import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService';
-import { getItemsWithRest } from 'services/profit/getItemsWithRest';
+import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService.js';
+import { getItemsWithRest } from 'services/profit/getItemsWithRest.js';
 import { Server as SocketIOServer } from 'socket.io';
 import {
   ClarifyBrandResult,
   getItemResultsParams,
   pageActionsResult,
   ProviderErrorData,
-} from 'types';
-import { isBrandMatch } from 'utils/data/isBrandMatch';
-import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse';
-import { SOCKET_EVENTS } from '../constants/socketEvents';
-import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService';
-import { clarifyBrand } from '../services/clarifyBrand';
-import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService';
-import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode';
-import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData';
-import { mapUgResponseData } from '../services/ug/mapUgResponseData';
-import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData';
-import { filterAndSortAllResults } from '../utils/filterAndSortAllResults';
-import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData';
-import { logResultCount } from '../utils/stdLogs';
+} from 'types/index.js';
+import { isBrandMatch } from 'utils/data/isBrandMatch.js';
+import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
+import { SOCKET_EVENTS } from '../constants/socketEvents.js';
+import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
+import { clarifyBrand } from '../services/clarifyBrand.js';
+import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService.js';
+import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.js';
+import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData.js';
+import { mapUgResponseData } from '../services/ug/mapUgResponseData.js';
+import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData.js';
+import { filterAndSortAllResults } from '../utils/filterAndSortAllResults.js';
+import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData.js';
+import { logResultCount } from '../utils/stdLogs.js';
 
 enum ProviderErrorCodes {
   ObjectNotFound = 301,

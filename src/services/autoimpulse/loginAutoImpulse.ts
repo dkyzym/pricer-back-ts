@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
-import fs from 'fs/promises';
+
 import { CookieJar } from 'tough-cookie';
-import { logger } from '../../config/logger';
-import { ugHeaders } from '../../constants/headers';
-import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn';
+import { logger } from '../../config/logger/index.js';
+import { ugHeaders } from '../../constants/headers.js';
+import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn.js';
 
 // Создаем общий cookieJar и клиент
 const cookieJarAutoImpulse = new CookieJar();
@@ -32,8 +32,6 @@ export const loginAutoImpulse = async () => {
   const response = await clientAutoImpulse.post(AUTOIMPULSE_LOGIN_URL, data, {
     headers,
   });
-
-  fs.writeFile('some.Response.json', JSON.stringify(response.data));
 
   // Куки автоматически сохраняются в cookieJar
   const cookies = await cookieJarAutoImpulse.getCookies(AUTOIMPULSE_LOGIN_URL);

@@ -1,7 +1,7 @@
-import { addToCartController } from 'controllers/data/addToCartController';
+import { addToCartController } from 'controllers/data/addToCartController.js';
 import { Router } from 'express';
-import { ctrlWrapper } from 'middleware/ctrlWrapper';
-import { autocompleteUgController } from '../controllers/data/autocompleteUgController';
+import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
+import { autocompleteUgController } from '../controllers/data/autocompleteUgController.js';
 
 const router = Router();
 

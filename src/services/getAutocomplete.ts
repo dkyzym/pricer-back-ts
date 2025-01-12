@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
 import { CookieJar } from 'tough-cookie';
-import { ugHeaders } from '../constants/headers';
+import { ugHeaders } from '../constants/headers.js';
 
 // Переменные модуля
 const cookieJar = new CookieJar();

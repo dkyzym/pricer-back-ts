@@ -1,17 +1,17 @@
 import { AxiosError } from 'axios';
 import { Request, Response } from 'express';
-import { addToCartProfitService } from 'services/profit/addToCartProfitService';
-import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService';
-import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart';
-import { addToCartTurboCarService } from '../../services/turboCars/addToCartTurboCarService';
-import { addToCartUgService } from '../../services/ug/cart/addToCartUgService';
+import { addToCartProfitService } from 'services/profit/addToCartProfitService.js';
+import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService.js';
+import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
+import { addToCartTurboCarService } from '../../services/turboCars/addToCartTurboCarService.js';
+import { addToCartUgService } from '../../services/ug/cart/addToCartUgService.js';
+import { addToCartAutosputnikData } from '../../types/autosputnik.js';
 import {
   BasketPositionTurboCars,
   BasketPositionUG,
   BasketTurboCarsFrontendData,
   SupplierName,
-} from '../../types';
-import { addToCartAutosputnikData } from '../../types/autosputnik';
+} from '../../types/index.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier }: { supplier: SupplierName } = req.body;

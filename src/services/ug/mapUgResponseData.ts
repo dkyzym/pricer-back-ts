@@ -1,7 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
-import { SearchResultsParsed, ugArticleSearchResult } from '../../types';
-import { calculateDeliveryDate } from '../../utils/calculateDates';
-import { isBrandMatch } from '../../utils/data/isBrandMatch';
+import {
+  SearchResultsParsed,
+  ugArticleSearchResult,
+} from '../../types/index.js';
+import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
+import { isBrandMatch } from '../../utils/data/isBrandMatch.js';
 
 export const mapUgResponseData = (
   data: ugArticleSearchResult[],

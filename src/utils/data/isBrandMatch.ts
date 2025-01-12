@@ -1,6 +1,6 @@
 import stringSimilarity from 'string-similarity';
-import { getStandardBrandName } from './getStandardBrandName';
-import { normalizeBrandName } from './normalizeBrandName';
+import { getStandardBrandName } from './getStandardBrandName.js';
+import { normalizeBrandName } from './normalizeBrandName.js';
 
 export const isBrandMatch = (
   expectedBrand: string,
