@@ -1,4 +1,3 @@
-import { DateTime } from 'luxon';
 import {
   ApiResponseItem,
   ProductProfit,
@@ -18,9 +17,6 @@ export const parseProfitApiResponse = (
 ): SearchResultsParsed[] => {
   const parsedResults: SearchResultsParsed[] = [];
 
-  // Получаем текущее время
-  const currentTime = DateTime.now().setZone('UTC+3');
-
   apiResponse.forEach((item) => {
     const { id: innerId, article, brand, products } = item;
 
@@ -29,7 +25,10 @@ export const parseProfitApiResponse = (
         return typeof prob === 'number' ? prob : '';
       };
 
-      const availability = product.quantity;
+      // Изменение здесь: извлечение чистого числа из product.quantity
+      const availability =
+        Number(String(product.quantity).replace(/[^\d.]/g, '')) || 0;
+
       const price = product.price;
       const warehouse = product.custom_warehouse_name;
       const imageUrl = getImageUrl(product);
@@ -44,14 +43,14 @@ export const parseProfitApiResponse = (
       );
       const returnable = product.returnable; // number
       const multi = product.multi; // number
-      const allow_return = product.allow_return; //string
+      const allow_return = product.allow_return; // string
       const warehouse_id = product.warehouse_id; // number
       const inner_product_code = product.product_code;
 
       // Извлекаем дату доставки
       const deliveryDateFromApi = product.delivery_date?.split(' ')[0] ?? '';
 
-      // Создаем объект результата без даты доставки
+      // Создаём объект результата без даты доставки
       const parsedItem: SearchResultsParsed = {
         id: productKey,
         innerId,
