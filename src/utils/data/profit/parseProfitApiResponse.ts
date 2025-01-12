@@ -3,9 +3,9 @@ import {
   ProductProfit,
   SearchResultsParsed,
   SupplierName,
-} from 'types';
-import { calculateDeliveryDate } from '../../calculateDates';
-import { needToCheckBrand } from '../needToCheckBrand';
+} from 'types/index.js';
+import { calculateDeliveryDate } from '../../calculateDates/index.js';
+import { needToCheckBrand } from '../needToCheckBrand.js';
 
 const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';

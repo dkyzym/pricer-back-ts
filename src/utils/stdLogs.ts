@@ -4,8 +4,8 @@ import {
   ItemToParallelSearch,
   SearchResultsParsed,
   SupplierName,
-} from 'types';
-import { logger } from '../config/logger';
+} from 'types/index.js';
+import { logger } from '../config/logger/index.js';
 
 export const logResultCount = (
   item: ItemToParallelSearch,

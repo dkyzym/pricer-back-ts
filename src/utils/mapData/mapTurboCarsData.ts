@@ -1,8 +1,8 @@
 import { XMLParser } from 'fast-xml-parser';
 import { v4 as uuidv4 } from 'uuid';
-import { SearchResultsParsed } from '../../types';
-import { calculateDeliveryDate } from '../calculateDates';
-import { isBrandMatch } from '../data/isBrandMatch';
+import { SearchResultsParsed } from '../../types/index.js';
+import { calculateDeliveryDate } from '../calculateDates/index.js';
+import { isBrandMatch } from '../data/isBrandMatch.js';
 
 // Нормализация бренда
 const normalizeBrandNameExtended = (

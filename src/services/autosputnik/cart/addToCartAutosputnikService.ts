@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   AddToCardAutosputnik,
   addToCartAutosputnikData,
-} from '../../../types/autosputnik';
+} from '../../../types/autosputnik.js';
 
 export const addToCartAutosputnikService = async (
   data: addToCartAutosputnikData

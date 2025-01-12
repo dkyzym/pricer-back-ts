@@ -1,5 +1,5 @@
-import { ItemToParallelSearch, SearchResultsParsed } from 'types';
-import { formatText } from './formatText';
+import { ItemToParallelSearch, SearchResultsParsed } from 'types/index.js';
+import { formatText } from './formatText.js';
 
 export const filterEqualResults = (
   results: SearchResultsParsed[],

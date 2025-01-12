@@ -1,14 +1,9 @@
 import { AxiosResponse } from 'axios';
-import { US_SERVICE_PATHS } from '../../../config/api/config';
-import { ugArticleSearchResult } from '../../../types';
-import { createAxiosInstance } from '../../apiClient';
+import { US_SERVICE_PATHS } from '../../../config/api/config.js';
+import { ugArticleSearchResult } from '../../../types/index.js';
+import { createAxiosInstance } from '../../apiClient.js';
 
-export const fetchUgData = async (
-  article: string,
-  brand: string,
-  useOnlineStocks?: number,
-  withOutAnalogs?: number
-) => {
+export const fetchUgData = async (article: string, brand: string) => {
   try {
     const axiosInstance = await createAxiosInstance('ug');
 

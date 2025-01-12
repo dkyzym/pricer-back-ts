@@ -1,13 +1,13 @@
 import { DateTime } from 'luxon';
-import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService';
+import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService.js';
 import { v4 as uuidV4 } from 'uuid';
 import {
   SearchResultsParsed,
   SupplierName,
   TovarAutosputnik,
-} from '../../../types';
-import { calculateDeliveryDate } from '../../calculateDates';
-import { isBrandMatch } from '../isBrandMatch';
+} from '../../../types/index.js';
+import { calculateDeliveryDate } from '../../calculateDates/index.js';
+import { isBrandMatch } from '../isBrandMatch.js';
 
 export const parseAutosputnikData = async (item: {
   article: string;

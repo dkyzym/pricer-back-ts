@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
-import { TURBOCARS_SERVICE_PATHS } from '../../config/api/config';
-import { createAxiosInstance } from '../apiClient';
+import { TURBOCARS_SERVICE_PATHS } from '../../config/api/config.js';
+import { createAxiosInstance } from '../apiClient.js';
 
 export const searchTurbocarsCode = async (searchCode: string) => {
   try {

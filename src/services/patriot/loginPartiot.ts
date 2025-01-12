@@ -2,9 +2,9 @@ import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
 import { CookieJar } from 'tough-cookie';
-import { logger } from '../../config/logger';
-import { ugHeaders } from '../../constants/headers';
-import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn';
+import { logger } from '../../config/logger/index.js';
+import { ugHeaders } from '../../constants/headers.js';
+import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn.js';
 
 // Создаем общий cookieJar и клиент
 const cookieJarPatriot = new CookieJar();

@@ -2,15 +2,15 @@ import axios, { AxiosError } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
 import { CookieJar } from 'tough-cookie';
-import { ugHeaders } from '../constants/headers';
+import { ugHeaders } from '../constants/headers.js';
 
 // Переменные модуля
 const cookieJar = new CookieJar();
-const client = wrapper(axios.create({ jar: cookieJar }));
+const client = wrapper(axios.create({ jar: cookieJar, withCredentials: true }));
 let cookiesInitialized = false;
 
 // Функция инициализации куки
-const initializeCookies = async (): Promise<void> => {
+const initializeCookies = async () => {
   try {
     await client.get('https://ugautopart.ru/', {
       headers: ugHeaders,

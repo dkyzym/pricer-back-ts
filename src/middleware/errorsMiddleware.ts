@@ -1,6 +1,6 @@
-import { BaseError } from '@utils/errors';
+import { BaseError } from '@utils/errors.js';
 import chalk from 'chalk';
-import { logger } from 'config/logger';
+import { logger } from 'config/logger/index.js';
 import { NextFunction, Request, Response } from 'express';
 
 export const error = (

@@ -3,9 +3,9 @@ import {
   ParallelSearchParams,
   SearchResultsParsed,
   SupplierName,
-} from 'types';
-import { calculateDeliveryDate } from '../calculateDates';
-import { needToCheckBrand } from '../data/needToCheckBrand';
+} from 'types/index.js';
+import { calculateDeliveryDate } from '../calculateDates/index.js';
+import { needToCheckBrand } from '../data/needToCheckBrand.js';
 
 export const parsePickedPatriotResults = async ({
   page,

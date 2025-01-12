@@ -1,9 +1,9 @@
-import { logger } from '../config/logger';
+import { logger } from '../config/logger/index.js';
 import {
   clientPatriot,
   ensurePatriotLoggedIn,
   loginPatriot,
-} from '../services/patriot/loginPartiot';
+} from '../services/patriot/loginPartiot.js';
 
 export const makePatriotRequest = async (url: string, options: any = {}) => {
   try {

@@ -1,11 +1,11 @@
-import { logger } from 'config/logger';
-import { ParallelSearchParams, SearchResultsParsed } from 'types';
+import { logger } from 'config/logger/index.js';
+import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
 
 import * as cheerio from 'cheerio';
 
-import { ugHeaders } from '../../constants/headers';
-import { makePatriotRequest } from '../../utils/makePatriotRequest';
-import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults';
+import { ugHeaders } from '../../constants/headers.js';
+import { makePatriotRequest } from '../../utils/makePatriotRequest.js';
+import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults.js';
 
 export const itemDataPatriotService = async ({
   item,

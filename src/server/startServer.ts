@@ -1,10 +1,10 @@
 import chalk from 'chalk';
-import { PORT } from 'config';
-import { logger } from 'config/logger';
+import { PORT } from 'config/index.js';
+import { logger } from 'config/logger/index.js';
 import type { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
-import { initializeSocket } from '../sockets';
+import { initializeSocket } from '../sockets/index.js';
 
 export const startServer = async (app: Application) => {
   try {

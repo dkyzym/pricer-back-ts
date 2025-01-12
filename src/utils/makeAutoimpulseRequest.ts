@@ -1,9 +1,9 @@
-import { logger } from '../config/logger';
+import { logger } from '../config/logger/index.js';
 import {
   clientAutoImpulse,
   ensureAutoImpulseLoggedIn,
   loginAutoImpulse,
-} from '../services/autoimpulse/loginAutoImpulse';
+} from '../services/autoimpulse/loginAutoImpulse.js';
 
 export const makeAutoImpulseRequest = async (
   url: string,

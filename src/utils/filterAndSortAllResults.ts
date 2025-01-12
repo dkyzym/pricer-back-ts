@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { SearchResultsParsed, SupplierName } from '../types';
+import { SearchResultsParsed, SupplierName } from '../types/index.js';
 
 const MIN_PROBABILITY = 80;
 const MIN_RESULTS = 4;

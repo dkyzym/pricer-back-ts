@@ -1,4 +1,4 @@
-import { formatText } from './formatText';
+import { formatText } from './formatText.js';
 
 export const needToCheckBrand = (
   expectedBrand: string,

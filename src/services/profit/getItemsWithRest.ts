@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { logger } from 'config/logger';
-import { itemsGroupProfit } from 'types';
+import { logger } from 'config/logger/index.js';
+import { itemsGroupProfit } from 'types/index.js';
 
 export const getItemsWithRest = async (
   items: itemsGroupProfit,

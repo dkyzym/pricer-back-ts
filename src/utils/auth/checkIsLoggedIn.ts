@@ -1,4 +1,4 @@
-import { UnAuthorizedError } from '../errors';
+import { UnAuthorizedError } from '../errors.js';
 
 export const checkIsLoggedIn = (response: any, clientInfo: string) => {
   const isLoggedIn = response.includes(clientInfo);

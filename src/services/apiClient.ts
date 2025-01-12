@@ -13,10 +13,10 @@ import {
   PROXY_HOST,
   PROXY_PORT,
   suppliers,
-} from '../config/api/config';
-import { SupplierName } from '../types';
-import { checkProxy } from '../utils/api/checkProxy';
-import { generateMD5 } from '../utils/generateMD5';
+} from '../config/api/config.js';
+import { SupplierName } from '../types/index.js';
+import { checkProxy } from '../utils/api/checkProxy.js';
+import { generateMD5 } from '../utils/generateMD5.js';
 
 type AxiosInstanceSupplierName = SupplierName | 'turboCarsBN';
 
