@@ -29,3 +29,4 @@ app.use(() => {
 app.use(error);
 
 await startServer(app);
+// https://pricer-back-ts-production.up.railway.app/    8080
