@@ -5,7 +5,7 @@ import { ItemAutocompleteRow } from '../../types/index.js';
 
 export const autocompleteUgController = async (req: Request, res: Response) => {
   const term = req.query.term as string;
-
+  console.log(`term in autocompleteController: ${term}`);
   if (!term) {
     return res
       .status(400)
@@ -14,7 +14,7 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
   const trimmedTerm = term.trim();
 
   const data = await getAutocomplete(trimmedTerm);
-
+  console.log(`data autocompleteUgController ${JSON.stringify(data)}`);
   const filteredData = data.filter(
     (item: ItemAutocompleteRow) => item.brand !== 'Найти по описанию'
   );
