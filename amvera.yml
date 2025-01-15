@@ -1,0 +1,14 @@
+version: '1.0'
+runtime: 'nodejs:20.18.0' # Указываем нужную версию Node.js
+build:
+  commands:
+    - npm install # Устанавливаем зависимости
+    - npm run build # Собираем TypeScript
+deploy:
+  command: npm start # Команда запуска приложения
+sources:
+  - '**/*' # Копируем все файлы из репозитория
+env:
+  PORT: 80 # Указываем порт приложения
+mountpoints:
+  - path: '/data' # Указываем mountpoint, если нужно
