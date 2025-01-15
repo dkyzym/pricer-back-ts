@@ -16,4 +16,4 @@ run:
   nodeArguments: null
   command: npm run start
   persistenceMount: /data
-  containerPort: 3000
+  containerPort: ""
