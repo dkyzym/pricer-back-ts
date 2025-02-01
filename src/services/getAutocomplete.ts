@@ -38,7 +38,6 @@ export const getAutocomplete = async (term: string): Promise<any> => {
       headers: ugHeaders,
     });
 
-    console.log('response', response);
     return response.data;
   } catch (error) {
     // Обработка ошибки с типизацией

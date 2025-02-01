@@ -13,6 +13,8 @@ export const brandGroupsMap = [
   ['sct', 'sct germany'],
   ['вмп', 'вмп авто', 'вмпавто', 'vmp', 'vmpauto'],
   ['pmc', 'x2', 'parts-mall', 'pm'],
+  ['clearLight', 'ledo'],
+  ['вати', 'вати-авто'],
 ];
 
 // 2389901318
