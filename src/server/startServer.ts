@@ -11,7 +11,7 @@ export const startServer = async (app: Application) => {
     const server: HTTPServer = app.listen(PORT, () => {
       logger.info(
         chalk.cyan.italic(
-          `Server is running. Use port: ${(server.address() as AddressInfo).port}`
+          `Server is running. Use port: ${(server.address() as AddressInfo).port} и пейте вкусный кофе`
         )
       );
     });
