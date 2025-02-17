@@ -15,6 +15,7 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch.js';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
+import { searchArmtekArticle } from '../services/armtek/searchArticle.js';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
 import { clarifyBrand } from '../services/clarifyBrand.js';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService.js';
@@ -418,6 +419,55 @@ export const initializeSocket = (server: HTTPServer) => {
             logger.error('TurboCars error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'turboCars',
+              error: (error as Error).message,
+            });
+          }
+        } else if (supplier === 'armtek') {
+          try {
+            logger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+            const data = await searchArmtekArticle({ PIN: item.article });
+            console.log(data);
+            // socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+            //   supplier: supplier,
+            //   article: item.article,
+            // });
+
+            // const data = await getItemsListByArticleService(item.article);
+            // const itemsWithRest = await getItemsWithRest(data);
+            // const relevantItems = itemsWithRest.filter(({ brand }: any) =>
+            //   isBrandMatch(item.brand, brand)
+            // );
+
+            // const profitParsedData = parseProfitApiResponse(
+            //   relevantItems,
+            //   item.brand
+            // );
+
+            // const filteredItems = filterAndSortAllResults(profitParsedData);
+
+            // logResultCount(item, supplier, profitParsedData);
+            // logger.info(
+            //   chalk.bgYellow(
+            //     `После фильтрации: ${supplier} - ${filteredItems?.length}`
+            //   )
+            // );
+
+            // const profitResult: pageActionsResult = {
+            //   success: profitParsedData.length > 0,
+            //   message: `Profit data fetched: ${filteredItems.length > 0}`,
+            //   data: filteredItems,
+            // };
+
+            // socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+            //   supplier: 'profit',
+            //   result: profitResult,
+            // });
+          } catch (error) {
+            logger.error('Armtek error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'Armtek',
               error: (error as Error).message,
             });
           }

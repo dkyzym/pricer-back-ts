@@ -4,7 +4,8 @@ export type SupplierName =
   | 'patriot'
   | 'profit'
   | 'autosputnik'
-  | 'autoImpulse';
+  | 'autoImpulse'
+  | 'armtek';
 
 export type PuppeteerSupplierName = 'patriot';
 
