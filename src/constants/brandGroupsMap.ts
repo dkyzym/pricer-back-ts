@@ -15,6 +15,7 @@ export const brandGroupsMap = [
   ['pmc', 'x2', 'parts-mall', 'pm'],
   ['clearLight', 'ledo'],
   ['вати', 'вати-авто'],
+  ['омега', 'группа омега'],
 ];
 
 // 2389901318
