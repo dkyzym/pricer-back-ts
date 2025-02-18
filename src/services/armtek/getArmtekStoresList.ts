@@ -29,7 +29,7 @@ export async function getArmtekStoresList(): Promise<
         },
       }
     );
-    console.log('Список складов:', response.data);
+
     return response.data;
   } catch (error) {
     console.error('Ошибка при выполнении запроса к getStoreList:', error);

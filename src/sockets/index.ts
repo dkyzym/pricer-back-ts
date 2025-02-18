@@ -16,9 +16,9 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch.js';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
-import { getArmtekStoresList } from '../services/armtek/getArmtekStoresList.js';
 import { parseArmtekResults } from '../services/armtek/parseArmtekResults.js';
 import { searchArmtekArticle } from '../services/armtek/searchArmtekArticle.js';
+import { getCachedStoreList } from '../services/armtek/storeList.js';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
 import { clarifyBrand } from '../services/clarifyBrand.js';
 import { itemDataPatriotService } from '../services/patriot/itemDataPatriotService.js';
@@ -454,12 +454,14 @@ export const initializeSocket = (server: HTTPServer) => {
               isBrandMatch(item.brand, resItem.BRAND || '')
             );
 
+            const storeList = await getCachedStoreList();
+
             const parsedArmtekResults: SearchResultsParsed[] =
-              parseArmtekResults(relevantItems);
+              parseArmtekResults(relevantItems, storeList);
 
             console.log(parsedArmtekResults);
 
-            getArmtekStoresList();
+            // getArmtekStoresList();
 
             logResultCount(item, supplier, parsedArmtekResults);
 

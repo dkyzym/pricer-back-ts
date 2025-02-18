@@ -1,44 +1,46 @@
 import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
 import { SearchResultsParsed } from '../../types';
-import { SearchResponseItem } from '../../types/armtek';
+import { SearchResponseItem, StoreResponseItem } from '../../types/armtek';
 
-export const parseArmtekResults = (
-  relevantItems: SearchResponseItem[]
-): SearchResultsParsed[] => {
-  const parsedResults = relevantItems.map((res) => {
-    // В некоторых случаях нужно конвертировать строки в числа
+/**
+ * Парсит результаты Armtek, сопоставляя KEYZAK со складом из storeList
+ */
+export function parseArmtekResults(
+  relevantItems: SearchResponseItem[],
+  storeList: StoreResponseItem[]
+): SearchResultsParsed[] {
+  return relevantItems.map((res) => {
+    // Конвертация в числа
     const availabilityNumber = res.RVALUE ? parseFloat(res.RVALUE) : 0;
     const priceNumber = res.PRICE ? parseFloat(res.PRICE) : 0;
-    const probabilityNumber = res.VENSL ? parseInt(res.VENSL, 10) : '';
+    const venSlNumber = res.VENSL ? parseInt(res.VENSL, 10) : NaN;
 
-    // Пример «дедлайна». Если хотите высчитывать из строки DLVDT (YYYYMMDDHHIISS),
-    // можно разобрать дату, но тут для простоты поставим 0 (или какую-то свою логику).
-    const deadlineNumber = 0;
-    const deadLineMaxNumber = 0;
+    // Получаем склад (по совпадению KEYZAK)
+    const store = storeList.find((st) => st.KEYZAK === res.KEYZAK);
 
-    // Преобразование DLVDT (формат YYYYMMDDHHmmss) в ISO-дату
+    // Формируем дату поставки
     const deliveryDate = res.DLVDT
-      ? DateTime.fromFormat(res.DLVDT, 'yyyyMMddHHmmss').toISODate() ||
-        '2999-01-01'
+      ? (DateTime.fromFormat(res.DLVDT, 'yyyyMMddHHmmss').toISODate() ??
+        '2999-01-01')
       : '2999-01-01';
 
-    // Собираем объект
+    // Собираем итоговый объект
     const result: SearchResultsParsed = {
-      id: uuidv4(), // или можно использовать другой уникальный идентификатор
+      id: uuidv4(),
       article: res.PIN ?? '',
       brand: res.BRAND ?? '',
       description: res.NAME ?? '',
-      availability: isNaN(availabilityNumber) ? '' : availabilityNumber,
+      availability: Number.isNaN(availabilityNumber) ? '' : availabilityNumber,
       price: priceNumber,
-      warehouse: res.KEYZAK ?? '',
-      imageUrl: '', // если у вас нет изображения, можно оставить пустым
-      deadline: deadlineNumber,
-      deadLineMax: deadLineMaxNumber,
-      supplier: 'armtek', // или берёте из переменной
-      probability: probabilityNumber || '',
+      // Здесь кладём SKLNAME, если есть. Если нет — fallback на KEYZAK или вообще ''
+      warehouse: store?.SKLNAME || res.KEYZAK || '',
+      imageUrl: '',
+      deadline: 0,
+      deadLineMax: 0,
+      supplier: 'armtek',
+      probability: Number.isNaN(venSlNumber) ? '' : venSlNumber,
 
-      // Далее поля, которые у вас в SearchResultsParsed
       needToCheckBrand: false,
       innerId: '',
       deadLineTimeToOrder: '',
@@ -52,5 +54,4 @@ export const parseArmtekResults = (
 
     return result;
   });
-  return parsedResults;
-};
+}
