@@ -427,9 +427,9 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'armtek') {
           /**
-           * склады - отображать названия для всех и показывать свои склады всегда
            *
-           * проставить правильные даты. сейчас пишет только минимальную дату
+           * Почему на фронт отдаются не все данные
+           * отграничить количество данных
            */
           try {
             logger.info(
@@ -453,15 +453,19 @@ export const initializeSocket = (server: HTTPServer) => {
             const relevantItems = RESP.filter((resItem) =>
               isBrandMatch(item.brand, resItem.BRAND || '')
             );
+            console.log('relevantItems', relevantItems.length);
+            console.log('relevantItems', JSON.stringify(relevantItems));
 
             const storeList = await getCachedStoreList();
 
             const parsedArmtekResults: SearchResultsParsed[] =
               parseArmtekResults(relevantItems, storeList);
 
-            console.log(parsedArmtekResults);
-
-            // getArmtekStoresList();
+            console.log('parsedArmtekResults', parsedArmtekResults.length);
+            console.log(
+              'parsedArmtekResults',
+              JSON.stringify(parsedArmtekResults)
+            );
 
             logResultCount(item, supplier, parsedArmtekResults);
 

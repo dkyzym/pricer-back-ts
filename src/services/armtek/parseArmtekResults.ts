@@ -58,6 +58,29 @@ function getApproxDeliveryHours(WRNTDT?: string, DLVDT?: string): number {
 }
 
 /**
+ * Функция пытается извлечь число из строки.
+ * Сначала пробует parseFloat, а если он возвращает NaN (например, если строка начинается с символа),
+ * то ищет первую последовательность цифр с возможной десятичной точкой.
+ *
+ * @param value - строка с информацией о наличии
+ * @returns извлечённое число или NaN, если число не найдено
+ */
+function extractNumber(value: string): number {
+  // Пробуем стандартный parseFloat
+  let num = parseFloat(value);
+  if (!Number.isNaN(num)) {
+    return num;
+  }
+  // Если parseFloat не смог преобразовать строку, ищем числовую последовательность внутри строки
+  const match = value.match(/(\d+(\.\d+)?)/);
+  if (match) {
+    num = parseFloat(match[0]);
+    return num;
+  }
+  return NaN;
+}
+
+/**
  * Парсит результаты Armtek, сопоставляя KEYZAK со складом из storeList
  * и считает `deadline` (приблизительные рабочие часы) по схеме:
  *  - если есть WRNTDT, считаем по нему
@@ -69,7 +92,7 @@ export function parseArmtekResults(
 ): SearchResultsParsed[] {
   return relevantItems.map((res) => {
     // Конвертация в числа
-    const availabilityNumber = res.RVALUE ? parseFloat(res.RVALUE) : 0;
+    const availabilityNumber = res.RVALUE ? extractNumber(res.RVALUE) : 0;
     const priceNumber = res.PRICE ? parseFloat(res.PRICE) : 0;
     const probabilityNumber = res.VENSL ? parseInt(res.VENSL, 10) : NaN;
 
@@ -94,7 +117,7 @@ export function parseArmtekResults(
       article: res.PIN ?? '',
       brand: res.BRAND ?? '',
       description: res.NAME ?? '',
-      availability: Number.isNaN(availabilityNumber) ? '' : availabilityNumber,
+      availability: Number.isNaN(availabilityNumber) ? 0 : availabilityNumber,
       price: priceNumber,
       // Здесь кладём SKLNAME, если есть. Если нет — fallback на KEYZAK или ''
       warehouse: store?.SKLNAME || res.KEYZAK || '',
