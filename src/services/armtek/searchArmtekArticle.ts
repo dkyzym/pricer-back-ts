@@ -1,5 +1,9 @@
 import axios, { AxiosError } from 'axios';
-import { ArmtekSearchResponse, SearchRequest } from '../../types/armtek';
+import {
+  ArmtekSearchResponse,
+  SearchRequest,
+  SearchResponseItem,
+} from '../../types/armtek';
 
 /**
  * Функция для поиска артикула на сервисе Armtek.
@@ -10,7 +14,7 @@ import { ArmtekSearchResponse, SearchRequest } from '../../types/armtek';
  */
 export async function searchArmtekArticle(
   params: SearchRequest
-): Promise<ArmtekSearchResponse> {
+): Promise<ArmtekSearchResponse<SearchResponseItem>> {
   // Дефолтные значения
   const {
     VKORG = '4000',
@@ -37,7 +41,7 @@ export async function searchArmtekArticle(
   });
 
   try {
-    const response = await axios.post<ArmtekSearchResponse>(
+    const response = await axios.post<ArmtekSearchResponse<SearchResponseItem>>(
       'http://ws.armtek.by/api/ws_search/search?format=json',
       formData,
       {

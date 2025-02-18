@@ -2,9 +2,9 @@
  * Общая структура ответа веб-сервиса (ver. 1.1.7)
  * - STATUS: код ответа
  * - MESSAGES: массив сообщений
- * - RESP: «тело» ответа (здесь в виде объекта с ключом ARRAY)
+ * - RESP: «тело» ответа
  */
-export interface ArmtekSearchResponse {
+export interface ArmtekSearchResponse<T> {
   STATUS: number;
   /**
    * Тип сообщения.
@@ -19,7 +19,7 @@ export interface ArmtekSearchResponse {
     TEXT: string;
     DATE?: string;
   }[];
-  RESP?: SearchResponseItem[];
+  RESP: T[];
 }
 
 /**
@@ -61,12 +61,6 @@ export interface SearchResponseItem {
   ANALOG?: string;
 }
 
-export interface ArmtekSearchResponse {
-  STATUS: number; // Например, 200, 400, 500 и т.д.
-  MESSAGES?: WebServiceMessage[]; // Список сообщений
-  RESP?: SearchResponseItem[]; // Тело ответа: { ARRAY?: ... }
-}
-
 /**
  * Интерфейс входных параметров для поиска артикула.
  * (Поле PIN оставлено обязательным, т.к. оно действительно критично)
@@ -81,4 +75,18 @@ export interface SearchRequest {
   KUNNR_ZA?: string;
   INCOTERMS?: string;
   VBELN?: string;
+}
+
+/**
+ * Интерфейс элемента списка склада.
+ *
+ * @property KEYZAK - Код склада (строка, макс. длина 10). Используется для идентификации склада.
+ * @property NAME - Наименование склада (строка, макс. длина 100).
+ * Дополнительно могут присутствовать и другие поля, если они возвращаются сервисом.
+ */
+export interface StoreResponseItem {
+  KEYZAK?: string;
+  NAME?: string;
+  SKLNAME?: string;
+  // Можно добавить дополнительные свойства, если они будут предоставлены в ответе.
 }
