@@ -54,7 +54,7 @@ export async function searchArmtekArticle(
         },
       }
     );
-
+    console.log(response.data);
     // Возвращаем данные, если запрос прошел успешно
     return response.data;
   } catch (error: unknown) {
