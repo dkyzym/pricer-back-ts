@@ -66,14 +66,20 @@ export interface SearchResponseItem {
  * (Поле PIN оставлено обязательным, т.к. оно действительно критично)
  */
 export interface SearchRequest {
+  /** Организация */
   VKORG?: string;
+  /** Клиент */
   KUNNR_RG?: string;
+  /** Артикул */
   PIN: string; // Номер артикула (ПИН)
   BRAND?: string;
+  /** Тип запроса - а аналог без аналог */
   QUERY_TYPE?: string;
+  /** Программа */
   PROGRAM?: string;
   KUNNR_ZA?: string;
   INCOTERMS?: string;
+  /** Заказ */
   VBELN?: string;
 }
 

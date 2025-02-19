@@ -56,7 +56,7 @@ export const initializeSocket = (server: HTTPServer) => {
       const { query } = data;
 
       if (!query || query.trim() === '') {
-        console.log(
+        logger.info(
           `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}`
         );
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
@@ -445,11 +445,6 @@ export const initializeSocket = (server: HTTPServer) => {
             });
           }
         } else if (supplier === 'armtek') {
-          /**
-           *
-           * Почему на фронт отдаются не все данные
-           * отграничить количество данных
-           */
           try {
             logger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
@@ -510,8 +505,6 @@ export const initializeSocket = (server: HTTPServer) => {
     // Disconnect Handler
     socket.on('disconnect', () => {
       logger.info(chalk.bgCyan(`Client disconnected: ${socket.id}`));
-      logger.info(`Socket disconnected: ${socket.id}`);
-      logger.info(`Closed sessions for socket ${socket.id}`);
     });
   });
 };
