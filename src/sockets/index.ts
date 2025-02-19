@@ -339,10 +339,17 @@ export const initializeSocket = (server: HTTPServer) => {
 
             logResultCount(item, supplier, data);
 
+            const filteredItems = filterAndSortAllResults(data);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
+
             const patriotResult: pageActionsResult = {
               success: data.length > 0,
               message: `Patriot data fetched: ${data.length > 0}`,
-              data: data,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -368,13 +375,19 @@ export const initializeSocket = (server: HTTPServer) => {
             });
 
             const data = await itemDataAutoImpulseService({ item, supplier });
-
             logResultCount(item, supplier, data);
+
+            const filteredItems = filterAndSortAllResults(data);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
 
             const autoImpulseResult: pageActionsResult = {
               success: data.length > 0,
               message: `AutoImpulse data fetched: ${data.length > 0}`,
-              data: data,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -407,11 +420,17 @@ export const initializeSocket = (server: HTTPServer) => {
             );
 
             logResultCount(item, supplier, data);
+            const filteredItems = filterAndSortAllResults(data);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
 
             const turboCarsResult: pageActionsResult = {
               success: data.length > 0,
               message: `Patriot data fetched: ${data.length > 0}`,
-              data: data,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
@@ -453,26 +472,24 @@ export const initializeSocket = (server: HTTPServer) => {
             const relevantItems = RESP.filter((resItem) =>
               isBrandMatch(item.brand, resItem.BRAND || '')
             );
-            console.log('relevantItems', relevantItems.length);
-            console.log('relevantItems', JSON.stringify(relevantItems));
 
             const storeList = await getCachedStoreList();
 
             const parsedArmtekResults: SearchResultsParsed[] =
               parseArmtekResults(relevantItems, storeList);
 
-            console.log('parsedArmtekResults', parsedArmtekResults.length);
-            console.log(
-              'parsedArmtekResults',
-              JSON.stringify(parsedArmtekResults)
-            );
-
             logResultCount(item, supplier, parsedArmtekResults);
+            const filteredItems = filterAndSortAllResults(parsedArmtekResults);
+            logger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
 
             const armtekResult: pageActionsResult = {
               success: parsedArmtekResults.length > 0,
               message: `Armtek data fetched: ${parsedArmtekResults.length > 0}`,
-              data: parsedArmtekResults,
+              data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
