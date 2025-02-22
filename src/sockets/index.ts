@@ -459,8 +459,20 @@ export const initializeSocket = (server: HTTPServer) => {
               PIN: item.article,
             });
 
-            if (!RESP) {
+            if (!RESP || !RESP.length) {
               logger.warn(JSON.stringify({ STATUS, MESSAGES }));
+
+              const armtekResult: pageActionsResult = {
+                success: true,
+                message: `Armtek data fetched: 0`,
+                data: [],
+              };
+
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier: 'armtek',
+                result: armtekResult,
+              });
+
               return [];
             }
 
