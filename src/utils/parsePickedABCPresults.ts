@@ -46,8 +46,8 @@ export const parseData = async (
 
     const availability = parseInt(availabilityText, 10) || 0;
     const price = parseFloat(priceText) || 0;
-    const deadline = parseInt(deadlineText, 10) || 0;
-    const deadLineMax = parseInt(deadLineMaxText, 10) || 0;
+    const deadline = parseInt(deadlineText, 10) || 12;
+    const deadLineMax = parseInt(deadLineMaxText, 10) || 24;
 
     const product: Omit<SearchResultsParsed, 'supplier'> = {
       article,
@@ -80,15 +80,21 @@ export const parsePickedABCPresults = async ({
 }: ParseParams): Promise<SearchResultsParsed[]> => {
   const $ = cheerio.load(html);
 
-  // Wait for any dynamic content if necessary (simulate wait)
-  // Since we're dealing with server-rendered HTML, this may not be necessary
-
+  // Парсинг данных
   const currentData = await parseData($);
 
   if (currentData.length > 0) {
+    // Добавляем поле supplier и изменяем probability для нужных поставщиков
     const resultsWithSupplier = currentData
-      .map((product) => ({ ...product, supplier }))
+      .map((product) => {
+        if (supplier === 'patriot' || supplier === 'autoImpulse') {
+          product.probability = 98;
+        }
+
+        return { ...product, supplier };
+      })
       .filter((product) => product.warehouse !== 'Внешний склад');
+
     const filteredResults = filterEqualResults(resultsWithSupplier, item);
     const resultsWithDeliveryDate = filteredResults.map((result) => ({
       ...result,

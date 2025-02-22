@@ -16,6 +16,7 @@ export const brandGroupsMap = [
   ['clearLight', 'ledo'],
   ['вати', 'вати-авто'],
   ['омега', 'группа омега'],
+  ['невский фильтр', 'nevsky filter'],
 ];
 
 // 2389901318
