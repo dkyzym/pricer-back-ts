@@ -30,8 +30,8 @@ export const webhookController = (req: Request, res: Response) => {
         logger.error('Ошибка при выполнении команд:', err);
         return res.status(500).send(`Ошибка деплоя ${err} ${stderr}`);
       }
-      logger.info('Вывод команд:', stdout);
-      logger.error('Ошибки команд:', stderr);
+      logger.info('Вывод команд:', JSON.stringify(stdout));
+      logger.error('Ошибки команд:', JSON.stringify(stderr));
       logger.info('Деплой успешно завершён');
       return res.status(200).send('Updated');
     }
