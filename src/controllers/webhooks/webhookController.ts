@@ -27,7 +27,7 @@ export const webhookController = (req: Request, res: Response) => {
     (err, stdout, stderr) => {
       if (err) {
         logger.error('Ошибка при выполнении команд:', err);
-        return res.status(500).send(`Ошибка деплоя ${err}`);
+        return res.status(500).send(`Ошибка деплоя ${err} ${stderr}`);
       }
       logger.info('Вывод команд:', stdout);
       logger.error('Ошибки команд:', stderr);
