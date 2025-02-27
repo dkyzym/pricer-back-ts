@@ -1,6 +1,5 @@
 import { exec } from 'child_process';
 import { Request, Response } from 'express';
-import { logger } from '../../config/logger/index.js';
 import { verifySignature } from '../../utils/verifySignature.js';
 
 export const webhookController = (req: Request, res: Response) => {
@@ -23,17 +22,19 @@ export const webhookController = (req: Request, res: Response) => {
   // В примере ниже запускаем последовательность команд в child_process
   // const cmd ='git pull origin main && npm install && npm run build && nssm restart pricer-back'
   exec(
-    'git pull origin main && npm install && npm run build',
-    { cwd: 'D:/projects/pricer-back-ts' },
+    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
+    {
+      cwd: 'D:/projects/pricer-back-ts',
+    },
     (err, stdout, stderr) => {
+      console.log('STDOUT:', stdout);
+      console.log('STDERR:', stderr);
       if (err) {
-        logger.error('Ошибка при выполнении команд:', err);
-        return res.status(500).send(`Ошибка деплоя ${err} ${stderr}`);
+        console.error('Ошибка при деплое:', err);
+        return res.status(500).send('Ошибка деплоя');
       }
-      console.log('Вывод команд:', JSON.stringify(stdout));
-      console.error('Ошибки команд:', stderr);
       console.log('Деплой успешно завершён');
-      return res.status(200).send('Updated');
+      res.status(200).send('OK');
     }
   );
 };
