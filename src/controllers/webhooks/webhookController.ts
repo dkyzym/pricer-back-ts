@@ -22,7 +22,7 @@ export const webhookController = (req: Request, res: Response) => {
   // Ниже запускаем последовательность команд в child_process
   // 'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
   exec(
-    'git pull origin main && npm install && npm run build',
+    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
     {
       cwd: 'D:/projects/pricer-back-ts',
     },
