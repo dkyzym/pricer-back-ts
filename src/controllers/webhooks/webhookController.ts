@@ -33,7 +33,7 @@ export const webhookController = (req: Request, res: Response) => {
         console.error('Ошибка при деплое:', err);
         return res.status(500).send('Ошибка деплоя');
       }
-      console.log('Деплой успешно завершён');
+      console.log('Деплой успешно завершён ');
       res.status(200).send('OK');
     }
   );
