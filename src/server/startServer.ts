@@ -9,7 +9,7 @@ import { initializeSocket } from '../sockets/index.js';
 export const startServer = async (app: Application) => {
   try {
     const server: HTTPServer = app.listen(PORT, () => {
-      console.log('Current working directory:', process.cwd());
+      console.log('NODE_ENV:', process.env.VKORG);
 
       logger.info(
         chalk.cyan.italic(
