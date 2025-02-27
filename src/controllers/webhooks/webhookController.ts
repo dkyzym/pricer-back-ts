@@ -19,8 +19,7 @@ export const webhookController = (req: Request, res: Response) => {
   console.log('Получен push Webhook, запускаю обновление...');
 
   // Команды можно выполнять одной строкой или по отдельности
-  // В примере ниже запускаем последовательность команд в child_process
-  // const cmd ='git pull origin main && npm install && npm run build && nssm restart pricer-back'
+  // Ниже запускаем последовательность команд в child_process
   exec(
     'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
     {
