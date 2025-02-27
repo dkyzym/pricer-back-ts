@@ -9,6 +9,8 @@ import { initializeSocket } from '../sockets/index.js';
 export const startServer = async (app: Application) => {
   try {
     const server: HTTPServer = app.listen(PORT, () => {
+      console.log('Current working directory:', process.cwd());
+
       logger.info(
         chalk.cyan.italic(
           `Server is running. Use port: ${(server.address() as AddressInfo).port} и пейте вкусный кофе`
