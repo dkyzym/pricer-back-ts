@@ -21,7 +21,7 @@ export const webhookController = (req: Request, res: Response) => {
   // Команды можно выполнять одной строкой или по отдельности
   // В примере ниже запускаем последовательность команд в child_process
   exec(
-    'git pull origin main && npm install && npm run build && pm2 restart all',
+    'git pull origin main && npm install && npm run build && nssm restart pricer-back',
     { cwd: 'D:/projects/pricer-back-ts' },
     (err, stdout, stderr) => {
       if (err) {

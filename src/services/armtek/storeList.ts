@@ -1,5 +1,5 @@
 import { StoreResponseItem } from '../../types/armtek';
-import { getArmtekStoresList } from './getArmtekStoresList';
+import { getArmtekStoresList } from './getArmtekStoresList.js';
 
 let storeListCache: StoreResponseItem[] = [];
 let lastUpdate = 0;
