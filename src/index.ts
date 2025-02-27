@@ -1,6 +1,7 @@
 import { error } from '@middleware/errorsMiddleware.js';
 
 import dataRoutes from '@routes/dataRoutes.js';
+import webhookRoutes from '@routes/webhookRoutes.js';
 import { RouteNotFoundError } from '@utils/errors.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -15,12 +16,19 @@ dotenv.config();
 const app = express();
 
 app.use(morgan('short'));
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
 app.use('/api', dataRoutes);
+app.use('/', webhookRoutes);
 
 app.use(() => {
   throw new RouteNotFoundError();
