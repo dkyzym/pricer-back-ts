@@ -28,6 +28,11 @@ function verifySignature(req: any) {
   return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
 }
 
+// Обработка корневого маршрута
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).send('Привет! Сервер работает.');
+});
+
 // Роут /webhook
 app.post('/webhook', (req: Request, res: Response) => {
   // 1) Проверяем подпись
