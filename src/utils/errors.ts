@@ -32,7 +32,7 @@ export class NotFoundError extends BaseError {
 
 export class RouteNotFoundError extends BaseError {
   constructor() {
-    super('Route not found 4 ');
+    super('Route not found 5 ');
 
     this.code = 404;
   }
