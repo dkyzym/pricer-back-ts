@@ -9,6 +9,7 @@ import express from 'express';
 import morgan from 'morgan';
 import { corsOptions } from './config/index.js';
 import { startServer } from './server/startServer.js';
+import { helloController } from './controllers/helloController.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', dataRoutes);
+app.use('/', helloController);
 
 app.use(() => {
   throw new RouteNotFoundError();
