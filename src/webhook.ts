@@ -29,7 +29,7 @@ function verifySignature(req: any) {
 }
 
 // Обработка корневого маршрута
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.status(200).send('Привет! Сервер работает.');
 });
 
