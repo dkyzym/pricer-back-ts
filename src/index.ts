@@ -11,6 +11,7 @@ import path from 'path';
 import { corsOptions } from './config/index.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
+import { initProxyCheck } from './services/apiClient.js';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(distPath));
+// app.use(express.static(distPath));
 app.use('/api', dataRoutes);
 app.use('/test', helloController);
 
@@ -47,4 +48,5 @@ app.use(() => {
 
 app.use(error);
 
+await initProxyCheck();
 await startServer(app);

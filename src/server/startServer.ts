@@ -5,12 +5,9 @@ import type { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import { AddressInfo } from 'net';
 import { initializeSocket } from '../sockets/index.js';
-import { initProxyCheck } from '../services/apiClient.js';
 
 export const startServer = async (app: Application) => {
   try {
-    await initProxyCheck();
-
     const server: HTTPServer = app.listen(PORT, () => {
       logger.info(
         chalk.cyan.italic(
