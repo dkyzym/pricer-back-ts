@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
-// app.use(express.static(distPath));
+app.use(express.static(distPath));
 app.use('/api', dataRoutes);
 app.use('/test', helloController);
 
