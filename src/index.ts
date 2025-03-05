@@ -7,11 +7,14 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
+import path from 'path';
 import { corsOptions } from './config/index.js';
-import { startServer } from './server/startServer.js';
 import { helloController } from './controllers/helloController.js';
+import { startServer } from './server/startServer.js';
 
 dotenv.config();
+
+const distPath = path.resolve('D:/projects/pricer-front/dist');
 
 const app = express();
 
@@ -27,8 +30,16 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(express.static(distPath));
 app.use('/api', dataRoutes);
-app.use('/', helloController);
+app.use('/test', helloController);
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/socket.io')) {
+    return next(); // передаем дальше запрос Socket.IO
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 app.use(() => {
   throw new RouteNotFoundError();
@@ -37,4 +48,3 @@ app.use(() => {
 app.use(error);
 
 await startServer(app);
-// https://pricer-back-ts-production.up.railway.app/    8080

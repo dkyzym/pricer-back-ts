@@ -68,6 +68,41 @@ app.post('/webhook', (req: Request, res: Response) => {
   );
 });
 
+// Роут для фронта
+app.post('/webhook-frontend', (req: Request, res: Response) => {
+  // 1) Проверяем подпись
+  if (!verifySignature(req)) {
+    console.log('Неверная подпись Webhook для фронта');
+    return res.status(401).send('Unauthorized');
+  }
+
+  // 2) Проверяем что push-событие
+  if (req.headers['x-github-event'] !== 'push') {
+    console.log('Не push-событие, игнорируем');
+    return res.status(200).send('Not a push event');
+  }
+
+  console.log('Получен push Webhook для фронта, запускаю обновление...');
+
+  // 3) Выполняем нужные команды в папке фронтенда
+  exec(
+    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
+    {
+      cwd: 'D:/projects/pricer-front', // Папка, где фронтовой .git, package.json и т.д.
+    },
+    (err, stdout, stderr) => {
+      console.log('STDOUT:', stdout);
+      console.log('STDERR:', stderr);
+      if (err) {
+        console.error('Ошибка при деплое фронта:', err);
+        return res.status(500).send('Ошибка деплоя фронта');
+      }
+      console.log('Деплой фронта успешно завершён');
+      return res.status(200).send('OK');
+    }
+  );
+});
+
 // Запускаем Webhook-сервис на порту 3002
 const PORT = 3002;
 app.listen(PORT, () => {
