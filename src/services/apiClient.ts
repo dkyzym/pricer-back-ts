@@ -17,55 +17,105 @@ import {
 import { SupplierName } from '../types/index.js';
 import { checkProxy } from '../utils/api/checkProxy.js';
 import { generateMD5 } from '../utils/generateMD5.js';
+import { getLocalIP } from '../utils/getLocalIP.js';
 
 type AxiosInstanceSupplierName = SupplierName | 'turboCarsBN';
 
-export const createAxiosInstance = async (
-  supplierKey: AxiosInstanceSupplierName
-): Promise<AxiosInstance> => {
-  const supplier = suppliers[supplierKey];
-  if (!supplier)
-    throw new Error(`No supplier config found for key: ${supplierKey}`);
+// Храним флаг использования прокси в модуле (или в global)
+let shouldUseProxy: boolean | null = null;
 
-  // Настраиваем прокси
+// Функция-инициализатор (один раз при старте приложения)
+export async function initProxyCheck() {
+  // 1) Получаем внешний IP
+  const localIP = await getLocalIP();
+
+  // 2) Сравниваем с PROXY_HOST
+  if (localIP === PROXY_HOST) {
+    console.log(
+      chalk.magenta(
+        `Текущий IP (${localIP}) = PROXY_HOST (${PROXY_HOST}). Прокси использовать не будем.`
+      )
+    );
+    shouldUseProxy = false;
+    return;
+  }
+
+  // 3) Если IP не совпадает – по умолчанию используем прокси.
+  //    Но проверим сразу «жив ли» прокси, если хотите.
   const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
   const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
   const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
-
-  console.log(
-    chalk.yellow(`Checking proxy availability for supplier: ${supplierKey}`)
-  );
   const isProxyWorking = await checkProxy(agent);
 
+  shouldUseProxy = isProxyWorking;
   if (!isProxyWorking) {
-    throw new Error('Proxy not available. Requests will not be sent.');
+    console.error(
+      chalk.red(
+        `Прокси ${proxyUrl} не работает, будут отказы в запросах через прокси.`
+      )
+    );
+  } else {
+    console.log(chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`));
+  }
+}
+
+// Собственно создание axios-инстанса
+export const createAxiosInstance = async (
+  supplierKey: AxiosInstanceSupplierName
+): Promise<AxiosInstance> => {
+  // Убедимся, что флаг shouldUseProxy уже определён
+  // (значит вы ранее вызвали initProxyCheck)
+  if (shouldUseProxy === null) {
+    throw new Error(
+      'Нельзя создать AxiosInstance до инициализации прокси. Сначала вызовите initProxyCheck()!'
+    );
   }
 
-  // Создаём инстанс axios
-  const axiosInstance = axios.create({
-    baseURL: supplier.baseUrl,
-    httpAgent: agent,
-    httpsAgent: agent,
-    timeout: 17_000,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  });
+  const supplier = suppliers[supplierKey];
+  if (!supplier) {
+    throw new Error(`No supplier config found for key: ${supplierKey}`);
+  }
+
+  let axiosInstance: AxiosInstance;
+
+  // Если нужно использовать прокси
+  if (shouldUseProxy) {
+    const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
+    const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
+    const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
+
+    axiosInstance = axios.create({
+      baseURL: supplier.baseUrl,
+      httpAgent: agent,
+      httpsAgent: agent,
+      timeout: 17_000,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+    console.log(chalk.green(`Axios instance with proxy for: ${supplierKey}`));
+  } else {
+    // Создаём без прокси
+    axiosInstance = axios.create({
+      baseURL: supplier.baseUrl,
+      timeout: 17_000,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+    console.log(chalk.blue(`Axios instance without proxy for: ${supplierKey}`));
+  }
 
   // Подключаем axios-retry
   axiosRetry(axiosInstance, {
-    retries: 2, // сколько раз повторять запрос
+    retries: 2,
     shouldResetTimeout: true,
-    retryDelay: (retryCount) => {
-      // Простая экспоненциальная задержка
-      return 1000 * Math.pow(2, retryCount); // 1s, 2s, 4s...
-    },
+    retryDelay: (retryCount) => 1000 * Math.pow(2, retryCount),
     retryCondition: (error: AxiosError) => {
-      // 1) Проверяем таймаут (код = ECONNABORTED)
+      // 1) Таймаут
       if (error.code === 'ECONNABORTED') {
         console.log(chalk.cyan('[axios-retry] Retrying because of timeout...'));
         return true;
       }
-      // 2) Проверяем 5xx (isNetworkOrIdempotentRequestError обрабатывает HTTP >= 500)
+      // 2) 5xx или сетевые ошибки
       if (isNetworkOrIdempotentRequestError(error)) {
         console.log(
           chalk.cyan('[axios-retry] Retrying network or 5xx error...')
@@ -76,27 +126,22 @@ export const createAxiosInstance = async (
     },
   });
 
-  // Интерсептор на запрос: добавляем заголовок Accept-Encoding
+  // Интерсептор на запрос
   axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      // Убедимся, что заголовки существуют и типизируем их правильно
       if (!config.headers) {
         config.headers = new AxiosHeaders();
       }
-
-      // Устанавливаем gzip и deflate для Accept-Encoding
       config.headers.set('Accept-Encoding', 'gzip, deflate');
 
-      // Логика для supplierKey === 'ug'
+      // Пример логики для конкретных поставщиков
       if (supplierKey === 'ug') {
         config.params = {
           ...config.params,
           userlogin: supplier.username,
           userpsw: generateMD5(supplier.password),
         };
-      }
-      // Логика для turboCars / turboCarsBN
-      else if (supplierKey === 'turboCars' || supplierKey === 'turboCarsBN') {
+      } else if (supplierKey === 'turboCars' || supplierKey === 'turboCarsBN') {
         config.params = {
           ...config.params,
           ClientID: supplier.username,
@@ -104,13 +149,12 @@ export const createAxiosInstance = async (
           FromStockOnly: 1,
         };
       }
-
       return config;
     },
     (error) => Promise.reject(error)
   );
 
-  // Интерсептор на ответ:
+  // Интерсептор на ответ
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
@@ -122,6 +166,5 @@ export const createAxiosInstance = async (
     }
   );
 
-  console.log(chalk.green('Axios instance created for supplier:'), supplierKey);
   return axiosInstance;
 };
