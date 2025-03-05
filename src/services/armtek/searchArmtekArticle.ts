@@ -61,7 +61,7 @@ export async function searchArmtekArticle(
       console.error('Axios Error:', error.message);
       if (error.response) {
         console.error('Response status:', error.response.status);
-        // console.error('Response messages', error.response?.messages);
+
         console.error('Response data:', error.response.data);
       }
     } else {
