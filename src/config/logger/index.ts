@@ -77,7 +77,7 @@ export const logger = createLogger({
 
     // ========= Общий файл (ежедневно новый, хранение 90 дней) =========
     new DailyRotateFile({
-      dirname: path.join('logs'),
+      dirname: path.join('logs/combined'),
       filename: 'combined-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxFiles: '90d',
@@ -87,7 +87,7 @@ export const logger = createLogger({
     }),
     // ========= Отдельные файлы на каждый уровень (по желанию) =========
     new DailyRotateFile({
-      dirname: path.join('logs'),
+      dirname: path.join('logs/error'),
       filename: 'error-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxFiles: '90d',
@@ -96,7 +96,7 @@ export const logger = createLogger({
       format: combine(filterOnly('error'), fileFormat),
     }),
     new DailyRotateFile({
-      dirname: path.join('logs'),
+      dirname: path.join('logs/warn'),
       filename: 'warn-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxFiles: '90d',
@@ -105,7 +105,7 @@ export const logger = createLogger({
       format: combine(filterOnly('warn'), fileFormat),
     }),
     new DailyRotateFile({
-      dirname: path.join('logs'),
+      dirname: path.join('logs/info'),
       filename: 'info-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxFiles: '90d',
@@ -114,7 +114,7 @@ export const logger = createLogger({
       format: combine(filterOnly('info'), fileFormat),
     }),
     new DailyRotateFile({
-      dirname: path.join('logs'),
+      dirname: path.join('logs/debug'),
       filename: 'debug-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxFiles: '90d',

@@ -9,8 +9,3 @@ export const corsOptions = {
   origin: '*',
   credentials: true,
 };
-
-// export const corsOptions = {
-//   origin: CLIENT_URL,
-//   credentials: true,
-// };

@@ -37,7 +37,7 @@ app.use('/test', helloController);
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/socket.io')) {
-    return next(); // передаем дальше запрос Socket.IO
+    return next();
   }
   res.sendFile(path.join(distPath, 'index.html'));
 });
