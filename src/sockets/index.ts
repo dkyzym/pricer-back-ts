@@ -26,6 +26,7 @@ import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.j
 import { fetchUgData } from '../services/ug/fetchUgData/fetchUgData.js';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData.js';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData.js';
+import { isContainsBrandName } from '../utils/data/isContainsBrandName.js';
 import { filterAndSortAllResults } from '../utils/filterAndSortAllResults.js';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData.js';
 import { logResultCount } from '../utils/stdLogs.js';
@@ -121,9 +122,13 @@ export const initializeSocket = (server: HTTPServer) => {
 
             const data = await getItemsListByArticleService(item.article);
             const itemsWithRest = await getItemsWithRest(data);
-            const relevantItems = itemsWithRest.filter(({ brand }: any) =>
-              isBrandMatch(item.brand, brand)
-            );
+
+            const relevantItems = itemsWithRest.filter(({ brand }: any) => {
+              return (
+                isBrandMatch(item.brand, brand) ||
+                isContainsBrandName(item.brand, brand)
+              );
+            });
 
             const profitParsedData = parseProfitApiResponse(
               relevantItems,
@@ -211,7 +216,6 @@ export const initializeSocket = (server: HTTPServer) => {
 
             // 2. Преобразуем ответ в удобный формат.
             const mappedUgResponseData = mapUgResponseData(data, item.brand);
-
             // 3. Логируем, сколько результатов получили (вдруг пригодится).
             logResultCount(item, supplier, mappedUgResponseData);
 
