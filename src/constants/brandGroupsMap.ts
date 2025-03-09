@@ -19,4 +19,5 @@ export const brandGroupsMap = [
   ['невский фильтр', 'nevsky filter'],
   ['автопартнер', 'avp', 'autopartner'],
   ['lynx-auto', 'lynx'],
+  ['автоград', 'автоград-д'],
 ];
