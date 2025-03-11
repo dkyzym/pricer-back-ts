@@ -37,7 +37,7 @@ export const mapUgResponseData = (
       needToCheckBrand: !isBrandMatch(brand, item.brand),
       returnable: Number(!item.noReturn),
       multi: item.packing || 1,
-      allow_return: String(!item.noReturn),
+      allow_return: !item.noReturn,
       warehouse_id: String(item.supplierCode),
       inner_product_code: item.itemKey,
       ug: {

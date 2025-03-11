@@ -134,7 +134,7 @@ export function parseArmtekResults(
       deliveryDate: deliveryDate,
       returnable: res.RETDAYS || 0,
       multi: res.RDPRF ? parseInt(res.RDPRF, 10) : 1,
-      allow_return: res.RETDAYS && res.RETDAYS > 0 ? 'YES' : 'NO',
+      allow_return: res.RETDAYS && res.RETDAYS > 0 ? true : false,
       warehouse_id: res.KEYZAK ?? '',
       inner_product_code: res.ARTID ?? '',
     };

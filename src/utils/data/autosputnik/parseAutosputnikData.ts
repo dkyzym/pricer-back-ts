@@ -68,7 +68,7 @@ export const parseAutosputnikData = async (item: {
           availability: item.STOCK,
           brand: item.BRA_BRAND,
           price: Number(item.NEW_COST),
-          allow_return: item.RETURNS_POSIBL,
+          allow_return: item.RETURNS_POSIBL === '1' ? true : false,
           supplier: 'autosputnik' as SupplierName,
           warehouse: item.PRICE_NAME,
           imageUrl: '',

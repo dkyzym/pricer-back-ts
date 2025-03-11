@@ -122,7 +122,7 @@ export interface SearchResultsParsed {
   deliveryDate?: string;
   returnable?: number;
   multi?: number;
-  allow_return?: string;
+  allow_return?: boolean;
   warehouse_id?: string;
   inner_product_code?: string;
 

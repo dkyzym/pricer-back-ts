@@ -43,7 +43,7 @@ export const parseProfitApiResponse = (
       );
       const returnable = product.returnable; // number
       const multi = product.multi; // number
-      const allow_return = product.allow_return; // string
+      const allow_return = Boolean(product.allow_return); // string
       const warehouse_id = product.warehouse_id; // number
       const inner_product_code = product.product_code;
 

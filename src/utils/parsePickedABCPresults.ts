@@ -36,8 +36,8 @@ export const parseData = async (
     const allow_return = allowReturnTitle.includes(
       'не подлежит возврату или обмену'
     )
-      ? '0'
-      : '1';
+      ? false
+      : true;
 
     const availabilityText = $row.attr('data-availability') || '0';
     const priceText = $row.attr('data-output-price') || '0';
