@@ -17,6 +17,7 @@
   "description": "",
   "dependencies": {
     "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/luxon": "^3.4.2",
     "@types/string-similarity": "^4.0.2",
     "@types/uuid": "^10.0.0",
@@ -33,6 +34,7 @@
     "fast-xml-parser": "^4.5.1",
     "https-proxy-agent": "^7.0.5",
     "iconv-lite": "^0.6.3",
+    "jsonwebtoken": "^9.0.2",
     "luxon": "^3.5.0",
     "morgan": "^1.10.0",
     "socket.io": "^4.7.5",

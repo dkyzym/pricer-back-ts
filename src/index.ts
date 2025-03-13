@@ -1,5 +1,6 @@
 import { error } from '@middleware/errorsMiddleware.js';
 
+import authRoutes from '@routes/authRoutes.js';
 import dataRoutes from '@routes/dataRoutes.js';
 import { RouteNotFoundError } from '@utils/errors.js';
 import cookieParser from 'cookie-parser';
@@ -32,6 +33,8 @@ app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(distPath));
+
+app.use('/api', authRoutes);
 app.use('/api', dataRoutes);
 app.use('/test', helloController);
 

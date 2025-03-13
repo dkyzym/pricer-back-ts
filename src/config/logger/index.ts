@@ -2,7 +2,7 @@ import path from 'path';
 import { addColors, createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-const { combine, colorize, errors, timestamp, printf, uncolorize } = format;
+const { combine, colorize, errors, timestamp, printf, json } = format;
 
 const customLevels = {
   levels: {
@@ -38,12 +38,11 @@ const filterOnly = (level: LogLevel) => {
  */
 const consoleFormat = combine(
   colorize({ all: true }),
-  errors({ stack: true }), // если прокинем Error-объект, выведет stack
+  errors({ stack: true }),
   timestamp({ format: 'HH:mm:ss' }),
-  printf((info) => {
-    // Если есть stack (ошибки), добавляем в сообщение
-    const msg = info.stack ? `${info.message}\n${info.stack}` : info.message;
-    return `[${info.timestamp}] [${info.level}]: ${msg}`;
+  printf(({ timestamp, level, message, stack, ...meta }) => {
+    const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+    return `[${timestamp}] [${level}] ${message}${stack ? `\n${stack}` : ''} ${metaStr}`;
   })
 );
 
@@ -52,14 +51,10 @@ const consoleFormat = combine(
  *  - убираем цвет (uncolorize())
  *  - выводим stack trace для ошибок
  */
-const fileFormat = combine(
-  uncolorize(),
+const fileJsonFormat = combine(
   errors({ stack: true }),
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  printf((info) => {
-    const msg = info.stack ? `${info.message}\n${info.stack}` : info.message;
-    return `[${info.timestamp}] [${info.level}]: ${msg}`;
-  })
+  json() // Все поля (timestamp, level, message, user, role и т.д.) будут в JSON
 );
 
 /**
@@ -83,7 +78,7 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'debug',
-      format: fileFormat,
+      format: fileJsonFormat,
     }),
     // ========= Отдельные файлы на каждый уровень (по желанию) =========
     new DailyRotateFile({
@@ -93,7 +88,7 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'error',
-      format: combine(filterOnly('error'), fileFormat),
+      format: combine(filterOnly('error'), fileJsonFormat),
     }),
     new DailyRotateFile({
       dirname: path.join('logs/warn'),
@@ -102,7 +97,7 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'warn',
-      format: combine(filterOnly('warn'), fileFormat),
+      format: combine(filterOnly('warn'), fileJsonFormat),
     }),
     new DailyRotateFile({
       dirname: path.join('logs/info'),
@@ -111,7 +106,7 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'info',
-      format: combine(filterOnly('info'), fileFormat),
+      format: combine(filterOnly('info'), fileJsonFormat),
     }),
     new DailyRotateFile({
       dirname: path.join('logs/debug'),
@@ -120,7 +115,7 @@ export const logger = createLogger({
       maxFiles: '90d',
       maxSize: '20m',
       level: 'debug',
-      format: combine(filterOnly('debug'), fileFormat),
+      format: combine(filterOnly('debug'), fileJsonFormat),
     }),
   ],
 });

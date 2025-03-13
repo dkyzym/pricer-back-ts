@@ -401,3 +401,10 @@ interface getItemResultsParams {
   item: ItemToParallelSearch;
   supplier: SupplierName;
 }
+
+/** Структура данных о пользователе в памяти */
+interface User {
+  username: string;
+  role: 'admin' | 'user' | string;
+  password: string;
+}

@@ -14,6 +14,7 @@ import {
   PROXY_PORT,
   suppliers,
 } from '../config/api/config.js';
+import { logger } from '../config/logger/index.js';
 import { SupplierName } from '../types/index.js';
 import { checkProxy } from '../utils/api/checkProxy.js';
 import { generateMD5 } from '../utils/generateMD5.js';
@@ -31,10 +32,8 @@ export async function initProxyCheck() {
 
   // 2) Сравниваем с PROXY_HOST
   if (localIP === PROXY_HOST) {
-    console.log(
-      chalk.magenta(
-        `Текущий IP (${localIP}) = PROXY_HOST (${PROXY_HOST}). Прокси использовать не будем.`
-      )
+    logger.info(
+      `Текущий IP (${localIP}) = PROXY_HOST (${PROXY_HOST}). Прокси использовать не будем.`
     );
     shouldUseProxy = false;
     return;
@@ -49,13 +48,13 @@ export async function initProxyCheck() {
 
   shouldUseProxy = isProxyWorking;
   if (!isProxyWorking) {
-    console.error(
+    logger.error(
       chalk.red(
         `Прокси ${proxyUrl} не работает, будут отказы в запросах через прокси.`
       )
     );
   } else {
-    console.log(chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`));
+    logger.info(chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`));
   }
 }
 
@@ -92,7 +91,7 @@ export const createAxiosInstance = async (
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
-    console.log(chalk.green(`Axios instance with proxy for: ${supplierKey}`));
+    logger.info(`Axios instance with proxy for: ${supplierKey}`);
   } else {
     // Создаём без прокси
     axiosInstance = axios.create({
@@ -101,7 +100,7 @@ export const createAxiosInstance = async (
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
-    console.log(chalk.blue(`Axios instance without proxy for: ${supplierKey}`));
+    logger.info(chalk.blue(`Axios instance without proxy for: ${supplierKey}`));
   }
 
   // Подключаем axios-retry
@@ -112,14 +111,12 @@ export const createAxiosInstance = async (
     retryCondition: (error: AxiosError) => {
       // 1) Таймаут
       if (error.code === 'ECONNABORTED') {
-        console.log(chalk.cyan('[axios-retry] Retrying because of timeout...'));
+        logger.warn('[axios-retry] Retrying because of timeout...');
         return true;
       }
       // 2) 5xx или сетевые ошибки
       if (isNetworkOrIdempotentRequestError(error)) {
-        console.log(
-          chalk.cyan('[axios-retry] Retrying network or 5xx error...')
-        );
+        logger.warn('[axios-retry] Retrying network or 5xx error...');
         return true;
       }
       return false;
@@ -159,7 +156,7 @@ export const createAxiosInstance = async (
     (response) => response,
     (error: AxiosError) => {
       if (error.code === 'ECONNREFUSED') {
-        console.error('Connection refused (proxy error)');
+        logger.error('Connection refused (proxy error)');
         return Promise.reject(new Error('Connection refused (proxy error)'));
       }
       return Promise.reject(error);

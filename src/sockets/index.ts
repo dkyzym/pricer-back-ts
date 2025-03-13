@@ -16,6 +16,7 @@ import {
 import { isBrandMatch } from 'utils/data/isBrandMatch.js';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
+import { verifyToken } from '../controllers/auth.js';
 import { parseArmtekResults } from '../services/armtek/parseArmtekResults.js';
 import { searchArmtekArticle } from '../services/armtek/searchArmtekArticle.js';
 import { getCachedStoreList } from '../services/armtek/storeList.js';
@@ -44,20 +45,49 @@ export const initializeSocket = (server: HTTPServer) => {
     },
   });
 
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.query.token as string | undefined;
+      if (!token) {
+        return next(new Error('No token provided'));
+      }
+      // Проверяем и декодируем токен
+      const payload = verifyToken(token);
+      // Сохраняем данные в socket.data, чтобы дальше использовать
+      socket.data.user = {
+        username: payload.username,
+        role: payload.role,
+      };
+      next();
+    } catch (err) {
+      // Если валидация токена упала
+      return next(err as any);
+    }
+  });
+
   io.on('connection', async (socket) => {
-    logger.info(chalk.cyan(`New client connected: ${socket.id}`));
+    const userLogger = logger.child({
+      user: socket.data.user?.username,
+      role: socket.data.user?.role,
+      socketId: socket.id,
+    });
+
+    userLogger.info(chalk.cyan(`New client connected: ${socket.id}`), {
+      user: socket.data?.user?.username,
+      role: socket.data?.user?.role,
+    });
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
-      logger.info(
+      userLogger.info(
         `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
         data
       );
       const { query } = data;
 
       if (!query || query.trim() === '') {
-        logger.info(
+        userLogger.info(
           `Empty query received for BRAND_CLARIFICATION from socket ${socket.id}`
         );
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
@@ -68,12 +98,12 @@ export const initializeSocket = (server: HTTPServer) => {
       }
 
       try {
-        logger.info(`Processing BRAND_CLARIFICATION for query "${query}"`);
+        userLogger.info(`Processing BRAND_CLARIFICATION for query "${query}"`);
 
         const result: ClarifyBrandResult = await clarifyBrand(query);
 
         if (result.success) {
-          logger.info(
+          userLogger.info(
             `BRAND_CLARIFICATION success, found: ${result.brands.length}`
           );
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
@@ -81,13 +111,13 @@ export const initializeSocket = (server: HTTPServer) => {
             message: result.message,
           });
         } else {
-          logger.error(`BRAND_CLARIFICATION failed `, result.message);
+          userLogger.error(`BRAND_CLARIFICATION failed `, result.message);
           socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
             message: result.message,
           });
         }
       } catch (error) {
-        logger.error('Brand Clarification error:', error);
+        userLogger.error('Brand Clarification error:', error);
         socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
           message: `Error clarifying brand: ${(error as Error).message}`,
         });
@@ -101,18 +131,18 @@ export const initializeSocket = (server: HTTPServer) => {
       async (data: getItemResultsParams) => {
         const { item, supplier } = data;
 
-        logger.info(
+        userLogger.info(
           `Received GET_ITEM_RESULTS event from socket ${socket.id}: ${JSON.stringify(data)}`
         );
 
         if (!supplier) {
-          logger.error('Supplier is undefined in GET_ITEM_RESULTS');
+          userLogger.error('Supplier is undefined in GET_ITEM_RESULTS');
           return;
         }
 
         if (supplier === 'profit') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
@@ -138,7 +168,7 @@ export const initializeSocket = (server: HTTPServer) => {
             const filteredItems = filterAndSortAllResults(profitParsedData);
 
             logResultCount(item, supplier, profitParsedData);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -155,7 +185,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: profitResult,
             });
           } catch (error) {
-            logger.error('Profit error:', error);
+            userLogger.error('Profit error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'profit',
               error: (error as Error).message,
@@ -163,7 +193,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autosputnik') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
@@ -177,7 +207,7 @@ export const initializeSocket = (server: HTTPServer) => {
             logResultCount(item, supplier, autoSputnikData);
 
             const filteredItems = filterAndSortAllResults(autoSputnikData);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -194,7 +224,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: autosputnikResult,
             });
           } catch (error) {
-            logger.error('Autosputnik error:', error);
+            userLogger.error('Autosputnik error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'autosputnik',
               error: (error as Error).message,
@@ -202,7 +232,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'ug') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
@@ -220,7 +250,7 @@ export const initializeSocket = (server: HTTPServer) => {
             logResultCount(item, supplier, mappedUgResponseData);
 
             const filteredItems = filterAndSortAllResults(mappedUgResponseData);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -244,7 +274,7 @@ export const initializeSocket = (server: HTTPServer) => {
             // 1. Проверяем, является ли это AxiosError.
             if (!axios.isAxiosError(err)) {
               // => НЕ Axios-ошибка.
-              logger.error('UG supplier: Non-Axios error occurred.', {
+              userLogger.error('UG supplier: Non-Axios error occurred.', {
                 message: (err as Error)?.message,
                 stack: (err as Error)?.stack,
               });
@@ -262,7 +292,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             // 3. Если нет response, значит это сетевая или «неизвестная» ошибка
             if (!axiosError.response) {
-              logger.error('UG supplier: Network or unknown error', {
+              userLogger.error('UG supplier: Network or unknown error', {
                 message: axiosError.message,
                 stack: axiosError.stack,
               });
@@ -281,7 +311,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             // 5. Проверка «Ожидаемых» ошибок (301 — "ObjectNotFound")
             if (errorCode === ProviderErrorCodes.ObjectNotFound) {
-              logger.warn(
+              userLogger.warn(
                 `UG supplier: "no results" from provider (code=${errorCode}, message="${errorMessage}").`
               );
 
@@ -310,7 +340,7 @@ export const initializeSocket = (server: HTTPServer) => {
             }
 
             // Логируем на уровне error, но только нужные детали
-            logger.error(
+            userLogger.error(
               `UG supplier error: code=${errorCode}, message="${errorMessage}", httpStatus=${status}`,
               {
                 stack: axiosError.stack,
@@ -330,7 +360,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'patriot') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
@@ -344,7 +374,7 @@ export const initializeSocket = (server: HTTPServer) => {
             logResultCount(item, supplier, data);
 
             const filteredItems = filterAndSortAllResults(data);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -361,7 +391,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: patriotResult,
             });
           } catch (error) {
-            logger.error('Patriot error:', error);
+            userLogger.error('Patriot error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'patriot',
               error: (error as Error).message,
@@ -369,7 +399,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'autoImpulse') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
@@ -382,7 +412,7 @@ export const initializeSocket = (server: HTTPServer) => {
             logResultCount(item, supplier, data);
 
             const filteredItems = filterAndSortAllResults(data);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -399,7 +429,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: autoImpulseResult,
             });
           } catch (error) {
-            logger.error('AutoImpulse error:', error);
+            userLogger.error('AutoImpulse error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier,
               error: (error as Error).message,
@@ -407,7 +437,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'turboCars') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
@@ -425,7 +455,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             logResultCount(item, supplier, data);
             const filteredItems = filterAndSortAllResults(data);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -442,7 +472,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: turboCarsResult,
             });
           } catch (error) {
-            logger.error('TurboCars error:', error);
+            userLogger.error('TurboCars error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'turboCars',
               error: (error as Error).message,
@@ -450,7 +480,7 @@ export const initializeSocket = (server: HTTPServer) => {
           }
         } else if (supplier === 'armtek') {
           try {
-            logger.info(
+            userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
@@ -464,7 +494,7 @@ export const initializeSocket = (server: HTTPServer) => {
             });
 
             if (!RESP || !RESP.length) {
-              logger.warn(JSON.stringify({ STATUS, MESSAGES }));
+              userLogger.warn(JSON.stringify({ STATUS, MESSAGES }));
 
               const armtekResult: pageActionsResult = {
                 success: true,
@@ -491,7 +521,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             logResultCount(item, supplier, parsedArmtekResults);
             const filteredItems = filterAndSortAllResults(parsedArmtekResults);
-            logger.info(
+            userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
               )
@@ -508,7 +538,7 @@ export const initializeSocket = (server: HTTPServer) => {
               result: armtekResult,
             });
           } catch (error) {
-            logger.error('Armtek error:', error);
+            userLogger.error('Armtek error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'armtek',
               error: (error as Error).message,

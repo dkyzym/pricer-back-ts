@@ -61,10 +61,7 @@ export const checkProxy = async (
       'Proxy check error after retries:',
       (error as AxiosError).message
     );
-    logger.error(
-      'Proxy check error after retries:',
-      (error as AxiosError).message
-    );
+
     return false;
   }
 };
