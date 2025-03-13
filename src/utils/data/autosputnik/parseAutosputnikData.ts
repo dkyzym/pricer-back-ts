@@ -78,7 +78,8 @@ export const parseAutosputnikData = async (item: {
           ).toFormat('yyyy-MM-dd'),
 
           multi: Number(item.CRATN),
-          probability: Number(item.SHIPPING_PROC),
+          probability:
+            Number(item.SHIPPING_PROC) === 0 ? 80 : Number(item.SHIPPING_PROC),
           warehouse_id: item.ID_SHOP_PRICES,
           description: item.NAME_TOVAR,
           autosputnik: {
@@ -92,6 +93,8 @@ export const parseAutosputnikData = async (item: {
         return { ...newItem, deliveryDate: calculateDeliveryDate(newItem) };
       }
     );
+
+    console.log(mapAutosputnikData);
 
     return mapAutosputnikData;
   } catch (error) {
