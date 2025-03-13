@@ -94,8 +94,6 @@ export const parseAutosputnikData = async (item: {
       }
     );
 
-    console.log(mapAutosputnikData);
-
     return mapAutosputnikData;
   } catch (error) {
     console.error('Error in parseAutosputnikData:', error);
