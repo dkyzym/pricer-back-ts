@@ -1,4 +1,3 @@
-import { logger } from 'config/logger/index.js';
 import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
 
 import * as cheerio from 'cheerio';
@@ -10,6 +9,7 @@ import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults.js';
 export const itemDataAutoImpulseService = async ({
   item,
   supplier,
+  userLogger,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   // const { selectors } = SUPPLIERS_DATA['autoImpulse'];
   const BASE_URL = 'https://lnr-auto-impulse.ru';
@@ -32,7 +32,9 @@ export const itemDataAutoImpulseService = async ({
   });
 
   if (elements.length > 0) {
-    logger.info(`[${supplier}] Элемент существует, выполняем второй запрос.`);
+    userLogger.info(
+      `[${supplier}] Элемент существует, выполняем второй запрос.`
+    );
 
     const detailUrl = `${BASE_URL}/search/${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
     const detailResponse = await makeAutoImpulseRequest(detailUrl, { headers });
@@ -41,11 +43,12 @@ export const itemDataAutoImpulseService = async ({
       html: detailResponse.data,
       item,
       supplier,
+      userLogger,
     });
 
     return allResults;
   } else {
-    logger.info(
+    userLogger.info(
       `${supplier} Элемент не найден. Продолжаем без второго запроса.`
     );
     // Optionally, you can parse results from the initial response if applicable
@@ -53,6 +56,7 @@ export const itemDataAutoImpulseService = async ({
       html: response.data,
       item,
       supplier,
+      userLogger,
     });
 
     return allResults;

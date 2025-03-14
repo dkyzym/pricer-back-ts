@@ -8,15 +8,20 @@ import {
 } from '../../../types/index.js';
 import { calculateDeliveryDate } from '../../calculateDates/index.js';
 import { isBrandMatch } from '../isBrandMatch.js';
+import { Logger } from 'winston';
 
-export const parseAutosputnikData = async (item: {
-  article: string;
-  brand: string;
-}) => {
+export const parseAutosputnikData = async (
+  item: {
+    article: string;
+    brand: string;
+  },
+  userLogger: Logger
+) => {
   try {
     // Шаг 1: Получаем первоначальные данные без указания бренда
     const initialData = await getAutosputnikItemsListByArticleService(
-      item.article
+      item.article,
+      userLogger
     );
 
     // Извлекаем массив объектов из initialData.requestAnswer
@@ -38,7 +43,7 @@ export const parseAutosputnikData = async (item: {
 
     // Шаг 3: Делаем повторные запросы с каждым идентификатором бренда
     const promises = uniqueBrandIds.map((brandId: string) =>
-      getAutosputnikItemsListByArticleService(item.article, brandId)
+      getAutosputnikItemsListByArticleService(item.article, userLogger, brandId)
     );
 
     // Ожидаем завершения всех промисов
@@ -90,13 +95,16 @@ export const parseAutosputnikData = async (item: {
           deadLineMax: Number(item.DAYOFF) * 24,
         };
 
-        return { ...newItem, deliveryDate: calculateDeliveryDate(newItem) };
+        return {
+          ...newItem,
+          deliveryDate: calculateDeliveryDate(newItem, userLogger),
+        };
       }
     );
 
     return mapAutosputnikData;
   } catch (error) {
-    console.error('Error in parseAutosputnikData:', error);
+    userLogger.error('Error in parseAutosputnikData:', error);
     throw error;
   }
 };

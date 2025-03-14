@@ -2,7 +2,8 @@ import path from 'path';
 import { addColors, createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-const { combine, colorize, errors, timestamp, printf, json } = format;
+const { combine, colorize, errors, timestamp, printf, json, uncolorize } =
+  format;
 
 const customLevels = {
   levels: {
@@ -52,6 +53,7 @@ const consoleFormat = combine(
  *  - выводим stack trace для ошибок
  */
 const fileJsonFormat = combine(
+  uncolorize(),
   errors({ stack: true }),
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   json() // Все поля (timestamp, level, message, user, role и т.д.) будут в JSON

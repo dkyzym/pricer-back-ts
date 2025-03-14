@@ -11,6 +11,7 @@ export const parsePickedPatriotResults = async ({
   page,
   item,
   supplier,
+  userLogger,
 }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
   try {
     await page.waitForSelector('.searchResultsTableWrapper', {
@@ -22,7 +23,7 @@ export const parsePickedPatriotResults = async ({
         try {
           // Проверяем валидность данных item
           if (!item || !item.brand || !item.article) {
-            console.error(`Invalid item data: ${JSON.stringify(item)}`);
+            userLogger.error(`Invalid item data: ${JSON.stringify(item)}`);
             return [];
           }
 
@@ -41,7 +42,7 @@ export const parsePickedPatriotResults = async ({
             document.querySelectorAll<HTMLTableRowElement>(itemRowSelector);
 
           if (itemRows.length === 0) {
-            console.warn(
+            userLogger.warn(
               `No item rows found with the given selector: ${itemRowSelector}`
             );
             return [];
@@ -81,7 +82,7 @@ export const parsePickedPatriotResults = async ({
               );
 
               if (!fakeInputElement) {
-                console.warn(`Row ${index}: fakeInputElement not found.`);
+                userLogger.warn(`Row ${index}: fakeInputElement not found.`);
                 return null; // Пропускаем строку, если элемент не найден
               }
 
@@ -116,7 +117,7 @@ export const parsePickedPatriotResults = async ({
 
           return data;
         } catch (evalError) {
-          console.error(`Error inside page.evaluate: ${evalError}`);
+          userLogger.error(`Error inside page.evaluate: ${evalError}`);
           return [];
         }
       },
@@ -131,7 +132,7 @@ export const parsePickedPatriotResults = async ({
           result.brand
         );
 
-        const deliveryDate = calculateDeliveryDate(result);
+        const deliveryDate = calculateDeliveryDate(result, userLogger);
 
         return {
           ...result,
@@ -143,7 +144,7 @@ export const parsePickedPatriotResults = async ({
 
     return allResults;
   } catch (error) {
-    console.error(`Error in parsePickedPatriotResults: ${error}`);
+    userLogger.error(`Error in parsePickedPatriotResults: ${error}`);
     return [];
   }
 };

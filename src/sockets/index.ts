@@ -9,6 +9,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import {
   ClarifyBrandResult,
   getItemResultsParams,
+  itemsGroupProfit,
   pageActionsResult,
   ProviderErrorData,
   SearchResultsParsed,
@@ -72,18 +73,12 @@ export const initializeSocket = (server: HTTPServer) => {
       socketId: socket.id,
     });
 
-    userLogger.info(chalk.cyan(`New client connected: ${socket.id}`), {
-      user: socket.data?.user?.username,
-      role: socket.data?.user?.role,
-    });
+    userLogger.info(chalk.cyan(`New client connected`));
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 
     socket.on(SOCKET_EVENTS.BRAND_CLARIFICATION, async (data) => {
-      userLogger.info(
-        `Received BRAND_CLARIFICATION event from socket ${socket.id}:`,
-        data
-      );
+      userLogger.info(`Received BRAND_CLARIFICATION event:`, data);
       const { query } = data;
 
       if (!query || query.trim() === '') {
@@ -100,7 +95,10 @@ export const initializeSocket = (server: HTTPServer) => {
       try {
         userLogger.info(`Processing BRAND_CLARIFICATION for query "${query}"`);
 
-        const result: ClarifyBrandResult = await clarifyBrand(query);
+        const result: ClarifyBrandResult = await clarifyBrand(
+          query,
+          userLogger
+        );
 
         if (result.success) {
           userLogger.info(
@@ -124,15 +122,13 @@ export const initializeSocket = (server: HTTPServer) => {
       }
     });
 
-    // GET_ITEM_RESULTS Handler
-
     socket.on(
       SOCKET_EVENTS.GET_ITEM_RESULTS,
       async (data: getItemResultsParams) => {
         const { item, supplier } = data;
 
         userLogger.info(
-          `Received GET_ITEM_RESULTS event from socket ${socket.id}: ${JSON.stringify(data)}`
+          `Received GET_ITEM_RESULTS event: ${JSON.stringify(data)}`
         );
 
         if (!supplier) {
@@ -150,8 +146,10 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await getItemsListByArticleService(item.article);
-            const itemsWithRest = await getItemsWithRest(data);
+            const items: itemsGroupProfit = await getItemsListByArticleService(
+              item.article
+            );
+            const itemsWithRest = await getItemsWithRest(items, userLogger);
 
             const relevantItems = itemsWithRest.filter(({ brand }: any) => {
               return (
@@ -162,12 +160,13 @@ export const initializeSocket = (server: HTTPServer) => {
 
             const profitParsedData = parseProfitApiResponse(
               relevantItems,
-              item.brand
+              item.brand,
+              userLogger
             );
 
             const filteredItems = filterAndSortAllResults(profitParsedData);
 
-            logResultCount(item, supplier, profitParsedData);
+            logResultCount(item, userLogger, supplier, profitParsedData);
             userLogger.info(
               chalk.bgYellow(
                 `После фильтрации: ${supplier} - ${filteredItems?.length}`
@@ -202,9 +201,12 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const autoSputnikData = await parseAutosputnikData(item);
+            const autoSputnikData = await parseAutosputnikData(
+              item,
+              userLogger
+            );
 
-            logResultCount(item, supplier, autoSputnikData);
+            logResultCount(item, userLogger, supplier, autoSputnikData);
 
             const filteredItems = filterAndSortAllResults(autoSputnikData);
             userLogger.info(
@@ -245,9 +247,13 @@ export const initializeSocket = (server: HTTPServer) => {
             const data = await fetchUgData(item.article, item.brand);
 
             // 2. Преобразуем ответ в удобный формат.
-            const mappedUgResponseData = mapUgResponseData(data, item.brand);
+            const mappedUgResponseData = mapUgResponseData(
+              data,
+              item.brand,
+              userLogger
+            );
             // 3. Логируем, сколько результатов получили (вдруг пригодится).
-            logResultCount(item, supplier, mappedUgResponseData);
+            logResultCount(item, userLogger, supplier, mappedUgResponseData);
 
             const filteredItems = filterAndSortAllResults(mappedUgResponseData);
             userLogger.info(
@@ -369,9 +375,13 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await itemDataPatriotService({ item, supplier });
+            const data = await itemDataPatriotService({
+              item,
+              supplier,
+              userLogger,
+            });
 
-            logResultCount(item, supplier, data);
+            logResultCount(item, userLogger, supplier, data);
 
             const filteredItems = filterAndSortAllResults(data);
             userLogger.info(
@@ -408,8 +418,12 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await itemDataAutoImpulseService({ item, supplier });
-            logResultCount(item, supplier, data);
+            const data = await itemDataAutoImpulseService({
+              item,
+              supplier,
+              userLogger,
+            });
+            logResultCount(item, userLogger, supplier, data);
 
             const filteredItems = filterAndSortAllResults(data);
             userLogger.info(
@@ -450,10 +464,11 @@ export const initializeSocket = (server: HTTPServer) => {
             const data = parseXmlToSearchResults(
               codeSearchResult,
               item.brand,
-              withAnalogs
+              withAnalogs,
+              userLogger
             );
 
-            logResultCount(item, supplier, data);
+            logResultCount(item, userLogger, supplier, data);
             const filteredItems = filterAndSortAllResults(data);
             userLogger.info(
               chalk.bgYellow(
@@ -463,18 +478,18 @@ export const initializeSocket = (server: HTTPServer) => {
 
             const turboCarsResult: pageActionsResult = {
               success: data.length > 0,
-              message: `Patriot data fetched: ${data.length > 0}`,
+              message: `TurboCars data fetched: ${data.length > 0}`,
               data: filteredItems,
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier: 'turboCars',
+              supplier,
               result: turboCarsResult,
             });
           } catch (error) {
             userLogger.error('TurboCars error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-              supplier: 'turboCars',
+              supplier,
               error: (error as Error).message,
             });
           }
@@ -489,9 +504,12 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const { RESP, STATUS, MESSAGES } = await searchArmtekArticle({
-              PIN: item.article,
-            });
+            const { RESP, STATUS, MESSAGES } = await searchArmtekArticle(
+              {
+                PIN: item.article,
+              },
+              userLogger
+            );
 
             if (!RESP || !RESP.length) {
               userLogger.warn(JSON.stringify({ STATUS, MESSAGES }));
@@ -519,7 +537,7 @@ export const initializeSocket = (server: HTTPServer) => {
             const parsedArmtekResults: SearchResultsParsed[] =
               parseArmtekResults(relevantItems, storeList);
 
-            logResultCount(item, supplier, parsedArmtekResults);
+            logResultCount(item, userLogger, supplier, parsedArmtekResults);
             const filteredItems = filterAndSortAllResults(parsedArmtekResults);
             userLogger.info(
               chalk.bgYellow(

@@ -2,6 +2,7 @@ import { logger } from 'config/logger/index.js';
 import { DateTime } from 'luxon';
 import { ProductProfit, SearchResultsParsed } from 'types/index.js';
 import { suppliersConfig } from './suppliersConfig/suppliersConfig.js';
+import { Logger } from 'winston';
 
 // Определяем type guard для ProductProfit
 const isProductProfit = (
@@ -11,7 +12,8 @@ const isProductProfit = (
 };
 
 export const calculateDeliveryDate = (
-  result: SearchResultsParsed | ProductProfit
+  result: SearchResultsParsed | ProductProfit,
+  userLogger: Logger
 ): string => {
   const currentTime = DateTime.now().setZone('UTC+3');
   const supplierConfig = suppliersConfig.find(
@@ -27,7 +29,7 @@ export const calculateDeliveryDate = (
   if (supplierConfig.specialConditions) {
     // Если supplierConfig требует SearchResultsParsed, то используем type guard
     if (isProductProfit(result)) {
-      logger.error(
+      userLogger.error(
         `Special conditions не поддерживают ProductProfit для поставщика ${result.supplier}`
       );
       // Устанавливаем дату по умолчанию вместо выбрасывания ошибки
@@ -42,7 +44,7 @@ export const calculateDeliveryDate = (
   if (!deliveryDate) {
     // Если deliveryDate не удалось определить, устанавливаем дату по умолчанию
     deliveryDate = DateTime.fromISO('2999-02-28');
-    logger.warn(
+    userLogger.warn(
       `delivery_date отсутствует для поставщика ${result.supplier}. Установлена дата по умолчанию: ${deliveryDate.toFormat(
         'yyyy-MM-dd'
       )}`

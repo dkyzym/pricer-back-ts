@@ -6,6 +6,7 @@ import {
 } from 'types/index.js';
 import { calculateDeliveryDate } from '../../calculateDates/index.js';
 import { needToCheckBrand } from '../needToCheckBrand.js';
+import { Logger } from 'winston';
 
 const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';
@@ -13,7 +14,8 @@ const getImageUrl = (product: ProductProfit): string => {
 
 export const parseProfitApiResponse = (
   apiResponse: ApiResponseItem[],
-  expectedBrand: string
+  expectedBrand: string,
+  userLogger: Logger
 ): SearchResultsParsed[] => {
   const parsedResults: SearchResultsParsed[] = [];
 
@@ -78,7 +80,7 @@ export const parseProfitApiResponse = (
       parsedItem.deliveryDate = deliveryDateFromApi;
 
       // Вызываем функцию расчета даты доставки
-      parsedItem.deliveryDate = calculateDeliveryDate(parsedItem);
+      parsedItem.deliveryDate = calculateDeliveryDate(parsedItem, userLogger);
 
       parsedResults.push(parsedItem);
     });

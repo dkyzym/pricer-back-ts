@@ -4,6 +4,7 @@ import {
   SearchRequest,
   SearchResponseItem,
 } from '../../types/armtek';
+import { Logger } from 'winston';
 
 /**
  * Функция для поиска артикула на сервисе Armtek.
@@ -13,7 +14,8 @@ import {
  * @throws Выбрасывает ошибку, если запрос завершился неудачно
  */
 export async function searchArmtekArticle(
-  params: SearchRequest
+  params: SearchRequest,
+  userLogger: Logger
 ): Promise<ArmtekSearchResponse<SearchResponseItem>> {
   // Дефолтные значения
   const {
@@ -58,14 +60,14 @@ export async function searchArmtekArticle(
     return response.data;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
-      console.error('Axios Error:', error.message);
+      userLogger.error('Axios Error:', error.message);
       if (error.response) {
-        console.error('Response status:', error.response.status);
+        userLogger.error('Response status:', error.response.status);
 
-        console.error('Response data:', error.response.data);
+        userLogger.error('Response data:', error.response.data);
       }
     } else {
-      console.error('Unknown Error:', error);
+      userLogger.error('Unknown Error:', error);
     }
     // Выбрасываем ошибку выше
     throw new Error('Ошибка при выполнении запроса к Armtek');

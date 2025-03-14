@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ItemAutocompleteRow } from '../types/index.js';
 import { createAxiosInstance } from './apiClient.js';
 import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
+import { Logger } from 'winston';
 
 interface UgBrandData {
   availability: number;
@@ -34,7 +35,8 @@ interface ClarifyBrandResult {
 }
 
 export const clarifyBrand = async (
-  query: string
+  query: string,
+  userLogger: Logger
 ): Promise<ClarifyBrandResult> => {
   // Функция для обработки данных от поставщика 'ug'
   const fetchUgBrands = async (): Promise<ItemAutocompleteRow[]> => {
@@ -114,7 +116,7 @@ export const clarifyBrand = async (
     }
   } else {
     success = false;
-    console.error(
+    userLogger.error(
       'Ошибка при получении данных от поставщика ug:',
       ugResult.reason
     );
@@ -126,7 +128,7 @@ export const clarifyBrand = async (
     finalBrands.push(...profitResult.value);
   } else {
     success = false;
-    console.error(
+    userLogger.error(
       'Ошибка при получении данных от поставщика profit:',
       profitResult.reason
     );

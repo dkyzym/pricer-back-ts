@@ -1,20 +1,19 @@
 import chalk from 'chalk';
 import {
-  accountAlias,
   ItemToParallelSearch,
   SearchResultsParsed,
   SupplierName,
 } from 'types/index.js';
-import { logger } from '../config/logger/index.js';
+import { Logger } from 'winston';
 
 export const logResultCount = (
   item: ItemToParallelSearch,
+  userLogger: Logger,
   supplier: SupplierName,
-  allResults: SearchResultsParsed[],
-  accountAlias?: accountAlias
+  allResults: SearchResultsParsed[]
 ) =>
-  logger.info(
+  userLogger.info(
     chalk.bgMagentaBright(
-      `Найдено для ${item.article} ${item.brand} -  ${supplier}_${accountAlias || ''}: ${allResults ? allResults.length : 0}`
+      `Найдено для ${item.article} ${item.brand} -  ${supplier}}: ${allResults ? allResults.length : 0}`
     )
   );

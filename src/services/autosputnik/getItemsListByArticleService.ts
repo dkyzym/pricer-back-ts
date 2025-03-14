@@ -1,8 +1,10 @@
 import axios from 'axios';
+import { Logger } from 'winston';
 // import { logger } from '../../config/logger';
 
 export const getAutosputnikItemsListByArticleService = async (
   article: string,
+  userLogger: Logger,
   brandId?: string
 ) => {
   const BASE_URL = 'https://api.auto-sputnik.ru/search_result.php';
@@ -39,7 +41,7 @@ export const getAutosputnikItemsListByArticleService = async (
     // logger.info(chalk.yellow(JSON.stringify(response?.data)));
     return response.data;
   } catch (error) {
-    console.error('Error fetching data from Autosputnik API:', error);
+    userLogger.error('Error fetching data from Autosputnik API:', error);
     throw error;
   }
 };

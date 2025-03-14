@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { v4 as uuidv4 } from 'uuid';
+import { Logger } from 'winston';
 import { SearchResultsParsed } from '../../types/index.js';
 import { calculateDeliveryDate } from '../calculateDates/index.js';
 import { isBrandMatch } from '../data/isBrandMatch.js';
@@ -24,7 +25,8 @@ const convertDeliveryDelayToHours = (deliveryDelayDays: number): number => {
 export const parseXmlToSearchResults = (
   xmlString: string,
   brandToMatch: string,
-  withAnalogsFlag: 0 | 1
+  withAnalogsFlag: 0 | 1,
+  userLogger: Logger
 ): SearchResultsParsed[] => {
   const parser = new XMLParser({
     ignoreAttributes: false,
@@ -114,6 +116,6 @@ export const parseXmlToSearchResults = (
 
   return results.map((parsedItem) => ({
     ...parsedItem,
-    deliveryDate: calculateDeliveryDate(parsedItem),
+    deliveryDate: calculateDeliveryDate(parsedItem, userLogger),
   }));
 };

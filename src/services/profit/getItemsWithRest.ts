@@ -1,9 +1,11 @@
 import axios from 'axios';
 import { logger } from 'config/logger/index.js';
 import { itemsGroupProfit } from 'types/index.js';
+import { Logger } from 'winston';
 
 export const getItemsWithRest = async (
   items: itemsGroupProfit,
+  userLogger: Logger,
   maxRetries: number = 1,
   delayMs: number = 1000
 ): Promise<any> => {
@@ -21,7 +23,7 @@ export const getItemsWithRest = async (
       return res.data;
     } catch (error) {
       // Логирование ошибки с номером попытки
-      logger.error(
+      userLogger.error(
         `Попытка ${attempt} - ошибка getItemsWithRest: ${(error as Error).message}`
       );
 
@@ -29,7 +31,7 @@ export const getItemsWithRest = async (
         // Ждем перед следующей попыткой
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       } else {
-        logger.error(error);
+        userLogger.error(error);
         return [];
       }
     }

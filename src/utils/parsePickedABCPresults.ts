@@ -1,10 +1,12 @@
 import * as cheerio from 'cheerio';
 import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
+import { Logger } from 'winston';
 import { calculateDeliveryDate } from './calculateDates/index.js';
 import { filterEqualResults } from './data/filterEqualResults.js';
 
 interface ParseParams extends ParallelSearchParams {
   html: string;
+  userLogger: Logger;
 }
 
 export const parseData = async (
@@ -77,6 +79,7 @@ export const parsePickedABCPresults = async ({
   html,
   item,
   supplier,
+  userLogger,
 }: ParseParams): Promise<SearchResultsParsed[]> => {
   const $ = cheerio.load(html);
 
@@ -98,7 +101,7 @@ export const parsePickedABCPresults = async ({
     const filteredResults = filterEqualResults(resultsWithSupplier, item);
     const resultsWithDeliveryDate = filteredResults.map((result) => ({
       ...result,
-      deliveryDate: calculateDeliveryDate(result),
+      deliveryDate: calculateDeliveryDate(result, userLogger),
     }));
     return resultsWithDeliveryDate;
   }

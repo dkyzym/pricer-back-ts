@@ -1,3 +1,5 @@
+import { Logger } from 'winston';
+
 export type SupplierName =
   | 'turboCars'
   | 'ug'
@@ -101,6 +103,7 @@ interface ParallelSearchParams {
   page?: Page;
   item: ItemToParallelSearch;
   supplier: SupplierName;
+  userLogger: Logger;
 }
 
 export interface SearchResultsParsed {

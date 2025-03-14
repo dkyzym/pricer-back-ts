@@ -5,10 +5,12 @@ import {
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
 import { isBrandMatch } from '../../utils/data/isBrandMatch.js';
+import { Logger } from 'winston';
 
 export const mapUgResponseData = (
   data: ugArticleSearchResult[],
-  brand: string
+  brand: string,
+  userLogger: Logger
 ): SearchResultsParsed[] => {
   const mappedResponseData: SearchResultsParsed[] = data.map((item) => {
     const ownWarehouses = ['краснодар', 'ростов']; // считаем что это родные склады ЮГ
@@ -48,7 +50,7 @@ export const mapUgResponseData = (
   });
 
   const ugResultsWithDeliveryDate = mappedResponseData.map((result) => {
-    const deliveryDate = calculateDeliveryDate(result);
+    const deliveryDate = calculateDeliveryDate(result, userLogger);
     return {
       ...result,
       deliveryDate,
