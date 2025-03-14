@@ -111,6 +111,15 @@ export const logger = createLogger({
       format: combine(filterOnly('info'), fileJsonFormat),
     }),
     new DailyRotateFile({
+      dirname: path.join('logs/http'),
+      filename: 'http-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '90d',
+      maxSize: '20m',
+      level: 'http', // <--
+      format: combine(filterOnly('http'), fileJsonFormat),
+    }),
+    new DailyRotateFile({
       dirname: path.join('logs/debug'),
       filename: 'debug-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
