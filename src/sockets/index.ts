@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import chalk from 'chalk';
 import { CLIENT_URL } from 'config/index.js';
-import { logger } from 'config/logger/index.js';
+import { attachSocketTransport, logger } from 'config/logger/index.js';
 import { Server as HTTPServer } from 'http';
 import { getItemsListByArticleService } from 'services/profit/getItemsListByArticleService.js';
 import { getItemsWithRest } from 'services/profit/getItemsWithRest.js';
@@ -38,6 +38,8 @@ enum ProviderErrorCodes {
   // ... доп. коды по необходимости
 }
 
+let transportAttached = false;
+
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
     cors: {
@@ -45,6 +47,11 @@ export const initializeSocket = (server: HTTPServer) => {
       methods: ['GET', 'POST'],
     },
   });
+
+  if (!transportAttached) {
+    attachSocketTransport(io);
+    transportAttached = true;
+  }
 
   io.use((socket, next) => {
     try {
@@ -74,6 +81,11 @@ export const initializeSocket = (server: HTTPServer) => {
     });
 
     userLogger.info(chalk.cyan(`New client connected`));
+
+    if (socket.data.user.role === 'admin') {
+      socket.join('admin');
+      userLogger.info(`Joined room "admin" `);
+    }
 
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
 

@@ -1,6 +1,8 @@
 import path from 'path';
 import { addColors, createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import { SocketIOTransport } from './socketTransport';
+import { Server as SocketIOServer } from 'socket.io';
 
 const { combine, colorize, errors, timestamp, printf, json, uncolorize } =
   format;
@@ -130,3 +132,8 @@ export const logger = createLogger({
     }),
   ],
 });
+
+export const attachSocketTransport = (io: SocketIOServer) => {
+  const socketTransport = new SocketIOTransport({ io });
+  logger.add(socketTransport);
+};
