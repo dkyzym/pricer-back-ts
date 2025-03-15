@@ -568,7 +568,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
     // Disconnect Handler
     socket.on('disconnect', () => {
-      logger.info(chalk.bgCyan(`Client disconnected: ${socket.id}`));
+      userLogger.info(chalk.bgCyan(`Client disconnected:`));
     });
   });
 };
