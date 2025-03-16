@@ -35,9 +35,9 @@ import { logResultCount } from '../utils/stdLogs.js';
 
 enum ProviderErrorCodes {
   ObjectNotFound = 301,
-  // ... доп. коды по необходимости
+  // ... доп. коды по  необходимости
 }
-
+//
 let transportAttached = false;
 
 export const initializeSocket = (server: HTTPServer) => {
