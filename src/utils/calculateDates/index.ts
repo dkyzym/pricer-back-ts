@@ -1,8 +1,7 @@
-import { logger } from 'config/logger/index.js';
 import { DateTime } from 'luxon';
 import { ProductProfit, SearchResultsParsed } from 'types/index.js';
-import { suppliersConfig } from './suppliersConfig/suppliersConfig.js';
 import { Logger } from 'winston';
+import { suppliersConfig } from './suppliersConfig/suppliersConfig.js';
 
 // Определяем type guard для ProductProfit
 const isProductProfit = (

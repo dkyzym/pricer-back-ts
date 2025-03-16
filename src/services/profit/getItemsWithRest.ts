@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { logger } from 'config/logger/index.js';
 import { itemsGroupProfit } from 'types/index.js';
 import { Logger } from 'winston';
 
