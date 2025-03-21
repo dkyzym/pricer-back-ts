@@ -20,4 +20,5 @@ export const brandGroupsMap = [
   ['автопартнер', 'avp', 'autopartner'],
   ['lynx-auto', 'lynx'],
   ['автоград', 'автоград-д'],
+  ['reinz', 'victor reinz'],
 ];
