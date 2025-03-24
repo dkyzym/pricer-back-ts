@@ -38,7 +38,6 @@ export const getAutosputnikItemsListByArticleService = async (
       throw new Error(response.data.error);
     }
 
-    // logger.info(chalk.yellow(JSON.stringify(response?.data)));
     return response.data;
   } catch (error) {
     userLogger.error('Error fetching data from Autosputnik API:', error);

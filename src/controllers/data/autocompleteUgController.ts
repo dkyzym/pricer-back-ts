@@ -14,7 +14,7 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
   const trimmedTerm = term.trim();
 
   const data = await getAutocomplete(trimmedTerm);
-  // console.log(`data autocompleteUgController ${JSON.stringify(data)}`);
+
   const filteredData = data.filter(
     (item: ItemAutocompleteRow) => item.brand !== 'Найти по описанию'
   );

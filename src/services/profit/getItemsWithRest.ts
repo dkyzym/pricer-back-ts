@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { itemsGroupProfit } from 'types/index.js';
 import { Logger } from 'winston';
 
@@ -21,16 +21,22 @@ export const getItemsWithRest = async (
       const res = await axios.get(uri);
       return res.data;
     } catch (error) {
-      // Логирование ошибки с номером попытки
+      const axiosError = error as AxiosError;
+
       userLogger.error(
-        `Попытка ${attempt} - ошибка getItemsWithRest: ${(error as Error).message}`
+        `Попытка ${attempt} - ошибка getItemsWithRest: ${axiosError.message}`,
+        {
+          url: axiosError.config?.url,
+          method: axiosError.config?.method,
+          status: axiosError.response?.status,
+          responseData: axiosError.response?.data,
+        }
       );
 
       if (attempt < maxRetries) {
-        // Ждем перед следующей попыткой
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       } else {
-        userLogger.error(error);
+        userLogger.error(`All attempts failed for URL: ${uri}`);
         return [];
       }
     }
