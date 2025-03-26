@@ -18,9 +18,7 @@ const normalizeBrandNameExtended = (
   return parts.length > 1 ? [normalized, ...parts] : [normalized];
 };
 
-const convertDeliveryDelayToHours = (deliveryDelayDays: number): number => {
-  return deliveryDelayDays === 0 ? 1 : deliveryDelayDays * 24;
-};
+const convertDeliveryDelayToHours = (d: number) => (d === 0 ? 1 : d);
 
 export const parseXmlToSearchResults = (
   xmlString: string,
@@ -85,6 +83,7 @@ export const parseXmlToSearchResults = (
       const stockID = stockLine.StokID as string;
       const stockQuantity = parseFloat(stockLine.StockQTY);
       const deliveryDelayValue = parseFloat(stockLine.DeliveryDelay);
+
       const deadlineHours = convertDeliveryDelayToHours(deliveryDelayValue);
 
       const parsedItem: SearchResultsParsed = {
