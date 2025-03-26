@@ -40,7 +40,7 @@ const SUPPLIER_CONFIG: Record<
     // не задали ничего, значит будем использовать глобальные значения
   },
   turboCars: {
-    maxItems: 7,
+    maxItems: 7, // оставляем значение, как и было
     minProbability: 90,
   },
   autoImpulse: {},
@@ -107,9 +107,12 @@ const findFastestItem = (
 /**
  * Удаляем «дубликаты» среди позиций.
  * Дубликатом считаем ситуацию, когда probability, availability,
- * время поставки, возможность возврата и цена — одинаковые.
+ * время поставки, возможность возврата и цена — одинаковые (для всех, кроме turboCars).
  *
- * Оставляем первый встретившийся (с учётом, что массив может быть уже отсортирован).
+ * [Новая логика]
+ * Для turboCars исключаем из ключа availability
+ * и, если встречается позиция с тем же ключом, оставляем ту,
+ * у которой availability больше.
  */
 const removeDuplicates = (
   items: SearchResultsParsed[]
@@ -117,11 +120,13 @@ const removeDuplicates = (
   const seen = new Map<string, SearchResultsParsed>();
 
   for (const item of items) {
-    const prob =
+    // Приведение к числу для probability
+    const probability =
       typeof item.probability === 'string'
         ? parseFloat(item.probability)
         : item.probability || 0;
 
+    // Приведение к числу для availability
     const availability =
       typeof item.availability === 'string'
         ? parseFloat(item.availability)
@@ -131,16 +136,43 @@ const removeDuplicates = (
     const refusalInfo = `${item.returnable ?? ''}_${item.allow_return ?? ''}`;
     const deliveryTime = getDeliveryTimeInMs(item);
 
-    const key = [
-      prob,
-      availability,
-      deliveryTime,
-      refusalInfo,
-      item.price,
-    ].join('|');
+    if (item.supplier === 'turboCars') {
+      // [Новая логика] — не включаем availability в ключ
+      const turboKey = [
+        probability,
+        deliveryTime,
+        refusalInfo,
+        item.price,
+      ].join('|');
 
-    if (!seen.has(key)) {
-      seen.set(key, item);
+      if (!seen.has(turboKey)) {
+        seen.set(turboKey, item);
+      } else {
+        // Если такая позиция уже есть — сравниваем availability
+        const existing = seen.get(turboKey) as SearchResultsParsed;
+        // Оставляем вариант с бОльшим наличием
+        const existingAvail =
+          typeof existing.availability === 'string'
+            ? parseFloat(existing.availability)
+            : existing.availability || 0;
+
+        if (availability > existingAvail) {
+          seen.set(turboKey, item);
+        }
+      }
+    } else {
+      // Старая логика — для всех остальных
+      const key = [
+        probability,
+        availability,
+        deliveryTime,
+        refusalInfo,
+        item.price,
+      ].join('|');
+
+      if (!seen.has(key)) {
+        seen.set(key, item);
+      }
     }
   }
 
@@ -152,21 +184,22 @@ const removeDuplicates = (
  *
  * Шаги:
  * 1) probability >= (MIN_PROBABILITY или свой из SUPPLIER_CONFIG)
- * 2) Сортируем (по цене, затем по времени)
- * 3) Если позиций <= MIN_RESULTS (например 4), возвращаем все
- * 4) Иначе берём верхние TOP_PERCENT (или topPercent из конфига),
+ * 2) [Новая логика] сначала «склеиваем» через removeDuplicates, чтобы в turboCars осталась позиция с максимальным availability
+ * 3) Сортируем (по цене, затем по времени)
+ * 4) Если позиций <= MIN_RESULTS (например 4), возвращаем все
+ * 5) Иначе берём верхние TOP_PERCENT (или topPercent из конфига),
  *    при желании можно брать min/max с учётом maxItems
- * 5) Добавляем самый быстрый вариант, если его там нет
- * 6) Убираем «дубликаты» (если оказались равнозначные)
+ * 6) Добавляем самый быстрый вариант, если его там нет
+ * 7) Убираем «дубликаты» повторно (на случай, если при добавлении fastest появилась копия)
  */
 const filterSupplierData = (
   data: SearchResultsParsed[],
   supplierName: SupplierName
 ): SearchResultsParsed[] => {
-  // 1. Фильтр по вероятности
+  // 1) Фильтруем по вероятности
   const minProb =
     SUPPLIER_CONFIG[supplierName]?.minProbability ?? MIN_PROBABILITY;
-  const filtered = data.filter((item) => {
+  let filtered = data.filter((item) => {
     const prob =
       typeof item.probability === 'string'
         ? parseFloat(item.probability)
@@ -176,10 +209,14 @@ const filterSupplierData = (
 
   if (filtered.length === 0) return [];
 
-  // 2. Сортируем
+  // 2) [Новая логика] — сперва «склеиваем» результаты
+  // (чтобы не потерять большую availability у turboCars)
+  filtered = removeDuplicates(filtered);
+
+  // 3) Сортируем
   filtered.sort(sortByPriceAndDelivery);
 
-  // 3. Если после фильтрации и сортировки позиций <= MIN_RESULTS — возвращаем все
+  // 4) Если после фильтрации и сортировки позиций <= MIN_RESULTS — возвращаем все
   if (filtered.length <= MIN_RESULTS) {
     // Добавим самый быстрый, если вдруг его нет (на практике при <= MIN_RESULTS он обычно и так внутри)
     const fastest = findFastestItem(filtered);
@@ -187,7 +224,8 @@ const filterSupplierData = (
       filtered.push(fastest);
       filtered.sort(sortByPriceAndDelivery);
     }
-    // Убираем дубликаты
+
+    // 7) И снова убираем дубликаты (могли появиться при добавлении fastest)
     return removeDuplicates(filtered);
   }
 
@@ -206,13 +244,13 @@ const filterSupplierData = (
   // Берём «срез»
   let result = filtered.slice(0, limit);
 
-  // 5. Добавляем самый быстрый вариант, если его там нет
+  // 6) Добавляем самый быстрый вариант, если его там нет
   const fastest = findFastestItem(filtered);
   if (fastest && !result.includes(fastest)) {
     result.push(fastest);
   }
 
-  // 6. Сортируем снова и убираем дубликаты
+  // 7) Сортируем снова и убираем дубликаты
   result.sort(sortByPriceAndDelivery);
   result = removeDuplicates(result);
 
