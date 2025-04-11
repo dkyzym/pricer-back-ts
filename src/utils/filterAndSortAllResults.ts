@@ -27,16 +27,16 @@ const SUPPLIER_CONFIG: Record<
   }
 > = {
   ug: {
-    maxItems: 3,
+    maxItems: 4,
   },
   profit: {
-    maxItems: 3,
+    maxItems: 4,
   },
   autosputnik: {
-    maxItems: 3,
+    maxItems: 4,
   },
   armtek: {
-    maxItems: 3,
+    maxItems: 4,
     // не задали ничего, значит будем использовать глобальные значения
   },
   turboCars: {
