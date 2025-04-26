@@ -23,4 +23,5 @@ export const brandGroupsMap = [
   ['reinz', 'victor reinz'],
   ['AT', 'AT Program', 'Auto Technologies Group'],
   ['евродеталь', 'ed', 'ЕВРОДЕТАЛЬ'],
+  ['БРТ', 'Tadem', 'Балаковорезинотехника'],
 ];
