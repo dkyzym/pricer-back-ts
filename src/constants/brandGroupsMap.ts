@@ -24,4 +24,5 @@ export const brandGroupsMap = [
   ['AT', 'AT Program', 'Auto Technologies Group'],
   ['евродеталь', 'ed', 'ЕВРОДЕТАЛЬ'],
   ['БРТ', 'Tadem', 'Балаковорезинотехника'],
+  ['total', 'TotalEnergies'],
 ];
