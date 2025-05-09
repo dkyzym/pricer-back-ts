@@ -1,48 +1,63 @@
 import { DateTime } from 'luxon';
 import { SearchResultsParsed, SupplierConfig } from 'types/index.js';
 
+const getNextWorkingDay =
+  (allowedWeekdays: number[]) =>
+  (from: DateTime): DateTime => {
+    let d = from;
+    while (true) {
+      d = d.plus({ days: 1 });
+      if (allowedWeekdays.includes(d.weekday)) return d;
+    }
+  };
+
 export const suppliersConfig: SupplierConfig[] = [
   {
     supplierName: 'patriot',
-    workingDays: [2, 3, 4, 5, 6], // со вторника по субботу
+
+    // вторник–суббота
+    workingDays: [2, 3, 4, 5, 6],
+
     cutoffTimes: {
-      default: '11:30', // Начальный крайний срок
-      extended: '20:00', // Второй крайний срок
+      default: '11:30',
+      extended: '20:00',
     },
+
     processingTime: { days: 0 },
-    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
-      let deliveryDate: DateTime;
 
-      if (
-        currentTime.hour < 11 ||
-        (currentTime.hour === 11 && currentTime.minute < 30)
-      ) {
-        // Заказ до 11:30 - доставка сегодня
-        deliveryDate = currentTime;
-      } else if (currentTime.hour < 20) {
-        // Заказ между 11:30 и 20:00 - доставка на следующий день
-        deliveryDate = currentTime.plus({ days: 1 });
-      } else {
-        // Заказ после 20:00 - доставка через два дня
-        deliveryDate = currentTime.plus({ days: 2 });
+    /* >>> НОВЫЙ блок <<< */
+    specialConditions: (
+      now: DateTime,
+      result: SearchResultsParsed
+    ): DateTime => {
+      const { workingDays, cutoffTimes } = suppliersConfig.find(
+        c => c.supplierName === 'patriot'
+      )!;
+
+      // 1. Часы, присланные ABCP:
+      //   Patriot 👇 реально кладёт «срок до отправки» в поле `deadline`
+      const hours = result.deadline > 0 ? result.deadline : 24;
+
+      /** «Черновая» дата — просто прибавляем часы  */
+      let tentative = now.plus({ hours });
+
+      /** 2. Если вышли за extended-cutoff сегодняшнего дня, - двигаем на сутки */
+      const extended = DateTime.fromFormat(
+        cutoffTimes.extended,
+        'HH:mm',
+        { zone: now.zone }
+      ).set({
+        year: tentative.year,
+        month: tentative.month,
+        day: tentative.day,
+      });
+
+      if (tentative > extended) {
+        tentative = tentative.plus({ days: 1 });
       }
 
-      // Добавляем специальные условия для warehouse
-      if (
-        result.warehouse.includes('Донецк') ||
-        result.warehouse.includes('Мариуполь')
-      ) {
-        deliveryDate = deliveryDate.plus({ days: 2 });
-      } else if (result.warehouse.includes('Мелитополь')) {
-        deliveryDate = deliveryDate.plus({ days: 3 });
-      }
-
-      // Корректировка для дней без доставки (воскресенье и понедельник)
-      while (deliveryDate.weekday === 1 || deliveryDate.weekday === 7) {
-        deliveryDate = deliveryDate.plus({ days: 1 });
-      }
-
-      return deliveryDate;
+      /** 3. Перебрасываем на ближайший рабочий день Patriot */
+      return getNextWorkingDay(workingDays)(tentative);
     },
   },
   {

@@ -7,5 +7,6 @@ todo*
 logs/**
 !logs/.gitkeep
 deleteTempFiles*
+send/
 
 

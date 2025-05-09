@@ -233,7 +233,7 @@ interface AddToCartConfig {
 
 type accountAlias = 'nal' | 'bezNal';
 
-interface ugArticleSearchResult {
+interface abcpArticleSearchResult {
   distributorId: number;
   grp: null;
   code: string | '';

@@ -1,39 +1,44 @@
 import { v4 as uuidv4 } from 'uuid';
+import { Logger } from 'winston';
 import {
   SearchResultsParsed,
-  ugArticleSearchResult,
+  abcpArticleSearchResult,
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
 import { isBrandMatch } from '../../utils/data/isBrandMatch.js';
-import { Logger } from 'winston';
 
 export const mapUgResponseData = (
-  data: ugArticleSearchResult[],
+  data: abcpArticleSearchResult[],
   brand: string,
   userLogger: Logger
 ): SearchResultsParsed[] => {
+  const ownWarehouses = ['краснодар', 'ростов'];       // «родные» склады ЮГ
+
   const mappedResponseData: SearchResultsParsed[] = data.map((item) => {
-    const ownWarehouses = ['краснодар', 'ростов']; // считаем что это родные склады ЮГ
-    // Приводим описание поставщика к нижнему регистру для корректного поиска
-    const supplierDescriptionLower = item.supplierDescription.toLowerCase();
-    // Если в строке содержится "краснодар" или "ростов", то probability будет 95 процентов
-    const probability = ownWarehouses.some((warehouse) =>
-      supplierDescriptionLower.includes(warehouse)
-    )
-      ? 95
-      : item.deliveryProbability;
+    /** 1. Гарантируем, что строки не равны null/undefined */
+    const supplierDescription = item.supplierDescription ?? '';
+    const supplierDescriptionLower = supplierDescription.toLowerCase();
+
+    /** 2. deliveryProbability тоже может отсутствовать */
+    const probability =
+      ownWarehouses.some((w) => supplierDescriptionLower.includes(w))
+        ? 95
+        : item.deliveryProbability ?? 0;
 
     return {
       id: uuidv4(),
       article: item.number,
       brand: item.brand,
       description: item.description,
-      availability: item.availability, // отрицательные значения: -1, -2, -3 означают "неточное" наличие, а -10 — наличие "под заказ".
+      availability: item.availability,          // «под заказ» по умолчанию
       price: item.price,
-      warehouse: item.supplierDescription,
+      warehouse: supplierDescription,
       imageUrl: '',
+
+      /** 3. Любое undefined → безопасное значение */
       deadline: item.deliveryPeriod || 1,
       deadLineMax: item.deliveryPeriodMax || 1,
+
       supplier: 'ug',
       probability,
       needToCheckBrand: !isBrandMatch(brand, item.brand),
@@ -42,6 +47,7 @@ export const mapUgResponseData = (
       allow_return: !item.noReturn,
       warehouse_id: String(item.supplierCode),
       inner_product_code: item.itemKey,
+
       ug: {
         itemKey: item.itemKey,
         supplierCode: String(item.supplierCode),
@@ -49,13 +55,9 @@ export const mapUgResponseData = (
     };
   });
 
-  const ugResultsWithDeliveryDate = mappedResponseData.map((result) => {
-    const deliveryDate = calculateDeliveryDate(result, userLogger);
-    return {
-      ...result,
-      deliveryDate,
-    };
-  });
-
-  return ugResultsWithDeliveryDate;
+  /** 4. Сразу добавляем дату поставки */
+  return mappedResponseData.map((result) => ({
+    ...result,
+    deliveryDate: calculateDeliveryDate(result, userLogger),
+  }));
 };
