@@ -566,7 +566,6 @@ export const initializeSocket = (server: HTTPServer) => {
               withAnalogs,
               userLogger
             );
-            console.log(data);
 
             logResultCount(item, userLogger, supplier, data);
             const filteredItems = filterAndSortAllResults(data);

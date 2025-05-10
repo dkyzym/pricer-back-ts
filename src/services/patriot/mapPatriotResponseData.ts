@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import {
-    SearchResultsParsed,
-    abcpArticleSearchResult,
+  SearchResultsParsed,
+  abcpArticleSearchResult,
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
 import { isBrandMatch } from '../../utils/data/isBrandMatch.js';
@@ -43,7 +43,7 @@ export const mapPatriotResponseData = (
 
   const patriotResultsWithDeliveryDate = mappedResponseData.map((result) => {
     const deliveryDate = calculateDeliveryDate(result, userLogger);
-    console.log("deliveryDate",deliveryDate);
+
     return {
       ...result,
       deliveryDate,
