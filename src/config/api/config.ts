@@ -25,11 +25,16 @@ export const suppliers: Record<string, SupplierConfig> = {
     password: process.env.TURBOCARS_PASSWORD_BN || '',
     baseUrl: 'https://www.mikado-parts.ru',
   },
-  patriot:{ 
+  patriot: {
     username: process.env.PATRIOT_USERNAME!,
     password: process.env.PATRIOT_PASSWORD!,
     baseUrl: 'https://id14533.public.api.abcp.ru',
-  }
+  },
+  ug_f: {
+    username: process.env.UG_USERNAME!,
+    password: process.env.UG_PASSWORD!,
+    baseUrl: 'https://id9065.public.api.abcp.ru',
+  },
 };
 
 export const PROXY_HOST = process.env.PROXY_HOST!;

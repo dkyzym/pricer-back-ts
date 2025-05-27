@@ -45,6 +45,7 @@ const SUPPLIER_CONFIG: Record<
   },
   autoImpulse: {},
   patriot: {},
+  ug_f: {},
 };
 
 /**

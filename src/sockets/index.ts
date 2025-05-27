@@ -244,46 +244,52 @@ export const initializeSocket = (server: HTTPServer) => {
               error: (error as Error).message,
             });
           }
-        } else if (supplier === 'ug') {
+        } else if (supplier === 'ug' || supplier === 'ug_f') {
           try {
             userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
-              supplier: 'ug',
+              supplier,
               article: item.article,
             });
 
+            const useOnlineStocks = supplier === 'ug_f' ? 0 : 1;
+
             // 1. Запрашиваем данные у поставщика.
-            const data = await fetchAbcpData(item.article, item.brand, supplier);
-
-            // 2. Преобразуем ответ в удобный формат.
-            const mappedUgResponseData = mapUgResponseData(
-              data,
+            const data = await fetchAbcpData(
+              item.article,
               item.brand,
-              userLogger
+              supplier,
+              useOnlineStocks
             );
-            // 3. Логируем, сколько результатов получили (вдруг пригодится).
-            logResultCount(item, userLogger, supplier, mappedUgResponseData);
 
-            const filteredItems = filterAndSortAllResults(mappedUgResponseData);
+            const mapped = mapUgResponseData(data, item.brand, userLogger);
+            const filtered = filterAndSortAllResults(mapped);
+
+            if (filtered.length === 0) return;
+
+            // 3. Логируем, сколько результатов получили (вдруг пригодится).
+            logResultCount(item, userLogger, supplier, mapped);
+
+            // const filteredItems = filterAndSortAllResults(freshOnly);
             userLogger.info(
               chalk.bgYellow(
-                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+                `После фильтрации: ${supplier} - ${filtered?.length}`
               )
             );
 
             // 4. Формируем результат.
             const ugResult = {
-              success: mappedUgResponseData.length > 0,
-              message: `Ug data fetched: ${filteredItems.length > 0}`,
-              data: filteredItems,
+              success: filtered.length > 0,
+              message: `Ug data fetched: ${filtered.length > 0}`,
+              data: filtered,
             };
 
             // 5. Отправляем клиенту.
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier: 'ug',
+              supplier,
               result: ugResult,
             });
           } catch (err: unknown) {
@@ -299,7 +305,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
               // Сообщаем клиенту об ошибке
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-                supplier: 'ug',
+                supplier,
                 error: (err as Error)?.message || 'Unknown non-Axios error',
               });
               return; // Завершаем обработку
@@ -316,7 +322,7 @@ export const initializeSocket = (server: HTTPServer) => {
               });
 
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-                supplier: 'ug',
+                supplier,
                 error: axiosError.message || 'Unknown network error',
               });
               return; // Завершаем обработку
@@ -339,7 +345,7 @@ export const initializeSocket = (server: HTTPServer) => {
                 data: [],
               };
               socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-                supplier: 'ug',
+                supplier,
                 result: ugResult,
               });
               return; // Завершаем обработку
@@ -372,7 +378,7 @@ export const initializeSocket = (server: HTTPServer) => {
 
             // Отправляем событие об ошибке клиенту
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-              supplier: 'ug',
+              supplier,
               error: errorMessage || axiosError.message,
             });
           }
@@ -387,8 +393,12 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const data = await fetchAbcpData(item.article, item.brand, supplier);
-    
+            const data = await fetchAbcpData(
+              item.article,
+              item.brand,
+              supplier
+            );
+
             const mappedPatriotData = mapPatriotResponseData(
               data,
               item.brand,
@@ -396,8 +406,7 @@ export const initializeSocket = (server: HTTPServer) => {
             );
 
             const filteredItems = filterAndSortAllResults(mappedPatriotData);
-     
-   
+
             logResultCount(item, userLogger, supplier, mappedPatriotData);
 
             userLogger.info(
