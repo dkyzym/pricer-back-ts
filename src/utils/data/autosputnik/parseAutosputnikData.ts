@@ -1,14 +1,14 @@
 import { DateTime } from 'luxon';
 import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService.js';
 import { v4 as uuidV4 } from 'uuid';
+import { Logger } from 'winston';
 import {
   SearchResultsParsed,
   SupplierName,
   TovarAutosputnik,
 } from '../../../types/index.js';
 import { calculateDeliveryDate } from '../../calculateDates/index.js';
-import { isBrandMatch } from '../isBrandMatch.js';
-import { Logger } from 'winston';
+import { isRelevantBrand } from '../../isRelevantBrand.js';
 
 export const parseAutosputnikData = async (
   item: {
@@ -34,7 +34,7 @@ export const parseAutosputnikData = async (
     // Шаг 2: Фильтруем бренды с помощью isBrandMatch
     const relevantBrandIds = responseArray
       .filter((responseItem: any) =>
-        isBrandMatch(item.brand, responseItem.BRA_BRAND)
+        isRelevantBrand(item.brand, responseItem.BRA_BRAND)
       )
       .map((responseItem: any) => responseItem.BRA_ID);
 

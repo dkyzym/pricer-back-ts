@@ -5,7 +5,7 @@ import {
   abcpArticleSearchResult,
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
-import { isBrandMatch } from '../../utils/data/isBrandMatch.js';
+import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
 
 export const mapPatriotResponseData = (
   data: abcpArticleSearchResult[],
@@ -13,7 +13,7 @@ export const mapPatriotResponseData = (
   userLogger: Logger
 ): SearchResultsParsed[] => {
   const mappedResponseData: SearchResultsParsed[] = data.map((item) => {
-       const probability = 95;
+    const probability = 95;
 
     return {
       id: uuidv4(),
@@ -28,7 +28,7 @@ export const mapPatriotResponseData = (
       deadLineMax: item.deliveryPeriodMax || 1,
       supplier: 'patriot',
       probability,
-      needToCheckBrand: !isBrandMatch(brand, item.brand),
+      needToCheckBrand: !isRelevantBrand(brand, item.brand),
       returnable: Number(!item.noReturn),
       multi: item.packing || 1,
       allow_return: !item.noReturn,

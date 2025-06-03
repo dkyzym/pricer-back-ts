@@ -14,7 +14,6 @@ import {
   ProviderErrorData,
   SearchResultsParsed,
 } from 'types/index.js';
-import { isBrandMatch } from 'utils/data/isBrandMatch.js';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
 import { verifyToken } from '../controllers/auth.js';
@@ -28,8 +27,8 @@ import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.j
 import { fetchAbcpData } from '../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData.js';
 import { parseAutosputnikData } from '../utils/data/autosputnik/parseAutosputnikData.js';
-import { isContainsBrandName } from '../utils/data/isContainsBrandName.js';
 import { filterAndSortAllResults } from '../utils/filterAndSortAllResults.js';
+import { isRelevantBrand } from '../utils/isRelevantBrand.js';
 import { parseXmlToSearchResults } from '../utils/mapData/mapTurboCarsData.js';
 import { logResultCount } from '../utils/stdLogs.js';
 
@@ -163,12 +162,9 @@ export const initializeSocket = (server: HTTPServer) => {
             );
             const itemsWithRest = await getItemsWithRest(items, userLogger);
 
-            const relevantItems = itemsWithRest.filter(({ brand }: any) => {
-              return (
-                isBrandMatch(item.brand, brand) ||
-                isContainsBrandName(item.brand, brand)
-              );
-            });
+            const relevantItems = itemsWithRest.filter(({ brand }: any) =>
+              isRelevantBrand(item.brand, brand)
+            );
 
             const profitParsedData = parseProfitApiResponse(
               relevantItems,
@@ -637,7 +633,7 @@ export const initializeSocket = (server: HTTPServer) => {
             }
 
             const relevantItems = RESP.filter((resItem) =>
-              isBrandMatch(item.brand, resItem.BRAND || '')
+              isRelevantBrand(item.brand, resItem.BRAND || '')
             );
 
             const storeList = await getCachedStoreList();

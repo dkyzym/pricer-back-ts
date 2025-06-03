@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { SearchResultsParsed } from '../../types/index.js';
 import { calculateDeliveryDate } from '../calculateDates/index.js';
-import { isBrandMatch } from '../data/isBrandMatch.js';
+import { isRelevantBrand } from '../isRelevantBrand.js';
 
 // Нормализация бренда
 const normalizeBrandNameExtended = (
@@ -66,7 +66,9 @@ export const parseXmlToSearchResults = (
     // Проверим совпадение бренда: если ни один вариант не совпадает
     // значит, пропускаем эту строку
     const brandMatched = producerBrandVariants.some((pbVariant) =>
-      brandVariantsToMatch.some((bVariant) => isBrandMatch(pbVariant, bVariant))
+      brandVariantsToMatch.some((bVariant) =>
+        isRelevantBrand(pbVariant, bVariant)
+      )
     );
 
     if (!brandMatched) {
@@ -106,7 +108,7 @@ export const parseXmlToSearchResults = (
         },
         // По условию, needToCheckBrand – это инверсия isBrandMatch(brandToMatch, producerBrand)
         // Но поскольку мы тут уже отсеяли неподходящие бренды, можно просто использовать старую логику:
-        needToCheckBrand: !isBrandMatch(brandToMatch, producerBrand),
+        needToCheckBrand: !isRelevantBrand(brandToMatch, producerBrand),
       };
 
       results.push(parsedItem);
