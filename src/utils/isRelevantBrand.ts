@@ -1,5 +1,5 @@
-import { isBrandMatch } from './data/isBrandMatch';
-import { isContainsBrandName } from './data/isContainsBrandName';
+import { isBrandMatch } from './data/isBrandMatch.js';
+import { isContainsBrandName } from './data/isContainsBrandName.js';
 
 export const isRelevantBrand = (expected: string, actual: string): boolean => {
   if (isBrandMatch(expected, actual)) return true;
