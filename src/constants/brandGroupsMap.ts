@@ -25,5 +25,5 @@ export const brandGroupsMap = [
   ['евродеталь', 'ed', 'ЕВРОДЕТАЛЬ'],
   ['БРТ', 'Tadem', 'Балаковорезинотехника'],
   ['total', 'TotalEnergies'],
-  ['seinsa', 'autofner', 'seinsa autofner'],
+  ['seinsa', 'autofner', 'seinsa autofren'],
 ];
