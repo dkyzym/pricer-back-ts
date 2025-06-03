@@ -36,7 +36,7 @@ enum ProviderErrorCodes {
   ObjectNotFound = 301,
   // ... доп. коды по  необходимости
 }
-//
+
 let transportAttached = false;
 
 export const initializeSocket = (server: HTTPServer) => {
