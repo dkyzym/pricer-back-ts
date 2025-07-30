@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { addToCartProfitService } from 'services/profit/addToCartProfitService.js';
 import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService.js';
 import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
+import { addToCartPatriotNpnService } from '../../services/patriot/cart/addToCartPatriotNpnService.js';
 import { addToCartTurboCarService } from '../../services/turboCars/addToCartTurboCarService.js';
 import { addToCartUgService } from '../../services/ug/cart/addToCartUgService.js';
 import { addToCartAutosputnikData } from '../../types/autosputnik.js';
@@ -12,7 +13,6 @@ import {
   BasketTurboCarsFrontendData,
   SupplierName,
 } from '../../types/index.js';
-import { addToCartPatriotService } from '../../services/patriot/cart/addToCartPatriotService.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier }: { supplier: SupplierName } = req.body;
@@ -71,7 +71,7 @@ export const addToCartController = async (req: Request, res: Response) => {
         message: 'Ошибка при добавлении в корзину',
       });
     }
-  } else if (supplier === 'patriot') {
+  } else if (supplier === 'patriot' || supplier === 'npn') {
     const { brand, supplierCode, quantity, itemKey, number } = req.body;
 
     if (!brand || !supplierCode || !quantity || !itemKey || !number) {
@@ -90,7 +90,7 @@ export const addToCartController = async (req: Request, res: Response) => {
     };
 
     try {
-      const result = await addToCartPatriotService([position]);
+      const result = await addToCartPatriotNpnService([position], supplier);
 
       res.status(200).json({
         success: Boolean(result.status),

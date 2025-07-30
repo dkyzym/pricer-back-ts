@@ -132,7 +132,11 @@ export const createAxiosInstance = async (
       config.headers.set('Accept-Encoding', 'gzip, deflate');
 
       // Пример логики для конкретных поставщиков
-      if (supplierKey === 'ug' || supplierKey === 'patriot') {
+      if (
+        supplierKey === 'ug' ||
+        supplierKey === 'patriot' ||
+        supplierKey === 'npn'
+      ) {
         config.params = {
           ...config.params,
           userlogin: supplier.username,

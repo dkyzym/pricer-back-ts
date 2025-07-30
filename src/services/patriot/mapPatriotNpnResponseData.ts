@@ -7,10 +7,11 @@ import {
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
 import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
 
-export const mapPatriotResponseData = (
+export const mapPatriotNpnResponseData = (
   data: abcpArticleSearchResult[],
   brand: string,
-  userLogger: Logger
+  userLogger: Logger,
+  supplier: 'patriot' | 'npn'
 ): SearchResultsParsed[] => {
   const mappedResponseData: SearchResultsParsed[] = data.map((item) => {
     const probability = 95;
@@ -26,7 +27,7 @@ export const mapPatriotResponseData = (
       imageUrl: '',
       deadline: item.deliveryPeriod || 1,
       deadLineMax: item.deliveryPeriodMax || 1,
-      supplier: 'patriot',
+      supplier: supplier,
       probability,
       needToCheckBrand: !isRelevantBrand(brand, item.brand),
       returnable: Number(!item.noReturn),
@@ -34,14 +35,14 @@ export const mapPatriotResponseData = (
       allow_return: !item.noReturn,
       warehouse_id: String(item.supplierCode),
       inner_product_code: item.itemKey,
-      patriot: {
+      [supplier]: {
         itemKey: item.itemKey,
         supplierCode: String(item.supplierCode),
       },
     };
   });
 
-  const patriotResultsWithDeliveryDate = mappedResponseData.map((result) => {
+  const patriotNpnResultsWithDeliveryDate = mappedResponseData.map((result) => {
     const deliveryDate = calculateDeliveryDate(result, userLogger);
 
     return {
@@ -50,5 +51,5 @@ export const mapPatriotResponseData = (
     };
   });
 
-  return patriotResultsWithDeliveryDate;
+  return patriotNpnResultsWithDeliveryDate;
 };

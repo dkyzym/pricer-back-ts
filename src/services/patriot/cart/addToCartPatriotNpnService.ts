@@ -4,11 +4,12 @@ import { BasketPositionUG, UgCartResponse } from '../../../types/index.js';
 import { createAxiosInstance } from '../../apiClient.js';
 import { removeFromCartUgService } from './removeFromCartPatriotService.js';
 
-export const addToCartPatriotService = async (
-  positions: BasketPositionUG[]
+export const addToCartPatriotNpnService = async (
+  positions: BasketPositionUG[],
+  supplier: 'patriot' | 'npn'
 ): Promise<UgCartResponse> => {
   try {
-    const axiosInstance = await createAxiosInstance('patriot');
+    const axiosInstance = await createAxiosInstance(supplier);
     const params = new URLSearchParams();
 
     positions.forEach((position, index) => {

@@ -46,6 +46,7 @@ const SUPPLIER_CONFIG: Record<
   autoImpulse: {},
   patriot: {},
   ug_f: {},
+  npn: {},
 };
 
 /**
@@ -60,6 +61,7 @@ const FILTERED_SUPPLIERS: SupplierName[] = [
   'turboCars',
   'patriot',
   'autoImpulse',
+  'npn',
   // при необходимости добавим других
 ];
 

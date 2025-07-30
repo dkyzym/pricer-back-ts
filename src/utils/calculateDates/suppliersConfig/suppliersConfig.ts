@@ -31,7 +31,7 @@ export const suppliersConfig: SupplierConfig[] = [
       result: SearchResultsParsed
     ): DateTime => {
       const { workingDays, cutoffTimes } = suppliersConfig.find(
-        c => c.supplierName === 'patriot'
+        (c) => c.supplierName === 'patriot'
       )!;
 
       // 1. Часы, присланные ABCP:
@@ -42,11 +42,9 @@ export const suppliersConfig: SupplierConfig[] = [
       let tentative = now.plus({ hours });
 
       /** 2. Если вышли за extended-cutoff сегодняшнего дня, - двигаем на сутки */
-      const extended = DateTime.fromFormat(
-        cutoffTimes.extended,
-        'HH:mm',
-        { zone: now.zone }
-      ).set({
+      const extended = DateTime.fromFormat(cutoffTimes.extended, 'HH:mm', {
+        zone: now.zone,
+      }).set({
         year: tentative.year,
         month: tentative.month,
         day: tentative.day,
@@ -202,6 +200,65 @@ export const suppliersConfig: SupplierConfig[] = [
     workingDays: [2, 5], // Вторник и пятница
     cutoffTimes: {
       default: '15:00', // Крайний срок 15:00
+    },
+    processingTime: { days: 0 },
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime;
+      const weekday = currentTime.weekday; // 1 = Monday, ..., 7 = Sunday
+      const hour = currentTime.hour;
+      const minute = currentTime.minute;
+
+      // Функция для получения следующего определенного дня недели
+      const getNextWeekday = (
+        current: DateTime,
+        targetWeekday: number
+      ): DateTime => {
+        let daysToAdd = (targetWeekday - current.weekday + 7) % 7;
+        if (daysToAdd === 0) {
+          daysToAdd = 7; // Если сегодня целевой день, выбрать следующий
+        }
+        return current.plus({ days: daysToAdd });
+      };
+
+      if (weekday === 2) {
+        // Вторник
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 во вторник — доставка в среду
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 во вторник — доставка в субботу
+          deliveryDate = getNextWeekday(currentTime, 6); // 6 = Saturday
+        }
+      } else if (weekday === 5) {
+        // Пятница
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 в пятницу — доставка в субботу
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 в пятницу — доставка в следующую среду
+          deliveryDate = getNextWeekday(currentTime, 3); // 3 = Wednesday
+        }
+      } else {
+        // В остальные дни — доставка на ближайшую среду или субботу
+        const nextWednesday = getNextWeekday(currentTime, 3);
+        const nextSaturday = getNextWeekday(currentTime, 6);
+
+        // Выбрать ближайший из двух дней
+        if (nextWednesday < nextSaturday) {
+          deliveryDate = nextWednesday;
+        } else {
+          deliveryDate = nextSaturday;
+        }
+      }
+
+      return deliveryDate;
+    },
+  },
+  {
+    supplierName: 'npn',
+    workingDays: [2, 5], // Вторник и пятница
+    cutoffTimes: {
+      default: '13:30', // Крайний срок 13:30 но ЕГО НУЖНО БЫ ПОПРАВИТЬ текущий вариант приблизительный
     },
     processingTime: { days: 0 },
     specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {

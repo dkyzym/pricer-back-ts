@@ -22,7 +22,7 @@ import { searchArmtekArticle } from '../services/armtek/searchArmtekArticle.js';
 import { getCachedStoreList } from '../services/armtek/storeList.js';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
 import { clarifyBrand } from '../services/clarifyBrand.js';
-import { mapPatriotResponseData } from '../services/patriot/mapPatriotResponseData.js';
+import { mapPatriotNpnResponseData } from '../services/patriot/mapPatriotNpnResponseData.js';
 import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.js';
 import { fetchAbcpData } from '../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData.js';
@@ -395,10 +395,11 @@ export const initializeSocket = (server: HTTPServer) => {
               supplier
             );
 
-            const mappedPatriotData = mapPatriotResponseData(
+            const mappedPatriotData = mapPatriotNpnResponseData(
               data,
               item.brand,
-              userLogger
+              userLogger,
+              supplier
             );
 
             const filteredItems = filterAndSortAllResults(mappedPatriotData);
@@ -664,6 +665,140 @@ export const initializeSocket = (server: HTTPServer) => {
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier: 'armtek',
               error: (error as Error).message,
+            });
+          }
+        } else if (supplier === 'npn') {
+          try {
+            userLogger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier: supplier,
+              article: item.article,
+            });
+
+            const data = await fetchAbcpData(
+              item.article,
+              item.brand,
+              supplier
+            );
+
+            const mappedPatriotData = mapPatriotNpnResponseData(
+              data,
+              item.brand,
+              userLogger,
+              supplier
+            );
+
+            const filteredItems = filterAndSortAllResults(mappedPatriotData);
+
+            logResultCount(item, userLogger, supplier, mappedPatriotData);
+
+            userLogger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
+
+            const npnResult: pageActionsResult = {
+              success: data.length > 0,
+              message: `Patriot data fetched: ${data.length > 0}`,
+              data: filteredItems,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier: supplier,
+              result: npnResult,
+            });
+          } catch (err: unknown) {
+            // Чтобы не "уронить" сервер, НЕ выбрасываем (throw) ошибку дальше.
+
+            // 1. Проверяем, является ли это AxiosError.
+            if (!axios.isAxiosError(err)) {
+              // => НЕ Axios-ошибка.
+              userLogger.error(`NPN supplier: Non-Axios error occurred.`, {
+                message: (err as Error)?.message,
+                stack: (err as Error)?.stack,
+              });
+
+              // Сообщаем клиенту об ошибке
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+                supplier: 'npn',
+                error: (err as Error)?.message || 'Unknown non-Axios error',
+              });
+              return; // Завершаем обработку
+            }
+
+            // 2. Это AxiosError
+            const axiosError = err as AxiosError<ProviderErrorData>;
+
+            // 3. Если нет response, значит это сетевая или «неизвестная» ошибка
+            if (!axiosError.response) {
+              userLogger.error('NPN supplier: Network or unknown error', {
+                message: axiosError.message,
+                stack: axiosError.stack,
+              });
+
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+                supplier: 'npn',
+                error: axiosError.message || 'Unknown network error',
+              });
+              return; // Завершаем обработку
+            }
+
+            // 4. Ответ есть, значит статус >= 400
+            const { data: providerData, status } = axiosError.response;
+            const errorCode = providerData?.errorCode;
+            const errorMessage = providerData?.errorMessage;
+
+            // 5. Проверка «Ожидаемых» ошибок (301 — "ObjectNotFound")
+            if (errorCode === ProviderErrorCodes.ObjectNotFound) {
+              userLogger.warn(
+                `NPN supplier: "no results" from provider (code=${errorCode}, message="${errorMessage}").`
+              );
+
+              const ugResult = {
+                success: true,
+                message: 'Ничего не нашли',
+                data: [],
+              };
+              socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+                supplier: 'npn',
+                result: ugResult,
+              });
+              return; // Завершаем обработку
+            }
+
+            // 6. Любая другая ошибка поставщика: логируем выборочно
+            let responseDataSnippet = '';
+            try {
+              if (axiosError.response.data) {
+                const rawData = JSON.stringify(axiosError.response.data);
+                responseDataSnippet = rawData.slice(0, 300); // «отрезаем» большой ответ
+              }
+            } catch (jsonErr) {
+              // На случай, если data вообще не сериализуется
+              responseDataSnippet = '[Failed to serialize response data]';
+            }
+
+            // Логируем на уровне error, но только нужные детали
+            userLogger.error(
+              `NPN supplier error: code=${errorCode}, message="${errorMessage}", httpStatus=${status}`,
+              {
+                stack: axiosError.stack,
+                config: {
+                  url: axiosError.config?.url,
+                  method: axiosError.config?.method,
+                },
+                dataSnippet: responseDataSnippet,
+              }
+            );
+
+            // Отправляем событие об ошибке клиенту
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier: 'npn',
+              error: errorMessage || axiosError.message,
             });
           }
         }

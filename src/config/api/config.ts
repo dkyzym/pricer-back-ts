@@ -13,7 +13,7 @@ export const suppliers: Record<string, SupplierConfig> = {
   ug: {
     username: process.env.UG_USERNAME!,
     password: process.env.UG_PASSWORD!,
-    baseUrl: 'https://id9065.public.api.abcp.ru',
+    baseUrl: `https://${process.env.UG_ABCP_ID}.public.api.abcp.ru`,
   },
   turboCars: {
     username: process.env.TURBOCARS_USERNAME || '',
@@ -28,12 +28,17 @@ export const suppliers: Record<string, SupplierConfig> = {
   patriot: {
     username: process.env.PATRIOT_USERNAME!,
     password: process.env.PATRIOT_PASSWORD!,
-    baseUrl: 'https://id14533.public.api.abcp.ru',
+    baseUrl: `https://${process.env.PATRIOT_ABCP_ID}.public.api.abcp.ru`,
   },
   ug_f: {
     username: process.env.UG_USERNAME!,
     password: process.env.UG_PASSWORD!,
-    baseUrl: 'https://id9065.public.api.abcp.ru',
+    baseUrl: `https://${process.env.UG_ABCP_ID}.public.api.abcp.ru`,
+  },
+  npn: {
+    username: process.env.NPN_USERNAME!,
+    password: process.env.NPN_PASSWORD!,
+    baseUrl: `https://${process.env.NPN_ABCP_ID}.public.api.abcp.ru`,
   },
 };
 
