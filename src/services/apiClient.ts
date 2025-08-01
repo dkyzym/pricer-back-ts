@@ -87,7 +87,7 @@ export const createAxiosInstance = async (
       baseURL: supplier.baseUrl,
       httpAgent: agent,
       httpsAgent: agent,
-      timeout: 17_000,
+      timeout: 10_000,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
@@ -96,7 +96,7 @@ export const createAxiosInstance = async (
     // Создаём без прокси
     axiosInstance = axios.create({
       baseURL: supplier.baseUrl,
-      timeout: 17_000,
+      timeout: 10_000,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
@@ -105,7 +105,7 @@ export const createAxiosInstance = async (
 
   // Подключаем axios-retry
   axiosRetry(axiosInstance, {
-    retries: 2,
+    retries: 1,
     shouldResetTimeout: true,
     retryDelay: (retryCount) => 1000 * Math.pow(2, retryCount),
     retryCondition: (error: AxiosError) => {
