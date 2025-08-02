@@ -26,4 +26,5 @@ export const brandGroupsMap = [
   ['БРТ', 'Tadem', 'Балаковорезинотехника'],
   ['total', 'TotalEnergies'],
   ['seinsa', 'autofner', 'seinsa autofren'],
+  ['transmaster', 'transmaster universal'],
 ];
