@@ -2,11 +2,7 @@ import { DateTime } from 'luxon';
 import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService.js';
 import { v4 as uuidV4 } from 'uuid';
 import { Logger } from 'winston';
-import {
-  SearchResultsParsed,
-  SupplierName,
-  TovarAutosputnik,
-} from '../../../types/index.js';
+import { SearchResultsParsed, TovarAutosputnik } from '../../../types/index.js';
 import { calculateDeliveryDate } from '../../calculateDates/index.js';
 import { isRelevantBrand } from '../../isRelevantBrand.js';
 
@@ -15,13 +11,15 @@ export const parseAutosputnikData = async (
     article: string;
     brand: string;
   },
-  userLogger: Logger
+  userLogger: Logger,
+  supplier: 'autosputnik' | 'autosputnik_bn'
 ) => {
   try {
     // Шаг 1: Получаем первоначальные данные без указания бренда
     const initialData = await getAutosputnikItemsListByArticleService(
       item.article,
-      userLogger
+      userLogger,
+      supplier
     );
 
     // Извлекаем массив объектов из initialData.requestAnswer
@@ -43,7 +41,12 @@ export const parseAutosputnikData = async (
 
     // Шаг 3: Делаем повторные запросы с каждым идентификатором бренда
     const promises = uniqueBrandIds.map((brandId: string) =>
-      getAutosputnikItemsListByArticleService(item.article, userLogger, brandId)
+      getAutosputnikItemsListByArticleService(
+        item.article,
+        userLogger,
+        supplier,
+        brandId
+      )
     );
 
     // Ожидаем завершения всех промисов
@@ -74,7 +77,7 @@ export const parseAutosputnikData = async (
           brand: item.BRA_BRAND,
           price: Number(item.NEW_COST),
           allow_return: item.RETURNS_POSIBL === '1' ? true : false,
-          supplier: 'autosputnik' as SupplierName,
+          supplier,
           warehouse: item.PRICE_NAME,
           imageUrl: '',
           deliveryDate: DateTime.fromFormat(
@@ -87,7 +90,7 @@ export const parseAutosputnikData = async (
             Number(item.SHIPPING_PROC) === 0 ? 80 : Number(item.SHIPPING_PROC),
           warehouse_id: item.ID_SHOP_PRICES,
           description: item.NAME_TOVAR,
-          autosputnik: {
+          [supplier]: {
             brand: item.BRA_ID,
             id_shop_prices: item.ID_SHOP_PRICES,
           },

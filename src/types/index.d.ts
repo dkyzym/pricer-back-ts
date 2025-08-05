@@ -3,11 +3,13 @@ import { Logger } from 'winston';
 export type SupplierName =
   | 'turboCars'
   | 'ug'
+  | 'ug_f'
+  | 'ug_bn'
   | 'patriot'
   | 'profit'
   | 'autosputnik'
+  | 'autosputnik_bn'
   | 'autoImpulse'
-  | 'ug_f'
   | 'armtek'
   | 'npn';
 

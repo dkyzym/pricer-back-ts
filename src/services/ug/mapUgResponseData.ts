@@ -10,7 +10,8 @@ import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
 export const mapUgResponseData = (
   data: abcpArticleSearchResult[],
   brand: string,
-  userLogger: Logger
+  userLogger: Logger,
+  supplier: 'ug' | 'ug_f' | 'ug_bn'
 ): SearchResultsParsed[] => {
   const ownWarehouses = ['краснодар', 'ростов']; // «родные» склады ЮГ
 
@@ -40,7 +41,7 @@ export const mapUgResponseData = (
       deadline: item.deliveryPeriod || 1,
       deadLineMax: item.deliveryPeriodMax || 1,
 
-      supplier: 'ug',
+      supplier,
       probability,
       needToCheckBrand: !isRelevantBrand(brand, item.brand),
       returnable: Number(!item.noReturn),
@@ -49,7 +50,7 @@ export const mapUgResponseData = (
       warehouse_id: String(item.supplierCode),
       inner_product_code: item.itemKey,
 
-      ug: {
+      [supplier]: {
         itemKey: item.itemKey,
         supplierCode: String(item.supplierCode),
       },

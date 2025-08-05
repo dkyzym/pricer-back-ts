@@ -1,15 +1,23 @@
 import axios from 'axios';
 import { Logger } from 'winston';
-// import { logger } from '../../config/logger';
 
 export const getAutosputnikItemsListByArticleService = async (
   article: string,
   userLogger: Logger,
+  supplier: 'autosputnik' | 'autosputnik_bn',
   brandId?: string
 ) => {
   const BASE_URL = 'https://api.auto-sputnik.ru/search_result.php';
-  const login = process.env.AUTOSPUTNIK_LOGIN;
-  const pass = process.env.AUTOSPUTNIK_PASS;
+
+  const login =
+    supplier === 'autosputnik'
+      ? process.env.AUTOSPUTNIK_LOGIN
+      : process.env.AUTOSPUTNIK_LOGIN_BN;
+
+  const pass =
+    supplier === 'autosputnik'
+      ? process.env.AUTOSPUTNIK_PASS
+      : process.env.AUTOSPUTNIK_PASS_BN;
 
   if (!login || !pass) {
     throw new Error(

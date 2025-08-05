@@ -6,7 +6,7 @@ import { createAxiosInstance } from '../../apiClient.js';
 export const fetchAbcpData = async (
   article: string,
   brand: string,
-  supplier: 'ug' | 'patriot' | 'ug_f' | 'npn',
+  supplier: 'ug' | 'patriot' | 'ug_f' | 'npn' | 'ug_bn',
   useOnlineStocks?: number
 ) => {
   try {

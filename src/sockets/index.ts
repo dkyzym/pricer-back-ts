@@ -198,20 +198,24 @@ export const initializeSocket = (server: HTTPServer) => {
               error: (error as Error).message,
             });
           }
-        } else if (supplier === 'autosputnik') {
+        } else if (
+          supplier === 'autosputnik' ||
+          supplier === 'autosputnik_bn'
+        ) {
           try {
             userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
             );
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
-              supplier: 'autosputnik',
+              supplier: supplier,
               article: item.article,
             });
 
             const autoSputnikData = await parseAutosputnikData(
               item,
-              userLogger
+              userLogger,
+              supplier
             );
 
             logResultCount(item, userLogger, supplier, autoSputnikData);
@@ -230,17 +234,21 @@ export const initializeSocket = (server: HTTPServer) => {
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier: 'autosputnik',
+              supplier,
               result: autosputnikResult,
             });
           } catch (error) {
             userLogger.error('Autosputnik error:', error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
-              supplier: 'autosputnik',
+              supplier,
               error: (error as Error).message,
             });
           }
-        } else if (supplier === 'ug' || supplier === 'ug_f') {
+        } else if (
+          supplier === 'ug' ||
+          supplier === 'ug_f' ||
+          supplier === 'ug_bn'
+        ) {
           try {
             userLogger.info(
               `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
@@ -251,7 +259,9 @@ export const initializeSocket = (server: HTTPServer) => {
               article: item.article,
             });
 
-            const useOnlineStocks = supplier === 'ug_f' ? 0 : 1;
+            const useOnlineStocks = ['ug_f', 'ug_bn'].includes(supplier)
+              ? 0
+              : 1;
 
             // 1. Запрашиваем данные у поставщика.
             const data = await fetchAbcpData(
@@ -261,7 +271,13 @@ export const initializeSocket = (server: HTTPServer) => {
               useOnlineStocks
             );
 
-            const mapped = mapUgResponseData(data, item.brand, userLogger);
+            const mapped = mapUgResponseData(
+              data,
+              item.brand,
+              userLogger,
+              supplier
+            );
+
             const filtered = filterAndSortAllResults(mapped);
 
             if (filtered.length === 0) return;

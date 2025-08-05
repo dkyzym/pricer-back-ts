@@ -35,6 +35,9 @@ const SUPPLIER_CONFIG: Record<
   autosputnik: {
     maxItems: 4,
   },
+  autosputnik_bn: {
+    maxItems: 4,
+  },
   armtek: {
     maxItems: 4,
     // не задали ничего, значит будем использовать глобальные значения
@@ -46,6 +49,7 @@ const SUPPLIER_CONFIG: Record<
   autoImpulse: {},
   patriot: {},
   ug_f: {},
+  ug_bn: {},
   npn: {},
 };
 
@@ -57,11 +61,14 @@ const FILTERED_SUPPLIERS: SupplierName[] = [
   'ug',
   'profit',
   'autosputnik',
+  'autosputnik_bn',
   'armtek',
   'turboCars',
   'patriot',
   'autoImpulse',
   'npn',
+  'ug_bn',
+  'ug_f',
   // при необходимости добавим других
 ];
 
