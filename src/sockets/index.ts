@@ -22,7 +22,8 @@ import { searchArmtekArticle } from '../services/armtek/searchArmtekArticle.js';
 import { getCachedStoreList } from '../services/armtek/storeList.js';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
 import { clarifyBrand } from '../services/clarifyBrand.js';
-import { mapPatriotNpnResponseData } from '../services/patriot/mapPatriotNpnResponseData.js';
+import { mapNpnResponseData } from '../services/npn/mapNpnResponseData.js';
+import { mapPatriotResponseData } from '../services/patriot/mapPatriotResponseData.js';
 import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.js';
 import { fetchAbcpData } from '../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { mapUgResponseData } from '../services/ug/mapUgResponseData.js';
@@ -401,7 +402,7 @@ export const initializeSocket = (server: HTTPServer) => {
             );
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
-              supplier: 'patriot',
+              supplier,
               article: item.article,
             });
 
@@ -411,7 +412,7 @@ export const initializeSocket = (server: HTTPServer) => {
               supplier
             );
 
-            const mappedPatriotData = mapPatriotNpnResponseData(
+            const mappedPatriotData = mapPatriotResponseData(
               data,
               item.brand,
               userLogger,
@@ -435,7 +436,7 @@ export const initializeSocket = (server: HTTPServer) => {
             };
 
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
-              supplier: 'patriot',
+              supplier,
               result: patriotResult,
             });
           } catch (err: unknown) {
@@ -700,16 +701,16 @@ export const initializeSocket = (server: HTTPServer) => {
               supplier
             );
 
-            const mappedPatriotData = mapPatriotNpnResponseData(
+            const mappedNpnData = mapNpnResponseData(
               data,
               item.brand,
               userLogger,
               supplier
             );
 
-            const filteredItems = filterAndSortAllResults(mappedPatriotData);
+            const filteredItems = filterAndSortAllResults(mappedNpnData);
 
-            logResultCount(item, userLogger, supplier, mappedPatriotData);
+            logResultCount(item, userLogger, supplier, mappedNpnData);
 
             userLogger.info(
               chalk.bgYellow(

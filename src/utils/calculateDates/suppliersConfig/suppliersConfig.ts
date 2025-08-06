@@ -369,61 +369,30 @@ export const suppliersConfig: SupplierConfig[] = [
   },
   {
     supplierName: 'npn',
-    workingDays: [2, 5], // Вторник и пятница
+    workingDays: [2, 5], // Дни отгрузки со склада поставщика: Вторник и Пятница
     cutoffTimes: {
-      default: '13:30', // Крайний срок 13:30 но ЕГО НУЖНО БЫ ПОПРАВИТЬ текущий вариант приблизительный
+      default: '15:00', // Время отсечки для отгрузки в тот же день
     },
     processingTime: { days: 0 },
-    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
-      let deliveryDate: DateTime;
-      const weekday = currentTime.weekday; // 1 = Monday, ..., 7 = Sunday
-      const hour = currentTime.hour;
-      const minute = currentTime.minute;
+    specialConditions: (
+      currentTime: DateTime,
+      result: SearchResultsParsed
+    ): DateTime => {
+      // Шаг 1: Рассчитываем предварительную дату прибытия на склад ПОСТАВЩИКА.
+      // Для этого используем часы, которые мы УЖЕ рассчитали в `mapPatriotNpnResponseData`.
+      const arrivalAtSupplierWarehouse = currentTime.plus({
+        hours: result.deadline,
+      });
 
-      // Функция для получения следующего определенного дня недели
-      const getNextWeekday = (
-        current: DateTime,
-        targetWeekday: number
-      ): DateTime => {
-        let daysToAdd = (targetWeekday - current.weekday + 7) % 7;
-        if (daysToAdd === 0) {
-          daysToAdd = 7; // Если сегодня целевой день, выбрать следующий
-        }
-        return current.plus({ days: daysToAdd });
-      };
+      // Шаг 2: Находим ближайший день отгрузки (Вторник или Пятница)
+      // ПОСЛЕ прибытия товара на их склад.
+      const shippingDay = getNextWorkingDay([2, 5])(arrivalAtSupplierWarehouse);
 
-      if (weekday === 2) {
-        // Вторник
-        if (hour < 15 || (hour === 15 && minute === 0)) {
-          // Заказ до 15:00 во вторник — доставка в среду
-          deliveryDate = currentTime.plus({ days: 1 });
-        } else {
-          // Заказ после 15:00 во вторник — доставка в субботу
-          deliveryDate = getNextWeekday(currentTime, 6); // 6 = Saturday
-        }
-      } else if (weekday === 5) {
-        // Пятница
-        if (hour < 15 || (hour === 15 && minute === 0)) {
-          // Заказ до 15:00 в пятницу — доставка в субботу
-          deliveryDate = currentTime.plus({ days: 1 });
-        } else {
-          // Заказ после 15:00 в пятницу — доставка в следующую среду
-          deliveryDate = getNextWeekday(currentTime, 3); // 3 = Wednesday
-        }
-      } else {
-        // В остальные дни — доставка на ближайшую среду или субботу
-        const nextWednesday = getNextWeekday(currentTime, 3);
-        const nextSaturday = getNextWeekday(currentTime, 6);
+      // Шаг 3: Добавляем 1 день на доставку от поставщика до ВАС.
+      // Это реализует вашу логику "отгрузится во вторник, приедет в среду".
+      const finalDeliveryDate = shippingDay.plus({ days: 1 });
 
-        // Выбрать ближайший из двух дней
-        if (nextWednesday < nextSaturday) {
-          deliveryDate = nextWednesday;
-        } else {
-          deliveryDate = nextSaturday;
-        }
-      }
-
-      return deliveryDate;
+      return finalDeliveryDate;
     },
   },
 ];
