@@ -39,7 +39,7 @@ export const addToCartController = async (req: Request, res: Response) => {
         message: 'Ошибка при добавлении в корзину',
       });
     }
-  } else if (supplier === 'ug') {
+  } else if (supplier.startsWith('ug')) {
     const { brand, supplierCode, quantity, itemKey, number } = req.body;
 
     if (!brand || !supplierCode || !quantity || !itemKey || !number) {
@@ -58,12 +58,14 @@ export const addToCartController = async (req: Request, res: Response) => {
     };
 
     try {
-      const result = await addToCartUgService([position]);
+      if (supplier === 'ug' || supplier === 'ug_bn' || supplier === 'ug_f') {
+        const result = await addToCartUgService([position], supplier);
 
-      res.status(200).json({
-        success: Boolean(result.status),
-        message: result.positions[0]?.errorMessage || 'Товар добавлен',
-      });
+        res.status(200).json({
+          success: Boolean(result.status),
+          message: result.positions[0]?.errorMessage || 'Товар добавлен',
+        });
+      }
     } catch (error) {
       console.error(`Ошибка при добавлении в корзину ${supplier}:`, error);
       res.status(500).json({
@@ -122,7 +124,7 @@ export const addToCartController = async (req: Request, res: Response) => {
     };
     try {
       const result = await addToCartAutosputnikService(data);
-      // console.log(result);
+
       const cart = await getAutosputnikCart();
       console.log(cart);
 

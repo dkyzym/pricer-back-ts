@@ -133,8 +133,7 @@ export const createAxiosInstance = async (
 
       // Пример логики для конкретных поставщиков
       if (
-        supplierKey === 'ug' ||
-        supplierKey === 'ug_bn' ||
+        supplierKey.startsWith('ug') ||
         supplierKey === 'patriot' ||
         supplierKey === 'npn'
       ) {
