@@ -5,7 +5,7 @@ import {
   abcpArticleSearchResult,
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
-import { suppliersConfig } from '../../utils/calculateDates/suppliersConfig/suppliersConfig.js';
+
 import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
 import { calculateNpnDeadlineHours } from '../../utils/npn/calculateNpnDeadline.js';
 
@@ -15,34 +15,10 @@ export const mapNpnResponseData = (
   userLogger: Logger,
   supplier: 'npn'
 ): SearchResultsParsed[] => {
-  // Находим конфиг для текущего поставщика один раз
-  const supplierConfig = suppliersConfig.find(
-    (c) => c.supplierName === supplier
-  );
-
   const mappedResponseData: Omit<SearchResultsParsed, 'deliveryDate'>[] =
     data.map((item) => {
-      let deadlines = {
-        deadline: item.deliveryPeriod || 24,
-        deadLineMax: item.deliveryPeriodMax || item.deliveryPeriod || 24,
-      };
+      let deadlines = calculateNpnDeadlineHours(item, userLogger);
 
-      // Если поставщик - 'npn' и мы нашли его конфиг, вызываем расчет с доп. параметром
-      if (supplier === 'npn' && supplierConfig) {
-        deadlines = calculateNpnDeadlineHours(
-          item,
-          supplierConfig.workingDays,
-          userLogger
-        );
-      } else if (supplier === 'npn') {
-        // Запасной вариант, если конфиг не найден
-        userLogger.warn(
-          `[NPN] Конфигурация для поставщика не найдена. Расчет часов может быть неточным.`
-        );
-        deadlines = calculateNpnDeadlineHours(item, [], userLogger); // Передаем пустой массив
-      }
-
-      // --- Используем реальную вероятность поставки из API ---
       const probability =
         item.deliveryProbability > 0 ? item.deliveryProbability : 95;
 
@@ -59,7 +35,7 @@ export const mapNpnResponseData = (
         deadLineMax: deadlines.deadLineMax,
         deadlineReplace: item.deadlineReplace,
         supplier: supplier,
-        probability, // Используем значение из API
+        probability,
         needToCheckBrand: !isRelevantBrand(brand, item.brand),
         returnable: Number(!item.noReturn),
         multi: item.packing || 1,

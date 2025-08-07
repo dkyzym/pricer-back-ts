@@ -1,10 +1,8 @@
+import { DateTime, WeekdayNumbers } from 'luxon';
 import { Logger } from 'winston';
 import { abcpArticleSearchResult } from '../../types/index.js';
 
-// --- Вспомогательные утилиты ---
 const dayNameToIndex: { [key: string]: number } = {
-  вос: 0,
-  вс: 0,
   пон: 1,
   пн: 1,
   вто: 2,
@@ -17,129 +15,111 @@ const dayNameToIndex: { [key: string]: number } = {
   пт: 5,
   суб: 6,
   сб: 6,
+  вос: 7,
+  вс: 7,
 };
 
-const getNextDayOfWeek = (startDate: Date, targetDayIndex: number): Date => {
-  const resultDate = new Date(startDate.getTime());
-  const currentDayIndex = resultDate.getDay();
-  const daysToAdd =
-    targetDayIndex <= currentDayIndex
-      ? 7 + targetDayIndex - currentDayIndex
-      : targetDayIndex - currentDayIndex;
-  resultDate.setDate(resultDate.getDate() + daysToAdd);
-  return resultDate;
-};
+const dayNamesForRegex = Object.keys(dayNameToIndex).join('|');
+const weeklyRuleRegex = new RegExp(
+  `до\\s+(${dayNamesForRegex})[а-я.]*\\s.*?(\\d{1,2})[.:-](\\d{2}).*?доставка.*?(?:след)[а-я.]*\\s+(${dayNamesForRegex})[а-я]*`
+);
 
-/**
- * Находит дату следующей отгрузки на основе текущего времени, времени отсечки и дней отгрузки.
- */
-const getNextShipmentDate = (
-  currentTime: Date,
-  cutoffTimeToday: Date,
-  shipmentDays: number[]
-): Date => {
-  let shipmentDate = new Date(currentTime.getTime());
-
-  // Проверяем, успеваем ли мы на отгрузку сегодня
-  if (
-    shipmentDays.includes(shipmentDate.getDay()) &&
-    currentTime.getTime() <= cutoffTimeToday.getTime()
-  ) {
-    // Да, отгрузка сегодня.
-    return shipmentDate;
-  }
-
-  // Если не успели, ищем следующий доступный день отгрузки
-  while (true) {
-    shipmentDate.setDate(shipmentDate.getDate() + 1);
-    if (shipmentDays.includes(shipmentDate.getDay())) {
-      return shipmentDate;
-    }
-  }
-};
-
-// --- Основная функция расчета часов ---
 export const calculateNpnDeadlineHours = (
   originalItem: abcpArticleSearchResult,
-  shipmentDays: number[], // Новый параметр: дни отгрузки из конфига
   logger: Logger
 ): { deadline: number; deadLineMax: number } => {
-  const now = new Date();
-  const initialDeadline = originalItem.deliveryPeriod || 24;
-  const initialDeadlineMax = originalItem.deliveryPeriodMax || initialDeadline;
+  const now = DateTime.now().setZone('Europe/Moscow');
 
+  const deliveryPeriodHours = originalItem.deliveryPeriod ?? 24;
+  const deliveryPeriodMaxHours =
+    originalItem.deliveryPeriodMax ?? deliveryPeriodHours;
+
+  // Пытаемся разобрать правило из строки, только если она существует и не пустая.
   if (
-    typeof originalItem.deadlineReplace !== 'string' ||
-    !originalItem.deadlineReplace.trim()
+    typeof originalItem.deadlineReplace === 'string' &&
+    originalItem.deadlineReplace.trim()
   ) {
-    return { deadline: initialDeadline, deadLineMax: initialDeadlineMax };
-  }
+    const rule = originalItem.deadlineReplace.toLowerCase();
+    try {
+      // Правило 1: Недельное расписание (переопределяет deliveryPeriod)
+      const weeklyMatch = rule.match(weeklyRuleRegex);
+      if (weeklyMatch) {
+        const [, cutoffDayStr, cutoffHour, cutoffMinute, deliveryDayStr] =
+          weeklyMatch;
+        const cutoffDayIndex = dayNameToIndex[cutoffDayStr] as WeekdayNumbers;
+        const deliveryDayIndex = dayNameToIndex[
+          deliveryDayStr
+        ] as WeekdayNumbers;
 
-  const rule = originalItem.deadlineReplace.toLowerCase();
+        let cutoffDate = now.set({
+          weekday: cutoffDayIndex,
+          hour: Number(cutoffHour),
+          minute: Number(cutoffMinute),
+        });
+        if (now > cutoffDate) cutoffDate = cutoffDate.plus({ weeks: 1 });
 
-  try {
-    // --- Правило 1: Недельное расписание (без изменений) ---
-    const weeklyMatch = rule.match(
-      /до\s+(пон|вто|ср|чет|пят|суб|вос)[а-я.]*\s.*?(\d{1,2})[.:-](\d{2}).*?доставка.*?(?:след)[а-я.]*\s+(пон|вто|ср|чет|пят|суб|вос)[а-я]*/
-    );
-    if (weeklyMatch) {
-      // ... логика остается прежней ...
-      const [, cutoffDay, cutoffHour, cutoffMinute, deliveryDay] = weeklyMatch;
-      const cutoffDayIndex = dayNameToIndex[cutoffDay];
-      let cutoffDate = getNextDayOfWeek(now, cutoffDayIndex);
-      cutoffDate.setHours(Number(cutoffHour), Number(cutoffMinute), 0, 0);
+        let deliveryDate = cutoffDate.set({ weekday: deliveryDayIndex });
+        if (deliveryDate <= cutoffDate)
+          deliveryDate = deliveryDate.plus({ weeks: 1 });
 
-      if (now.getTime() > cutoffDate.getTime()) {
-        cutoffDate.setDate(cutoffDate.getDate() + 7);
+        const readyTime = deliveryDate.set({ hour: 9, minute: 0 });
+        const hours = Math.ceil(readyTime.diff(now, 'hours').hours);
+        return { deadline: hours, deadLineMax: hours + 24 };
       }
 
-      const deliveryDayIndex = dayNameToIndex[deliveryDay];
-      const deliveryDate = getNextDayOfWeek(cutoffDate, deliveryDayIndex);
-      deliveryDate.setHours(18, 0, 0, 0);
+      // Правило 2: "на наш склад через X дня" (переопределяет deliveryPeriod)
+      const daysMatch = rule.match(/на наш склад через\s+(\d+)\s+д/);
+      if (daysMatch) {
+        let arrivalDate = now.plus({ days: parseInt(daysMatch[1], 10) });
+        if (arrivalDate.weekday === 6)
+          arrivalDate = arrivalDate.plus({ days: 2 });
+        if (arrivalDate.weekday === 7)
+          arrivalDate = arrivalDate.plus({ days: 1 });
 
-      const hours = Math.ceil(
-        (deliveryDate.getTime() - now.getTime()) / 3600000
+        const readyTime = arrivalDate.set({ hour: 9, minute: 0 });
+        const hours = Math.ceil(readyTime.diff(now, 'hours').hours);
+        return { deadline: hours, deadLineMax: hours };
+      }
+
+      // Правило 3: "XX часов" (переопределяет deliveryPeriod)
+      const hoursMatch = rule.match(/(\d+)\s+час/);
+      if (hoursMatch) {
+        const hours = parseInt(hoursMatch[1], 10);
+        return { deadline: hours, deadLineMax: hours };
+      }
+
+      // Правило 4: Общая дневная отсечка (переопределяет deliveryPeriod)
+      const dailyMatch = rule.match(/(?:до)?\s*(\d{1,2})[.:-](\d{2})/);
+      if (dailyMatch) {
+        let processingDay = now;
+        const cutoffTimeToday = now.set({
+          hour: Number(dailyMatch[1]),
+          minute: Number(dailyMatch[2]),
+        });
+
+        if (now > cutoffTimeToday || now.weekday > 5) {
+          processingDay = processingDay.plus({ days: 1 });
+          while (processingDay.weekday > 5) {
+            processingDay = processingDay.plus({ days: 1 });
+          }
+        }
+        const readyTime = processingDay.set({ hour: 9, minute: 0 });
+        const hours = Math.ceil(readyTime.diff(now, 'hours').hours);
+        return { deadline: hours, deadLineMax: hours };
+      }
+
+      // Если правило в строке не распознано, логируем и используем deliveryPeriod.
+      logger.warn(
+        `[NPN] Правило в строке "${rule}" не распознано. Используется значение из deliveryPeriod.`
       );
-      return { deadline: hours, deadLineMax: hours + 24 };
-    }
-
-    // --- Правило 2 (НОВОЕ): "на наш склад через X дня" ---
-    const daysMatch = rule.match(/на наш склад через\s+(\d+)\s+д/);
-    if (daysMatch) {
-      const days = parseInt(daysMatch[1], 10);
-      const hours = days * 24;
-      return { deadline: hours, deadLineMax: hours };
-    }
-
-    // --- Правило 3 (ОБНОВЛЕННОЕ): "до 10-45" ---
-    const dailyMatch = rule.match(/(?:до)?\s*(\d{1,2})[.:-](\d{2})/);
-    if (dailyMatch) {
-      const [, cutoffHour, cutoffMinute] = dailyMatch;
-      const cutoffTimeToday = new Date(now.getTime());
-      cutoffTimeToday.setHours(Number(cutoffHour), Number(cutoffMinute), 0, 0);
-
-      // Находим фактическую дату следующей отгрузки
-      const nextShipment = getNextShipmentDate(
-        now,
-        cutoffTimeToday,
-        shipmentDays
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error(
+        `[NPN] Ошибка при разборе правила: "${rule}". ${errorMessage}`
       );
-
-      // Рассчитываем, сколько часов осталось до этой отгрузки
-      const hours = Math.ceil(
-        (nextShipment.getTime() - now.getTime()) / 3600000
-      );
-      return { deadline: hours, deadLineMax: hours };
     }
-  } catch (error) {
-    logger.error(
-      `[NPN] Критическая ошибка при разборе правила: "${rule}"`,
-      error
-    );
   }
 
-  logger.warn(
-    `[NPN] Не удалось распознать правило: "${rule}". Используется расчет по умолчанию.`
-  );
-  return { deadline: initialDeadline, deadLineMax: initialDeadlineMax };
+  return { deadline: deliveryPeriodHours, deadLineMax: deliveryPeriodMaxHours };
 };

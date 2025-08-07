@@ -369,30 +369,50 @@ export const suppliersConfig: SupplierConfig[] = [
   },
   {
     supplierName: 'npn',
-    workingDays: [2, 5], // Дни отгрузки со склада поставщика: Вторник и Пятница
+    workingDays: [2, 5], // Дни отгрузки: Вторник и Пятница
     cutoffTimes: {
-      default: '15:00', // Время отсечки для отгрузки в тот же день
+      default: '15:00', // Время отсечки для отгрузки
     },
     processingTime: { days: 0 },
     specialConditions: (
       currentTime: DateTime,
       result: SearchResultsParsed
     ): DateTime => {
-      // Шаг 1: Рассчитываем предварительную дату прибытия на склад ПОСТАВЩИКА.
-      // Для этого используем часы, которые мы УЖЕ рассчитали в `mapPatriotNpnResponseData`.
-      const arrivalAtSupplierWarehouse = currentTime.plus({
+      // 1. Рассчитываем, когда товар будет ГОТОВ к отгрузке на складе NPN
+      const readyForShipmentTime = currentTime.plus({
         hours: result.deadline,
       });
 
-      // Шаг 2: Находим ближайший день отгрузки (Вторник или Пятница)
-      // ПОСЛЕ прибытия товара на их склад.
-      const shippingDay = getNextWorkingDay([2, 5])(arrivalAtSupplierWarehouse);
+      const shipmentDays = [2, 5]; // Вторник, Пятница
+      const [cutoffHour, cutoffMinute] = '15:00'.split(':').map(Number);
 
-      // Шаг 3: Добавляем 1 день на доставку от поставщика до ВАС.
-      // Это реализует вашу логику "отгрузится во вторник, приедет в среду".
-      const finalDeliveryDate = shippingDay.plus({ days: 1 });
+      // 2. Начинаем поиск дня отгрузки, отталкиваясь от времени готовности товара
+      let shipmentDay = readyForShipmentTime;
 
-      return finalDeliveryDate;
+      // Ищем в цикле (максимум 7 итераций для безопасности)
+      for (let i = 0; i < 7; i++) {
+        // Является ли текущий день днем отгрузки?
+        if (shipmentDays.includes(shipmentDay.weekday)) {
+          // Да. Теперь проверим, успеваем ли мы до отсечки.
+          const cutoffDateTime = shipmentDay.set({
+            hour: cutoffHour,
+            minute: cutoffMinute,
+          });
+
+          if (readyForShipmentTime <= cutoffDateTime) {
+            // Успели! Это наш день отгрузки.
+            // Доставка клиенту происходит на следующий день.
+            return shipmentDay.plus({ days: 1 });
+          }
+        }
+
+        // Если день не подходит или мы опоздали к отсечке,
+        // переходим к началу следующего дня и повторяем проверку.
+        shipmentDay = shipmentDay.plus({ days: 1 }).startOf('day');
+      }
+
+      // Запасной вариант, если что-то пошло не так
+      return currentTime.plus({ days: 10 });
     },
   },
 ];
