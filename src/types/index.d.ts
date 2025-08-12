@@ -11,6 +11,7 @@ export type SupplierName =
   | 'autosputnik_bn'
   | 'autoImpulse'
   | 'armtek'
+  | 'mikano'
   | 'npn';
 
 export type PuppeteerSupplierName = 'patriot';

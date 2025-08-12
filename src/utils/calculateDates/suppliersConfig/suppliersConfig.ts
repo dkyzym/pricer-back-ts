@@ -415,4 +415,64 @@ export const suppliersConfig: SupplierConfig[] = [
       return currentTime.plus({ days: 10 });
     },
   },
+  {
+    supplierName: 'mikano',
+    workingDays: [1, 5], // Понедельник и пятница
+    cutoffTimes: {
+      default: '15:00', // Крайний срок 15:00
+    },
+    processingTime: { days: 0 },
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime;
+      const weekday = currentTime.weekday; // 1 = Monday, ..., 7 = Sunday
+      const hour = currentTime.hour;
+      const minute = currentTime.minute;
+
+      // Функция для получения следующего определенного дня недели
+      const getNextWeekday = (
+        current: DateTime,
+        targetWeekday: number
+      ): DateTime => {
+        let daysToAdd = (targetWeekday - current.weekday + 7) % 7;
+        if (daysToAdd === 0) {
+          daysToAdd = 7; // Если сегодня целевой день, выбрать следующий
+        }
+        return current.plus({ days: daysToAdd });
+      };
+
+      if (weekday === 1) {
+        // 1 = понедельник, 5 пятница
+        // Пятница
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 в понедельник — доставка во вторник
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 в понедельник — доставка в субботу
+          deliveryDate = getNextWeekday(currentTime, 6); // 6 = Saturday
+        }
+      } else if (weekday === 5) {
+        // Пятница
+        if (hour < 15 || (hour === 15 && minute === 0)) {
+          // Заказ до 15:00 в пятницу — доставка в субботу
+          deliveryDate = currentTime.plus({ days: 1 });
+        } else {
+          // Заказ после 15:00 в пятницу — доставка в следующий вторник
+          deliveryDate = getNextWeekday(currentTime, 2); // 2 = Вторник
+        }
+      } else {
+        // В остальные дни — доставка на ближайший вторник или субботу
+        const nextTuesday = getNextWeekday(currentTime, 2);
+        const nextSaturday = getNextWeekday(currentTime, 6);
+
+        // Выбрать ближайший из двух дней
+        if (nextTuesday < nextSaturday) {
+          deliveryDate = nextTuesday;
+        } else {
+          deliveryDate = nextSaturday;
+        }
+      }
+
+      return deliveryDate;
+    },
+  },
 ];

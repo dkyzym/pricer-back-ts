@@ -51,6 +51,7 @@ const SUPPLIER_CONFIG: Record<
   ug_f: {},
   ug_bn: {},
   npn: {},
+  mikano: {},
 };
 
 /**

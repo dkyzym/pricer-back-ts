@@ -22,6 +22,7 @@ import { searchArmtekArticle } from '../services/armtek/searchArmtekArticle.js';
 import { getCachedStoreList } from '../services/armtek/storeList.js';
 import { itemDataAutoImpulseService } from '../services/autoimpulse/itemDataAutoImpulseService.js';
 import { clarifyBrand } from '../services/clarifyBrand.js';
+import { itemDataMikanoService } from '../services/mikano/itemDataAutoMikanoService.js';
 import { mapNpnResponseData } from '../services/npn/mapNpnResponseData.js';
 import { mapPatriotResponseData } from '../services/patriot/mapPatriotResponseData.js';
 import { searchTurbocarsCode } from '../services/turboCars/searchTurboCarsCode.js';
@@ -566,6 +567,48 @@ export const initializeSocket = (server: HTTPServer) => {
             });
           } catch (error) {
             userLogger.error('AutoImpulse error:', error);
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
+              supplier,
+              error: (error as Error).message,
+            });
+          }
+        } else if (supplier === 'mikano') {
+          try {
+            userLogger.info(
+              `Fetching data from ${supplier} for item: ${JSON.stringify(item)}`
+            );
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_STARTED, {
+              supplier,
+              article: item.article,
+            });
+
+            const data = await itemDataMikanoService({
+              item,
+              supplier,
+              userLogger,
+            });
+            logResultCount(item, userLogger, supplier, data);
+
+            const filteredItems = filterAndSortAllResults(data);
+            userLogger.info(
+              chalk.bgYellow(
+                `После фильтрации: ${supplier} - ${filteredItems?.length}`
+              )
+            );
+
+            const mikanoResult: pageActionsResult = {
+              success: data.length > 0,
+              message: `${supplier} data fetched: ${data.length > 0}`,
+              data: filteredItems,
+            };
+
+            socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_SUCCESS, {
+              supplier,
+              result: mikanoResult,
+            });
+          } catch (error) {
+            userLogger.error(`${supplier} error:`, error);
             socket.emit(SOCKET_EVENTS.SUPPLIER_DATA_FETCH_ERROR, {
               supplier,
               error: (error as Error).message,

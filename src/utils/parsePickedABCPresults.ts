@@ -1,5 +1,9 @@
 import * as cheerio from 'cheerio';
-import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
+import {
+  ParallelSearchParams,
+  SearchResultsParsed,
+  SupplierName,
+} from 'types/index.js';
 import { Logger } from 'winston';
 import { calculateDeliveryDate } from './calculateDates/index.js';
 import { filterEqualResults } from './data/filterEqualResults.js';
@@ -10,7 +14,8 @@ interface ParseParams extends ParallelSearchParams {
 }
 
 export const parseData = async (
-  $: cheerio.CheerioAPI
+  $: cheerio.CheerioAPI,
+  supplier: SupplierName
 ): Promise<Omit<SearchResultsParsed, 'supplier'>[]> => {
   const data: Omit<SearchResultsParsed, 'supplier'>[] = [];
 
@@ -45,8 +50,12 @@ export const parseData = async (
     const priceText = $row.attr('data-output-price') || '0';
     const deadlineText = $row.attr('data-deadline') || '0';
     const deadLineMaxText = $row.attr('data-deadline-max') || '0';
+    const isMicanoChangePlusNeed =
+      supplier === 'mikano' && availabilityText === '-1'; // для того чтобы знать нужно менять значение наличия с + на число или нет.
 
-    const availability = parseInt(availabilityText, 10) || 0;
+    let availability = isMicanoChangePlusNeed
+      ? 50
+      : parseInt(availabilityText, 10) || 0;
     const price = parseFloat(priceText) || 0;
     const deadline = parseInt(deadlineText, 10) || 12;
     const deadLineMax = parseInt(deadLineMaxText, 10) || 24;
@@ -84,13 +93,17 @@ export const parsePickedABCPresults = async ({
   const $ = cheerio.load(html);
 
   // Парсинг данных
-  const currentData = await parseData($);
+  const currentData = await parseData($, supplier);
 
   if (currentData.length > 0) {
     // Добавляем поле supplier и изменяем probability для нужных поставщиков
     const resultsWithSupplier = currentData
       .map((product) => {
-        if (supplier === 'patriot' || supplier === 'autoImpulse') {
+        if (
+          supplier === 'patriot' ||
+          supplier === 'autoImpulse' ||
+          supplier === 'mikano'
+        ) {
           product.probability = 98;
         }
 
