@@ -27,19 +27,19 @@ const SUPPLIER_CONFIG: Record<
   }
 > = {
   ug: {
-    maxItems: 4,
+    maxItems: 3,
   },
   profit: {
-    maxItems: 4,
+    maxItems: 3,
   },
   autosputnik: {
-    maxItems: 4,
+    maxItems: 3,
   },
   autosputnik_bn: {
-    maxItems: 4,
+    maxItems: 3,
   },
   armtek: {
-    maxItems: 4,
+    maxItems: 3,
     // не задали ничего, значит будем использовать глобальные значения
   },
   turboCars: {
@@ -48,8 +48,8 @@ const SUPPLIER_CONFIG: Record<
   },
   autoImpulse: {},
   patriot: {},
-  ug_f: {},
-  ug_bn: {},
+  ug_f: { maxItems: 3 },
+  ug_bn: { maxItems: 3 },
   npn: {},
   mikano: {},
 };
