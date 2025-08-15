@@ -5,6 +5,11 @@ const getNextWorkingDay =
   (allowedWeekdays: number[]) =>
   (from: DateTime): DateTime => {
     let d = from;
+    // Сначала проверяем текущий день 'from'
+    if (allowedWeekdays.includes(d.weekday)) {
+      return d;
+    }
+    // Если не подошел, ищем следующий
     while (true) {
       d = d.plus({ days: 1 });
       if (allowedWeekdays.includes(d.weekday)) return d;
