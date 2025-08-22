@@ -20,7 +20,7 @@ export const initializeSocket = (server: HTTPServer) => {
     transportAttached = true;
   }
 
-  // Middleware для аутентификации
+  // Middleware для аутентификации (без изменений)
   io.use((socket, next) => {
     try {
       const token = socket.handshake.query.token as string | undefined;
@@ -39,6 +39,16 @@ export const initializeSocket = (server: HTTPServer) => {
       socketId: socket.id,
     });
     userLogger.info(chalk.cyan(`New client connected`));
+
+    // --- ВОССТАНОВЛЕННАЯ ЛОГИКА ---
+    if (socket.data.user.role === 'admin') {
+      socket.join('admin');
+      userLogger.info(`Joined room "admin"`);
+    }
+
+    // Отправляем событие об успешном подключении клиенту
+    socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
+    // --- КОНЕЦ ВОССТАНОВЛЕННОЙ ЛОГИКИ ---
 
     // --- Регистрация обработчиков событий ---
     socket.on(
