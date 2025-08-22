@@ -22,6 +22,11 @@ export const mapNpnResponseData = (
       const probability =
         item.deliveryProbability > 0 ? item.deliveryProbability : 95;
 
+      const warehouse =
+        item.deadlineReplace === ''
+          ? 'СВОЙ СКЛАД'
+          : `ЧУЖОЙ СКЛАД ${item.deadlineReplace}`;
+
       return {
         id: uuidv4(),
         article: item.number,
@@ -29,7 +34,7 @@ export const mapNpnResponseData = (
         description: item.description,
         availability: item.availability,
         price: item.price,
-        warehouse: item.supplierDescription,
+        warehouse: warehouse,
         imageUrl: '',
         deadline: deadlines.deadline,
         deadLineMax: deadlines.deadLineMax,
