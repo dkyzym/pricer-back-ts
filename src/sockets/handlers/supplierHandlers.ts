@@ -3,15 +3,15 @@ import {
   getItemResultsParams,
   SearchResultsParsed,
 } from '../../types/index.js';
-import { handleArmtek } from './armtekHandler.js';
-import { handleAutoImpulse } from './autoImpulseHandler.js';
-import { handleAutosputnik } from './autosputnikHandler.js';
-import { handleMikano } from './mikanoHandler.js';
-import { handleNpn } from './npnHandler.js';
-import { handlePatriot } from './patriotHandler.js';
-import { handleProfit } from './profitHandler.js';
-import { handleTurboCars } from './turboCarsHandler.js';
-import { handleUg } from './ugHandler.js';
+import { handleArmtek } from './suppliers/armtekHandler.js';
+import { handleAutoImpulse } from './suppliers/autoImpulseHandler.js';
+import { handleAutosputnik } from './suppliers/autosputnikHandler.js';
+import { handleMikano } from './suppliers/mikanoHandler.js';
+import { handleNpn } from './suppliers/npnHandler.js';
+import { handlePatriot } from './suppliers/patriotHandler.js';
+import { handleProfit } from './suppliers/profitHandler.js';
+import { handleTurboCars } from './suppliers/turboCarsHandler.js';
+import { handleUg } from './suppliers/ugHandler.js';
 
 type SupplierHandler = (
   data: getItemResultsParams,

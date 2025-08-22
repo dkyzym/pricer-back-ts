@@ -6,8 +6,8 @@ import {
   getItemResultsParams,
   itemsGroupProfit,
   SearchResultsParsed,
-} from '../../types/index.js';
-import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
+} from '../../../types/index.js';
+import { isRelevantBrand } from '../../../utils/isRelevantBrand.js';
 
 export const handleProfit = async (
   data: getItemResultsParams,

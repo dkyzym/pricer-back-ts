@@ -2,8 +2,8 @@ import { Logger } from 'winston';
 import {
   getItemResultsParams,
   SearchResultsParsed,
-} from '../../types/index.js';
-import { parseAutosputnikData } from '../../utils/data/autosputnik/parseAutosputnikData.js';
+} from '../../../types/index.js';
+import { parseAutosputnikData } from '../../../utils/data/autosputnik/parseAutosputnikData.js';
 
 export const handleAutosputnik = async (
   data: getItemResultsParams,
