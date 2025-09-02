@@ -49,7 +49,7 @@ export const initializeSocket = (server: HTTPServer) => {
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
     // --- КОНЕЦ ВОССТАНОВЛЕННОЙ ЛОГИКИ ---
 
-    // --- Регистрация обработчиков событий ---
+    // ---  Регистрация обработчиков событий ---
     socket.on(
       SOCKET_EVENTS.BRAND_CLARIFICATION,
       createBrandClarificationHandler(socket, userLogger)
