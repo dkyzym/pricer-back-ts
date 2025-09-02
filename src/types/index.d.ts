@@ -12,6 +12,7 @@ export type SupplierName =
   | 'autoImpulse'
   | 'armtek'
   | 'mikano'
+  | 'avtodinamika'
   | 'npn';
 
 export type PuppeteerSupplierName = 'patriot';
@@ -237,6 +238,14 @@ interface AddToCartConfig {
 }
 
 type accountAlias = 'nal' | 'bezNal';
+
+type abcpSupplierAlias =
+  | 'ug'
+  | 'patriot'
+  | 'ug_f'
+  | 'npn'
+  | 'ug_bn'
+  | 'avtodinamika';
 
 interface abcpArticleSearchResult {
   distributorId: number;

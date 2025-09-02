@@ -6,7 +6,7 @@ import { removeFromCartUgService } from './removeFromCartPatriotService.js';
 
 export const addToCartPatriotNpnService = async (
   positions: BasketPositionUG[],
-  supplier: 'patriot' | 'npn'
+  supplier: 'patriot' | 'npn' | 'avtodinamika'
 ): Promise<UgCartResponse> => {
   try {
     const axiosInstance = await createAxiosInstance(supplier);

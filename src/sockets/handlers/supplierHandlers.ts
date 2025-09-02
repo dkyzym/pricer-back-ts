@@ -12,6 +12,7 @@ import { handlePatriot } from './suppliers/patriotHandler.js';
 import { handleProfit } from './suppliers/profitHandler.js';
 import { handleTurboCars } from './suppliers/turboCarsHandler.js';
 import { handleUg } from './suppliers/ugHandler.js';
+import { handleAvtodinamika } from './suppliers/avtodinamikaHandler.js';
 
 type SupplierHandler = (
   data: getItemResultsParams,
@@ -31,4 +32,5 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   turboCars: handleTurboCars,
   armtek: handleArmtek,
   npn: handleNpn,
+  avtodinamika: handleAvtodinamika,
 };

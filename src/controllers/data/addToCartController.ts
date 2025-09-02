@@ -73,7 +73,11 @@ export const addToCartController = async (req: Request, res: Response) => {
         message: 'Ошибка при добавлении в корзину',
       });
     }
-  } else if (supplier === 'patriot' || supplier === 'npn') {
+  } else if (
+    supplier === 'patriot' ||
+    supplier === 'npn' ||
+    supplier === 'avtodinamika'
+  ) {
     const { brand, supplierCode, quantity, itemKey, number } = req.body;
 
     if (!brand || !supplierCode || !quantity || !itemKey || !number) {

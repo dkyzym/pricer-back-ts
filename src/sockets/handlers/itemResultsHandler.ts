@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
 import { getItemResultsParams, pageActionsResult } from '../../types/index.js';
 import { AbcpError } from '../../utils/abcpErrorHandler.js';
-import { filterAndSortAllResults } from '../../utils/filterAndSortAllResults.js';
+import { filterAndSortAllResults } from '../../utils/filterAndSortResults/filterAndSortAllResults.js';
 import { logResultCount } from '../../utils/stdLogs.js';
 import { supplierHandlers } from './supplierHandlers.js';
 

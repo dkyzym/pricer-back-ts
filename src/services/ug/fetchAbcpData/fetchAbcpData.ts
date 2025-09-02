@@ -1,12 +1,15 @@
 import { AxiosResponse } from 'axios';
 import { ABCP_SERVICE_PATHS } from '../../../config/api/config.js';
-import { abcpArticleSearchResult } from '../../../types/index.js';
+import {
+  abcpArticleSearchResult,
+  abcpSupplierAlias,
+} from '../../../types/index.js';
 import { createAxiosInstance } from '../../apiClient.js';
 
 export const fetchAbcpData = async (
   article: string,
   brand: string,
-  supplier: 'ug' | 'patriot' | 'ug_f' | 'npn' | 'ug_bn',
+  supplier: abcpSupplierAlias,
   useOnlineStocks?: number
 ) => {
   try {

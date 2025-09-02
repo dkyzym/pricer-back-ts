@@ -383,7 +383,7 @@ export const suppliersConfig: SupplierConfig[] = [
       currentTime: DateTime,
       result: SearchResultsParsed
     ): DateTime => {
-      // 1. Рассчитываем, когда товар будет ГОТОВ к отгрузке на складе NPN
+      // 1. Рассчитываем точное время, когда товар будет ГОТОВ к отгрузке на складе NPN
       const readyForShipmentTime = currentTime.plus({
         hours: result.deadline,
       });
@@ -391,32 +391,40 @@ export const suppliersConfig: SupplierConfig[] = [
       const shipmentDays = [2, 5]; // Вторник, Пятница
       const [cutoffHour, cutoffMinute] = '15:00'.split(':').map(Number);
 
-      // 2. Начинаем поиск дня отгрузки, отталкиваясь от времени готовности товара
-      let shipmentDay = readyForShipmentTime;
+      // 2. Ищем ближайший день отгрузки, начиная со дня готовности товара
+      let nextShipmentDate = readyForShipmentTime.startOf('day');
 
-      // Ищем в цикле (максимум 7 итераций для безопасности)
-      for (let i = 0; i < 7; i++) {
-        // Является ли текущий день днем отгрузки?
-        if (shipmentDays.includes(shipmentDay.weekday)) {
-          // Да. Теперь проверим, успеваем ли мы до отсечки.
-          const cutoffDateTime = shipmentDay.set({
+      // Ищем в цикле (максимум 8 итераций для безопасности)
+      for (let i = 0; i < 8; i++) {
+        // Проверяем, является ли текущий день днем отгрузки
+        if (shipmentDays.includes(nextShipmentDate.weekday)) {
+          // Да, это день отгрузки. Создаем объект DateTime для времени отсечки в этот день.
+          const cutoffDateTime = nextShipmentDate.set({
             hour: cutoffHour,
             minute: cutoffMinute,
+            second: 0,
+            millisecond: 0,
           });
 
+          // Проверяем, успевает ли товар (готовый в readyForShipmentTime) к этому времени отсечки
           if (readyForShipmentTime <= cutoffDateTime) {
-            // Успели! Это наш день отгрузки.
-            // Доставка клиенту происходит на следующий день.
-            return shipmentDay.plus({ days: 1 });
+            // УСПЕВАЕТ! Это наш день отгрузки.
+            // Доставка клиенту происходит на следующий день после отгрузки.
+            let customerDeliveryDate = cutoffDateTime.plus({ days: 1 });
+
+            // Если день доставки клиенту - воскресенье, переносим на понедельник.
+            if (customerDeliveryDate.weekday === 7) {
+              customerDeliveryDate = customerDeliveryDate.plus({ days: 1 });
+            }
+            return customerDeliveryDate;
           }
         }
-
-        // Если день не подходит или мы опоздали к отсечке,
-        // переходим к началу следующего дня и повторяем проверку.
-        shipmentDay = shipmentDay.plus({ days: 1 }).startOf('day');
+        // Если это не день отгрузки ИЛИ мы не успели к отсечке,
+        // переходим к следующему дню и повторяем проверку.
+        nextShipmentDate = nextShipmentDate.plus({ days: 1 });
       }
 
-      // Запасной вариант, если что-то пошло не так
+      // Запасной вариант на случай непредвиденной ошибки в логике
       return currentTime.plus({ days: 10 });
     },
   },
@@ -474,6 +482,54 @@ export const suppliersConfig: SupplierConfig[] = [
           deliveryDate = nextTuesday;
         } else {
           deliveryDate = nextSaturday;
+        }
+      }
+
+      return deliveryDate;
+    },
+  },
+  {
+    supplierName: 'avtodinamika',
+    workingDays: [1, 3, 5],
+    cutoffTimes: { default: '14:00' },
+    processingTime: { days: 0 },
+    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
+      let deliveryDate: DateTime;
+
+      /**
+       * Функция ищет ближайший понедельник (weekday=1) или четверг (weekday=4)
+       * СТРОГО ПОСЛЕ переданной даты (т. е. если совпадает день, мы его пропускаем).
+       */
+      const getNextDeliveryDateFrom = (date: DateTime): DateTime => {
+        let nextDate = date;
+        while (true) {
+          // Если это понедельник или четверг
+          if (nextDate.weekday === 1 || nextDate.weekday === 4) {
+            // Если день совпадает с исходным (по дате), пропускаем его
+            // (тем самым не даём выбрать «сегодня»).
+            if (nextDate.hasSame(date, 'day')) {
+              nextDate = nextDate.plus({ days: 1 });
+              continue;
+            }
+            return nextDate;
+          }
+          nextDate = nextDate.plus({ days: 1 });
+        }
+      };
+
+      // Если deadLineMax > 0, сначала прибавляем эти часы к currentTime
+      // (в вашем коде это трактуется просто как "часов" без уточнения выходных/праздников).
+      if (result.deadLineMax > 0) {
+        const tentativeDate = currentTime.plus({ hours: result.deadLineMax });
+        deliveryDate = getNextDeliveryDateFrom(tentativeDate);
+      } else {
+        // Иначе логика «если до 14:00 – сдвигаем на +1 день, если после 14:00 – на +2 дня»
+        if (currentTime.hour < 14) {
+          const tentativeDate = currentTime.plus({ days: 1 });
+          deliveryDate = getNextDeliveryDateFrom(tentativeDate);
+        } else {
+          const tentativeDate = currentTime.plus({ days: 2 });
+          deliveryDate = getNextDeliveryDateFrom(tentativeDate);
         }
       }
 

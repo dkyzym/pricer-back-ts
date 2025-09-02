@@ -71,6 +71,7 @@ export const createAxiosInstance = async (
   }
 
   const supplier = suppliers[supplierKey];
+
   if (!supplier) {
     throw new Error(`No supplier config found for key: ${supplierKey}`);
   }
@@ -135,7 +136,8 @@ export const createAxiosInstance = async (
       if (
         supplierKey.startsWith('ug') ||
         supplierKey === 'patriot' ||
-        supplierKey === 'npn'
+        supplierKey === 'npn' ||
+        supplierKey === 'avtodinamika'
       ) {
         config.params = {
           ...config.params,
