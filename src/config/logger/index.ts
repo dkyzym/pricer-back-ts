@@ -1,8 +1,8 @@
 import path from 'path';
+import { Server as SocketIOServer } from 'socket.io';
 import { addColors, createLogger, format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { SocketIOTransport } from './socketTransport.js';
-import { Server as SocketIOServer } from 'socket.io';
 
 const { combine, colorize, errors, timestamp, printf, json, uncolorize } =
   format;
@@ -36,6 +36,19 @@ const filterOnly = (level: LogLevel) => {
   return format((info) => (info.level === level ? info : false))();
 };
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key: string, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 /**
  * Формат для консоли: хотим видеть цвета + красивый вывод + stack trace для ошибок.
  */
@@ -44,7 +57,10 @@ const consoleFormat = combine(
   errors({ stack: true }),
   timestamp({ format: 'HH:mm:ss' }),
   printf(({ timestamp, level, message, stack, ...meta }) => {
-    const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+    const metaStr = Object.keys(meta).length
+      ? JSON.stringify(meta, getCircularReplacer())
+      : '';
+
     return `[${timestamp}] [${level}] ${message}${stack ? `\n${stack}` : ''} ${metaStr}`;
   })
 );
