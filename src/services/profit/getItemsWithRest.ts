@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import https from 'https';
 import { itemsGroupProfit } from 'types/index.js';
 import { Logger } from 'winston';
 
@@ -16,9 +17,17 @@ export const getItemsWithRest = async (
 
   const uri = `https://api.pr-lg.ru/search/items?secret=${apiKey}&article=${items[0].article}&brand=${items[0].brand}`;
 
+  // Создаем HTTPS агент для игнорирования SSL ошибок
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const res = await axios.get(uri);
+      const res = await axios.get(uri, {
+        httpsAgent,
+        timeout: 30000,
+      });
       return res.data;
     } catch (error) {
       const axiosError = error as AxiosError;
