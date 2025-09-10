@@ -20,47 +20,51 @@ export const suppliersConfig: SupplierConfig[] = [
   {
     supplierName: 'patriot',
 
-    // вторник–суббота
-    workingDays: [2, 3, 4, 5, 6],
+    // Обработка: понедельник–суббота (каждый день кроме воскресенья)
+    workingDays: [1, 2, 3, 4, 5, 6],
 
     cutoffTimes: {
-      default: '11:30',
-      extended: '20:00',
+      default: '11:00', // граница для доставки в тот же день
+      extended: '18:00', // конец приёма заказов
     },
 
     processingTime: { days: 0 },
 
-    /* >>> НОВЫЙ блок <<< */
     specialConditions: (
       now: DateTime,
       result: SearchResultsParsed
     ): DateTime => {
-      const { workingDays, cutoffTimes } = suppliersConfig.find(
-        (c) => c.supplierName === 'patriot'
-      )!;
+      // Дни доставки: вторник–суббота (нет доставки в вс и пн)
+      const deliveryDays = [2, 3, 4, 5, 6];
 
-      // 1. Часы, присланные ABCP:
-      //   Patriot 👇 реально кладёт «срок до отправки» в поле `deadline`
-      const hours = result.deadline > 0 ? result.deadline : 24;
-
-      /** «Черновая» дата — просто прибавляем часы  */
-      let tentative = now.plus({ hours });
-
-      /** 2. Если вышли за extended-cutoff сегодняшнего дня, - двигаем на сутки */
-      const extended = DateTime.fromFormat(cutoffTimes.extended, 'HH:mm', {
+      // Граничные времена
+      const cutoffTime = DateTime.fromFormat('11:00', 'HH:mm', {
         zone: now.zone,
-      }).set({
-        year: tentative.year,
-        month: tentative.month,
-        day: tentative.day,
-      });
+      }).set({ year: now.year, month: now.month, day: now.day });
 
-      if (tentative > extended) {
-        tentative = tentative.plus({ days: 1 });
+      const orderDeadline = DateTime.fromFormat('18:00', 'HH:mm', {
+        zone: now.zone,
+      }).set({ year: now.year, month: now.month, day: now.day });
+
+      // Проверяем, можем ли принять заказ
+      if (now > orderDeadline) {
+        // После 18:00 - заказы не принимаются в тот же день
+        // Доставка на следующий рабочий день доставки
+        return getNextWorkingDay(deliveryDays)(now.plus({ days: 1 }));
       }
 
-      /** 3. Перебрасываем на ближайший рабочий день Patriot */
-      return getNextWorkingDay(workingDays)(tentative);
+      let deliveryDate: DateTime;
+
+      if (now < cutoffTime) {
+        // Заказ до 11:00 → дневная доставка сегодня (13:00-16:00)
+        deliveryDate = now;
+      } else {
+        // Заказ после 11:00 → утренняя доставка завтра (до 12:00)
+        deliveryDate = now.plus({ days: 1 });
+      }
+
+      // Находим ближайший день доставки (вт-сб)
+      return getNextWorkingDay(deliveryDays)(deliveryDate);
     },
   },
   {
