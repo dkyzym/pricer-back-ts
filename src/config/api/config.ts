@@ -43,17 +43,6 @@ export const suppliers: Record<string, SupplierConfig> = {
   ug_f: createAbcpConfig('UG_ABCP_ID', 'UG_USERNAME', 'UG_PASSWORD'),
   ug_bn: createAbcpConfig('UG_ABCP_ID', 'UG_USERNAME_BN', 'UG_PASSWORD_BN'),
 
-  turboCars: {
-    username: getEnvVar('TURBOCARS_USERNAME'),
-    password: getEnvVar('TURBOCARS_PASSWORD'),
-    baseUrl: 'https://www.mikado-parts.ru',
-  },
-  turboCarsBN: {
-    username: getEnvVar('TURBOCARS_USERNAME_BN'),
-    password: getEnvVar('TURBOCARS_PASSWORD_BN'),
-    baseUrl: 'https://www.mikado-parts.ru',
-  },
-
   patriot: createAbcpConfig(
     'PATRIOT_ABCP_ID',
     'PATRIOT_USERNAME',
@@ -81,17 +70,6 @@ if (isNaN(PROXY_PORT)) {
 }
 
 // --- Константы путей API ---
-
-/**
- * Пути сервисов поставщика Turbo-cars
- */
-export const TURBOCARS_SERVICE_PATHS = {
-  /**
-   * Возвращает данные включая аналоги
-   */
-  Code_search: '/ws1/service.asmx/Code_Search',
-  Basket_Add: '/ws1/basket.asmx/Basket_Add',
-};
 
 /**
  * Пути сервисов для поставщиков на платформе ABCP

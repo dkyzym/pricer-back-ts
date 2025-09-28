@@ -6,13 +6,12 @@ import {
 import { handleArmtek } from './suppliers/armtekHandler.js';
 import { handleAutoImpulse } from './suppliers/autoImpulseHandler.js';
 import { handleAutosputnik } from './suppliers/autosputnikHandler.js';
+import { handleAvtodinamika } from './suppliers/avtodinamikaHandler.js';
 import { handleMikano } from './suppliers/mikanoHandler.js';
 import { handleNpn } from './suppliers/npnHandler.js';
 import { handlePatriot } from './suppliers/patriotHandler.js';
 import { handleProfit } from './suppliers/profitHandler.js';
-import { handleTurboCars } from './suppliers/turboCarsHandler.js';
 import { handleUg } from './suppliers/ugHandler.js';
-import { handleAvtodinamika } from './suppliers/avtodinamikaHandler.js';
 
 type SupplierHandler = (
   data: getItemResultsParams,
@@ -29,7 +28,6 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   patriot: handlePatriot,
   autoImpulse: handleAutoImpulse,
   mikano: handleMikano,
-  turboCars: handleTurboCars,
   armtek: handleArmtek,
   npn: handleNpn,
   avtodinamika: handleAvtodinamika,

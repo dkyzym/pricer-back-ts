@@ -1,18 +1,12 @@
-import { AxiosError } from 'axios';
 import { Request, Response } from 'express';
 import { addToCartProfitService } from 'services/profit/addToCartProfitService.js';
 import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService.js';
 import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
 import { addToCartPatriotNpnService } from '../../services/patriot/cart/addToCartPatriotNpnService.js';
-import { addToCartTurboCarService } from '../../services/turboCars/addToCartTurboCarService.js';
+
 import { addToCartUgService } from '../../services/ug/cart/addToCartUgService.js';
 import { addToCartAutosputnikData } from '../../types/autosputnik.js';
-import {
-  BasketPositionTurboCars,
-  BasketPositionUG,
-  BasketTurboCarsFrontendData,
-  SupplierName,
-} from '../../types/index.js';
+import { BasketPositionUG, SupplierName } from '../../types/index.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier }: { supplier: SupplierName } = req.body;
@@ -144,35 +138,6 @@ export const addToCartController = async (req: Request, res: Response) => {
       });
     }
     //
-  } else if (supplier === 'turboCars') {
-    const { QTY, StockID, ZakazCode, nal }: BasketTurboCarsFrontendData =
-      req.body;
-
-    try {
-      const params: BasketPositionTurboCars = {
-        QTY,
-        StockID,
-        ZakazCode,
-        DeliveryType: '0',
-        ExpressID: '0',
-        Notes: '',
-        nal,
-      };
-      console.log(JSON.stringify(params));
-
-      const result = await addToCartTurboCarService(params);
-
-      res.status(200).json({
-        success: result.AddResult.Message === 'OK' ? true : false,
-        message: result.AddResult.Message,
-      });
-    } catch (error) {
-      console.log(error as AxiosError);
-      res.status(500).json({
-        success: false,
-        message: 'Ошибка при добавлении в корзину',
-      });
-    }
   } else {
     res.status(400).json({
       success: false,

@@ -67,6 +67,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return getNextWorkingDay(deliveryDays)(deliveryDate);
     },
   },
+
   {
     supplierName: 'ug',
     workingDays: [1, 4],
@@ -115,6 +116,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'ug_bn',
     workingDays: [1, 4],
@@ -163,6 +165,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'ug_f',
     workingDays: [1, 4],
@@ -213,60 +216,6 @@ export const suppliersConfig: SupplierConfig[] = [
   },
 
   {
-    supplierName: 'turboCars',
-    workingDays: [1, 2, 3, 4, 5, 6], // понедельник - суббота
-    cutoffTimes: {
-      'РД-3': '12:00',
-      default: 'deadLineTimeToOrder', // Крайний срок из данных товара
-    },
-    processingTime: { days: 0 },
-    specialConditions: (currentTime: DateTime, result: SearchResultsParsed) => {
-      let deliveryDate: DateTime;
-
-      if (result.warehouse === 'РД-3') {
-        if (currentTime.hour < 12) {
-          deliveryDate = currentTime;
-        } else {
-          deliveryDate = currentTime.plus({ days: 1 });
-        }
-      } else {
-        // Разбор 'deadLineTimeToOrder' для получения часа и минуты
-        let deadlineHour = 0;
-        let deadlineMinute = 0;
-        if (result.deadLineTimeToOrder) {
-          const [hourStr, minuteStr] = result.deadLineTimeToOrder.split(':');
-          deadlineHour = parseInt(hourStr, 10);
-          deadlineMinute = parseInt(minuteStr, 10);
-        }
-
-        let orderBeforeDeadline = false;
-
-        if (
-          currentTime.hour < deadlineHour ||
-          (currentTime.hour === deadlineHour &&
-            currentTime.minute <= deadlineMinute)
-        ) {
-          orderBeforeDeadline = true;
-        }
-
-        let daysToAdd = result.deadline;
-
-        if (!orderBeforeDeadline) {
-          daysToAdd += 1;
-        }
-
-        deliveryDate = currentTime.plus({ days: daysToAdd });
-      }
-
-      // Корректировка для воскресенья
-      while (deliveryDate.weekday === 7) {
-        deliveryDate = deliveryDate.plus({ days: 1 });
-      }
-
-      return deliveryDate;
-    },
-  },
-  {
     supplierName: 'profit',
     workingDays: [1, 2, 3, 4, 5, 6],
     cutoffTimes: {},
@@ -283,6 +232,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'autosputnik',
     workingDays: [1, 2, 3, 4, 5, 6],
@@ -300,6 +250,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'autosputnik_bn',
     workingDays: [1, 2, 3, 4, 5, 6],
@@ -317,6 +268,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'autoImpulse',
     workingDays: [2, 5], // Вторник и пятница
@@ -376,6 +328,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'npn',
     workingDays: [2, 5], // Дни отгрузки: Вторник и Пятница
@@ -432,6 +385,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return currentTime.plus({ days: 10 });
     },
   },
+
   {
     supplierName: 'mikano',
     workingDays: [1, 5], // Понедельник и пятница
@@ -492,6 +446,7 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+
   {
     supplierName: 'avtodinamika',
     workingDays: [1, 3, 5],

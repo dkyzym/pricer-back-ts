@@ -58,8 +58,7 @@ const findFastestItem = (
 
 /**
  * Удаляет дубликаты из массива на основе составного ключа.
- * Для 'turboCars' наличие ('availability') исключается из ключа, и сохраняется
- * позиция с наибольшим наличием. Для остальных поставщиков 'availability' является частью ключа.
+ * 'availability' является частью ключа.
  * @param items - Массив для дедупликации.
  * @returns Новый массив без дубликатов.
  */
@@ -82,38 +81,16 @@ const removeDuplicates = (
     const refusalInfo = `${item.returnable ?? ''}_${item.allow_return ?? ''}`;
     const deliveryTime = getDeliveryTimeInMs(item);
 
-    if (item.supplier === 'turboCars') {
-      // Для turboCars 'availability' не является частью ключа
-      const turboKey = [
-        probability,
-        deliveryTime,
-        refusalInfo,
-        item.price,
-      ].join('|');
+    const key = [
+      probability,
+      availability,
+      deliveryTime,
+      refusalInfo,
+      item.price,
+    ].join('|');
 
-      const existing = seen.get(turboKey);
-      if (
-        !existing ||
-        availability >
-          (typeof existing.availability === 'string'
-            ? parseFloat(existing.availability)
-            : existing.availability || 0)
-      ) {
-        seen.set(turboKey, item);
-      }
-    } else {
-      // Для остальных поставщиков включаем все свойства в ключ
-      const key = [
-        probability,
-        availability,
-        deliveryTime,
-        refusalInfo,
-        item.price,
-      ].join('|');
-
-      if (!seen.has(key)) {
-        seen.set(key, item);
-      }
+    if (!seen.has(key)) {
+      seen.set(key, item);
     }
   }
 

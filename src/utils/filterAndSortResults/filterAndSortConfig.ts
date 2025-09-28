@@ -31,10 +31,6 @@ export const SUPPLIER_CONFIG: Record<
   armtek: {
     maxItems: 3,
   },
-  turboCars: {
-    maxItems: 5,
-    minProbability: 90,
-  },
   autoImpulse: {},
   patriot: {},
   ug_f: { maxItems: 3 },
@@ -54,7 +50,6 @@ export const FILTERED_SUPPLIERS: SupplierName[] = [
   'autosputnik',
   'autosputnik_bn',
   'armtek',
-  'turboCars',
   'patriot',
   'autoImpulse',
   'npn',

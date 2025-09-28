@@ -20,7 +20,7 @@ import { checkProxy } from '../utils/api/checkProxy.js';
 import { generateMD5 } from '../utils/generateMD5.js';
 import { getLocalIP } from '../utils/getLocalIP.js';
 
-type AxiosInstanceSupplierName = SupplierName | 'turboCarsBN';
+type AxiosInstanceSupplierName = SupplierName;
 
 // Храним флаг использования прокси в модуле (или в global)
 let shouldUseProxy: boolean | null = null;
@@ -143,13 +143,6 @@ export const createAxiosInstance = async (
           ...config.params,
           userlogin: supplier.username,
           userpsw: generateMD5(supplier.password),
-        };
-      } else if (supplierKey === 'turboCars' || supplierKey === 'turboCarsBN') {
-        config.params = {
-          ...config.params,
-          ClientID: supplier.username,
-          Password: supplier.password,
-          FromStockOnly: 1,
         };
       }
       return config;

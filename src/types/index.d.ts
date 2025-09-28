@@ -1,7 +1,6 @@
 import { Logger } from 'winston';
 
 export type SupplierName =
-  | 'turboCars'
   | 'ug'
   | 'ug_f'
   | 'ug_bn'
@@ -141,14 +140,7 @@ export interface SearchResultsParsed {
     id_shop_prices: string;
   };
 
-  //** Свойства для TurboCars*/
-  turboCars?: {
-    stock_id: string;
-    zakazCode: string;
-    nal?: boolean;
-  };
-
-  //** Свойства для TurboCars*/
+  //** Свойства для UG*/
   ug?: {
     //**itemKey Для добавления товара в корзину.*/
     itemKey: string;
@@ -371,19 +363,6 @@ interface UgCartResponse {
     status: 1 | 0;
     errorMessage?: string;
   }>;
-}
-
-interface BasketTurboCarsFrontendData {
-  ZakazCode: string;
-  QTY: string;
-  StockID: string;
-  nal: boolean;
-}
-
-interface BasketPositionTurboCars extends BasketTurboCarsFrontendData {
-  DeliveryType?: '0'; //DeliveryType нужен для оригинальных запчастей, доделать бы
-  Notes?: string;
-  ExpressID?: '0';
 }
 
 interface AddResultXML {
