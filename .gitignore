@@ -8,5 +8,5 @@ logs/**
 !logs/.gitkeep
 deleteTempFiles*
 send/
-
+.continue
 
