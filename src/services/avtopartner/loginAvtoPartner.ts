@@ -8,7 +8,7 @@ import { clientAvtoPartner } from './client.js';
 const baseURL = 'https://avtopartner-yug.ru';
 const userAgent =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0';
-const supplier = 'AvtoPartner';
+const supplier = 'avtoPartner';
 
 /**
  * Проверяет, залогинен ли пользователь, по наличию элемента "Аккаунт" на главной странице.
