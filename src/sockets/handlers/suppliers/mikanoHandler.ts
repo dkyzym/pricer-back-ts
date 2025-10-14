@@ -1,5 +1,5 @@
 import { Logger } from 'winston';
-import { itemDataMikanoService } from '../../../services/mikano/itemDataAutoMikanoService.js';
+import { itemDataMikanoService } from '../../../services/mikano/itemDataMikanoService.js';
 import {
   getItemResultsParams,
   SearchResultsParsed,
