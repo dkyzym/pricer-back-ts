@@ -6,7 +6,7 @@ import {
   ParallelSearchParams,
   SearchResultsParsed,
 } from '../../types/index.js';
-import { calculateDeliveryDate } from '../../utils/calculateDates/index.js';
+import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
