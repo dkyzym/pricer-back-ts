@@ -7,6 +7,7 @@ import { handleArmtek } from './suppliers/armtekHandler.js';
 import { handleAutoImpulse } from './suppliers/autoImpulseHandler.js';
 import { handleAutosputnik } from './suppliers/autosputnikHandler.js';
 import { handleAvtodinamika } from './suppliers/avtodinamikaHandler.js';
+import { handleAvtoPartner } from './suppliers/avtoPartner.js';
 import { handleMikano } from './suppliers/mikanoHandler.js';
 import { handleNpn } from './suppliers/npnHandler.js';
 import { handlePatriot } from './suppliers/patriotHandler.js';
@@ -31,4 +32,5 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   armtek: handleArmtek,
   npn: handleNpn,
   avtodinamika: handleAvtodinamika,
+  avtoPartner: handleAvtoPartner,
 };

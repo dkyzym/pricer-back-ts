@@ -495,4 +495,47 @@ export const suppliersConfig: SupplierConfig[] = [
       return deliveryDate;
     },
   },
+  {
+    supplierName: 'avtoPartner',
+    workingDays: [1, 2, 3, 4, 5,6], // Пн,Сб - дни обработки заказов
+    cutoffTimes: { default: '14:00' },
+    processingTime: { days: 0 },
+    specialConditions: (
+      currentTime: DateTime,
+       ): DateTime => {
+      const weekday = currentTime.weekday; // 1=Пн, 7=Вс
+      const hour = currentTime.hour;
+
+      // Вспомогательная функция для поиска следующего дня недели
+      const findNextDay = (from: DateTime, targetWeekday: number): DateTime => {
+        let nextDate = from.startOf('day');
+        // Ищем до тех пор, пока не найдем нужный день недели
+        while (nextDate.weekday !== targetWeekday) {
+          nextDate = nextDate.plus({ days: 1 });
+        }
+        return nextDate;
+      };
+
+      const TUESDAY = 2;
+      const FRIDAY = 5;
+
+      // Заказ в понедельник до 14:00 -> доставка в ближайший вторник.
+      if (weekday === 1 && hour < 14) {
+        return findNextDay(currentTime, TUESDAY);
+      }
+
+      // Заказ с 14:00 понедельника до 14:00 четверга -> доставка в ближайшую пятницу.
+      if (
+        (weekday === 1 && hour >= 14) ||
+        weekday === 2 ||
+        weekday === 3 ||
+        (weekday === 4 && hour < 14)
+      ) {
+        return findNextDay(currentTime, FRIDAY);
+      }
+
+      // В остальных случаях (с 14:00 четверга до 14:00 понедельника) -> доставка в ближайший вторник.
+      return findNextDay(currentTime, TUESDAY);
+    },
+  },
 ];

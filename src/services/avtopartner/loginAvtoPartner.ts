@@ -1,36 +1,39 @@
-import axios from 'axios';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import 'dotenv/config';
 import { logger } from '../../config/logger/index.js';
-import { clientAvtoPartner } from './client.js';
+import { clientAvtoPartner, cookieJarAvtoPartner } from './client.js';
 
 const baseURL = 'https://avtopartner-yug.ru';
+const supplier = 'avtoPartner';
 const userAgent =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0';
-const supplier = 'avtoPartner';
 
 /**
- * Проверяет, залогинен ли пользователь, по наличию элемента "Аккаунт" на главной странице.
- * @returns {Promise<boolean>} - true, если пользователь залогинен, иначе false.
+ * Проверяет, активна ли текущая сессия avtopartner-yug.ru.
+ * Критерий: есть куки и на главной странице есть ссылка «Аккаунт».
  */
 const checkIsLoggedIn = async (): Promise<boolean> => {
+  const cookies = await cookieJarAvtoPartner.getCookies(baseURL);
+  if (cookies.length === 0) {
+    logger.debug(`[${supplier}] checkIsLoggedIn: куки пустые → не залогинен`);
+    return false;
+  }
+
   try {
-    const response = await clientAvtoPartner.get(baseURL, {
-      headers: { 'User-Agent': userAgent },
-    });
+    const response = await clientAvtoPartner.get(baseURL);
     const $ = cheerio.load(response.data);
-    const accountLink = $('a.header-middle__link--login:contains("Аккаунт")');
-    return accountLink.length > 0;
-  } catch (error) {
-    logger.error(`[${supplier}] Ошибка при проверке статуса входа:`, error);
+    const hasAccountLink = $('a.header-middle__link--login:contains("Аккаунт")').length > 0;
+    logger.debug(`[${supplier}] checkIsLoggedIn: найден Аккаунт = ${hasAccountLink}`);
+    return hasAccountLink;
+  } catch {
     return false;
   }
 };
 
 /**
- * Выполняет непосредственный вход на сайт.
- * @returns {Promise<boolean>} - true в случае успеха, иначе false.
+ * Выполняет вход на сайт с использованием .env-переменных.
+ * Возвращает true, если вход выполнен успешно.
  */
 export const loginAvtoPartner = async (): Promise<boolean> => {
   const login = process.env.AVTOPARTNER_LOGIN;
@@ -39,37 +42,22 @@ export const loginAvtoPartner = async (): Promise<boolean> => {
   if (!login || !password) {
     logger.error(
       chalk.red(
-        `[${supplier}] Ошибка: AVTOPARTNER_LOGIN или AVTOPARTNER_PASSWORD не найдены в .env файле.`
+        `[${supplier}] ❌ Логин/пароль не заданы в .env (AVTOPARTNER_LOGIN / AVTOPARTNER_PASSWORD)`
       )
     );
     return false;
   }
 
   try {
-    logger.info(
-      `[${supplier}] 1/3: Загрузка страницы входа для получения form_build_id...`
-    );
-    const loginPageResponse = await clientAvtoPartner.get(
-      `${baseURL}/user/login`,
-      {
-        headers: { 'User-Agent': userAgent },
-      }
-    );
-
+    logger.info(`[${supplier}] 1/3: Получение страницы входа...`);
+    const loginPageResponse = await clientAvtoPartner.get('/user/login');
     const $ = cheerio.load(loginPageResponse.data);
     const formBuildId = $('input[name="form_build_id"]').val();
 
     if (!formBuildId || typeof formBuildId !== 'string') {
-      logger.error(
-        chalk.red(
-          `[${supplier}] Не удалось найти form_build_id. Структура сайта могла измениться.`
-        )
-      );
+      logger.error(chalk.red(`[${supplier}] Не найден form_build_id — возможно, сайт изменился.`));
       return false;
     }
-    logger.info(
-      chalk.gray(` > [${supplier}] Найден form_build_id: ${formBuildId}`)
-    );
 
     const formData = new URLSearchParams();
     formData.append('name', login);
@@ -78,69 +66,50 @@ export const loginAvtoPartner = async (): Promise<boolean> => {
     formData.append('form_id', 'user_login');
     formData.append('op', 'Войти');
 
-    logger.info(`[${supplier}] 2/3: Отправка учетных данных...`);
+    logger.info(`[${supplier}] 2/3: Отправка данных входа...`);
     await clientAvtoPartner.post(`${baseURL}/user/login`, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': userAgent,
         Referer: `${baseURL}/user/login`,
       },
+      maxRedirects: 5,
     });
 
-    logger.info(`[${supplier}] 3/3: Проверка успешности входа...`);
+    logger.info(`[${supplier}] 3/3: Проверка входа...`);
     const isLoggedIn = await checkIsLoggedIn();
     if (isLoggedIn) {
       logger.info(chalk.green(`✅ [${supplier}] Вход выполнен успешно!`));
     } else {
-      logger.error(
-        chalk.red(
-          `❌ [${supplier}] Не удалось войти. Проверьте учетные данные.`
-        )
-      );
+      logger.error(chalk.red(`❌ [${supplier}] Вход не удался.`));
     }
+
     return isLoggedIn;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      logger.error(
-        chalk.red(`[${supplier}] Ошибка сети при входе: ${error.message}`)
-      );
-    } else {
-      logger.error(
-        chalk.red(`[${supplier}] Непредвиденная ошибка при входе:`),
-        error
-      );
-    }
+    logger.error(chalk.red(`[${supplier}] Ошибка при логине:`), error);
     return false;
   }
 };
 
-// --- Механизм управления параллельными запросами на вход ---
+// --- Синхронизация логина между конкурентными вызовами ---
 let isLoggingIn = false;
 const loginQueue: ((success: boolean) => void)[] = [];
 
 /**
- * Гарантирует, что сессия с Автопартнером активна.
- * Если сессии нет, выполняет вход и обрабатывает очередь ожидающих запросов.
+ * Гарантирует, что перед запросом клиент авторизован.
+ * Если кто-то уже логинится — ждёт завершения.
  */
 export const ensureAvtoPartnerLoggedIn = async () => {
   const isLoggedIn = await checkIsLoggedIn();
 
   if (!isLoggedIn) {
     if (isLoggingIn) {
-      logger.info(
-        chalk.yellow(
-          `[${supplier}] Процесс входа уже запущен, ожидаем в очереди...`
-        )
-      );
+      logger.info(chalk.yellow(`[${supplier}] Логин уже выполняется — ожидаем...`));
       await new Promise<boolean>((resolve) => loginQueue.push(resolve));
     } else {
       isLoggingIn = true;
       try {
-        logger.info(
-          chalk.yellow(
-            `[${supplier}] Сессия отсутствует или истекла, выполняем вход...`
-          )
-        );
+        logger.warn(chalk.yellow(`[${supplier}] Сессия неактивна — выполняем вход...`));
         const success = await loginAvtoPartner();
         loginQueue.forEach((resolve) => resolve(success));
       } finally {

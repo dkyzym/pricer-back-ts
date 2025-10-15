@@ -12,6 +12,7 @@ export type SupplierName =
   | 'armtek'
   | 'mikano'
   | 'avtodinamika'
+  | 'avtoPartner'
   | 'npn';
 
 export type PuppeteerSupplierName = 'patriot';

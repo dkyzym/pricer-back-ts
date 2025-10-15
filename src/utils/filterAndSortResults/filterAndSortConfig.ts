@@ -38,6 +38,7 @@ export const SUPPLIER_CONFIG: Record<
   npn: {},
   mikano: {},
   avtodinamika: { maxItems: 2 },
+  avtoPartner:{}
 };
 
 /**
@@ -56,4 +57,5 @@ export const FILTERED_SUPPLIERS: SupplierName[] = [
   'ug_bn',
   'ug_f',
   'avtodinamika',
+  'avtoPartner'
 ];
