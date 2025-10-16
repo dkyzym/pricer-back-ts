@@ -57,17 +57,51 @@ function calculateDirectFromApi(
   return null;
 }
 
+/**
+ * FIXED: This function now correctly handles time checks and weekday ranges
+ * that wrap around the end of the week (e.g., Saturday to Monday).
+ */
 function calculateByRules(
   config: RuleBasedStrategy,
   now: DateTime
 ): DateTime | null {
-  // A full implementation would also check the time part of the rule
   for (const rule of config.rules) {
-    const isWeekdayMatch =
-      now.weekday >= rule.ifPlaced.from.weekday &&
-      now.weekday <= rule.ifPlaced.to.weekday;
+    const { from, to } = rule.ifPlaced;
+    const currentWeekday = now.weekday;
 
-    if (isWeekdayMatch) {
+    let isWeekdayMatch = false;
+    if (from.weekday <= to.weekday) {
+      // Standard range: e.g., Monday -> Friday
+      isWeekdayMatch = currentWeekday >= from.weekday && currentWeekday <= to.weekday;
+    } else {
+      // Wrap-around range: e.g., Saturday -> Monday
+      isWeekdayMatch = currentWeekday >= from.weekday || currentWeekday <= to.weekday;
+    }
+
+    if (!isWeekdayMatch) {
+      continue; // This rule's weekday range doesn't apply, check the next one.
+    }
+
+    // A simple but effective time check using string comparison.
+    const currentTimeStr = now.toFormat('HH:mm');
+    
+    let isTimeMatch = false;
+    if (currentWeekday === from.weekday && currentWeekday === to.weekday) {
+        // Rule is for a single day
+        isTimeMatch = currentTimeStr >= from.time && currentTimeStr <= to.time;
+    } else if (currentWeekday === from.weekday) {
+        // We are on the first day of a multi-day rule
+        isTimeMatch = currentTimeStr >= from.time;
+    } else if (currentWeekday === to.weekday) {
+        // We are on the last day of a multi-day rule
+        isTimeMatch = currentTimeStr <= to.time;
+    } else {
+        // We are on a day fully inside the range (e.g., Wednesday in a Mon-Fri rule)
+        isTimeMatch = true;
+    }
+
+    if (isTimeMatch) {
+      // The rule's conditions are met! Calculate the delivery date.
       if (rule.thenDeliver.type === 'ON_NEXT_SPECIFIC_WEEKDAY') {
         let delivery = now;
         while (delivery.weekday !== rule.thenDeliver.weekday) {
@@ -82,12 +116,10 @@ function calculateByRules(
       }
     }
   }
-  return null;
+  return null; // No matching rule was found
 }
 
-/**
- * RESTORED: Implements logic for schedule-based suppliers.
- */
+
 function calculateBySchedule(
   config: ScheduleBasedStrategy,
   result: SearchResultsParsed,
@@ -128,7 +160,6 @@ function calculateBySchedule(
     return null; // Should not happen with correct config
   }
 
-  // CORRECTLY USING findNextAllowedDay
   return findNextAllowedDay(
     readyDate.startOf('day'),
     config.deliveryWeekdays,
@@ -185,7 +216,6 @@ export const runCalculationEngine = (
     case 'RULE_BASED':
       calculatedDate = calculateByRules(calculation, now);
       break;
-    // RESTORED CASE
     case 'SCHEDULE_BASED':
       if (isSearchResultsParsed(result)) {
         calculatedDate = calculateBySchedule(calculation, result, now);
