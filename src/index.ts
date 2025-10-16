@@ -13,6 +13,7 @@ import { corsOptions } from './config/index.js';
 import { morganMiddleware } from './config/logger/morganMiddleware.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
+import { initProxyCheck } from './services/apiClient.js';
 
 dotenv.config();
 
@@ -52,5 +53,5 @@ app.use(() => {
 
 app.use(error);
 
-// await initProxyCheck();
+await initProxyCheck();
 await startServer(app);

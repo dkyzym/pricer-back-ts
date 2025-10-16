@@ -111,6 +111,18 @@ export const suppliersConfig: SupplierDatesConfig[] = [
           ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 }, // Deliver next Wed
         },
+        // --- FIX STARTS HERE ---
+        // Default rule for Wed, Thu: deliver on the nearest Saturday
+        {
+            ifPlaced: { from: { weekday: 3, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
+            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
+        },
+        // Default rule for Sat, Sun, Mon: deliver on the nearest Wednesday
+        {
+            ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 1, time: '23:59'}},
+            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3}
+        }
+        // --- FIX ENDS HERE ---
       ],
     },
   },
@@ -136,6 +148,18 @@ export const suppliersConfig: SupplierDatesConfig[] = [
           ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 }, // Deliver next Tue
         },
+        // --- FIX STARTS HERE ---
+        // Default rule for Tue, Wed, Thu: deliver on the nearest Saturday
+        {
+            ifPlaced: { from: { weekday: 2, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
+            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
+        },
+        // Default rule for Sat, Sun: deliver on the nearest Tuesday
+        {
+            ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 7, time: '23:59'}},
+            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2}
+        }
+        // --- FIX ENDS HERE ---
       ],
     },
   },
@@ -159,3 +183,4 @@ export const suppliersConfig: SupplierDatesConfig[] = [
     },
   },
 ];
+

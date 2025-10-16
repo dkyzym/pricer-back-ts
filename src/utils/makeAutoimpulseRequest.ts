@@ -6,8 +6,7 @@ import {
 } from '../services/autoimpulse/loginAutoImpulse.js';
 
 export const makeAutoImpulseRequest = async (
-  url: string,
-  options: any = {}
+  url: string, options: any = {}
 ) => {
   try {
     await ensureAutoImpulseLoggedIn();
