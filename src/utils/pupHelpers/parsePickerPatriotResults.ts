@@ -4,7 +4,7 @@ import {
   SearchResultsParsed,
   SupplierName,
 } from 'types/index.js';
-import { calculateDeliveryDate } from '../calculateDates/index.js';
+import { calculateDeliveryDate } from '../calculateDates/calculateDeliveryDate.js';
 import { needToCheckBrand } from '../data/needToCheckBrand.js';
 
 export const parsePickedPatriotResults = async ({

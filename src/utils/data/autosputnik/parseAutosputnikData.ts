@@ -3,7 +3,7 @@ import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/ge
 import { v4 as uuidV4 } from 'uuid';
 import { Logger } from 'winston';
 import { SearchResultsParsed, TovarAutosputnik } from '../../../types/index.js';
-import { calculateDeliveryDate } from '../../calculateDates/index.js';
+import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../isRelevantBrand.js';
 
 export const parseAutosputnikData = async (

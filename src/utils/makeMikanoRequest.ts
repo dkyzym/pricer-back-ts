@@ -5,7 +5,9 @@ import {
   loginMikano,
 } from '../services/mikano/loginMikano.js';
 
-export const makeMikanoRequest = async (url: string, options: any = {}) => {
+export const makeMikanoRequest = async (
+  url: string, options: any = {}
+) => {
   try {
     await ensureMikanoLoggedIn();
     const response = await clientMikano.get(url, options);

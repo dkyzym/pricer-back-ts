@@ -5,7 +5,7 @@ import {
   SupplierName,
 } from 'types/index.js';
 import { Logger } from 'winston';
-import { calculateDeliveryDate } from './calculateDates/index.js';
+import { calculateDeliveryDate } from './calculateDates/calculateDeliveryDate.js';
 import { filterEqualResults } from './data/filterEqualResults.js';
 
 interface ParseParams extends ParallelSearchParams {

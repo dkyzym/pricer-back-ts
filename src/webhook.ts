@@ -1,110 +1,142 @@
 import { exec } from 'child_process';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 
-// Секрет для проверки подписи GitHub.
-// Можно хранить в .env и подтягивать через process.env:
-const GITHUB_SECRET = process.env.GITHUB_SECRET || 'catBoris';
+dotenv.config();
 
-// Создаём приложение Express
+// --- Конфигурация ---
+const GITHUB_SECRET = process.env.GITHUB_SECRET;
+const PORT = process.env.PORT || 3002;
+
+// --- Настройка приложения ---
 const app = express();
 
-// Нам нужно «raw body» для проверки подписи
+// --- Предварительные проверки ---
+// Убеждаемся, что приложение не запустится без секрета.
+if (!GITHUB_SECRET) {
+  console.error('КРИТИЧЕСКАЯ ОШИБКА: GITHUB_SECRET не определен в переменных окружения.');
+  console.error('Пожалуйста, создайте файл .env с GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.');
+  process.exit(1); // Завершаем процесс с кодом ошибки
+}
+
+// --- Middleware (Промежуточное ПО) ---
+// Расширяем интерфейс Request, чтобы включить rawBody
+interface RequestWithRawBody extends Request {
+  rawBody: Buffer;
+}
+
+// Middleware для получения "сырого" тела запроса, необходимого для проверки подписи.
 app.use(
   express.json({
-    verify: (req: any, _res, buf) => {
+    verify: (req: RequestWithRawBody, _res, buf) => {
       req.rawBody = buf;
     },
   })
 );
 
-// Функция проверки подписи GitHub
-function verifySignature(req: any) {
+// --- Вспомогательные функции ---
+/**
+ * Проверяет подпись вебхука GitHub для подтверждения подлинности запроса.
+ * @param req Объект запроса Express, расширенный свойством rawBody.
+ * @returns True, если подпись верна, иначе false.
+ */
+function verifySignature(req: RequestWithRawBody): boolean {
+  // Имя заголовка - 'x-hub-signature-256'
   const signature = req.headers['x-hub-signature-256'] as string;
-  if (!signature) return false;
+  if (!signature) {
+    console.warn('Заголовок с подписью не найден.');
+    return false;
+  }
 
-  const hmac = crypto.createHmac('sha256', GITHUB_SECRET);
-  const digest = 'sha256=' + hmac.update(req.rawBody).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+  // Мы уверены, что GITHUB_SECRET определен, благодаря проверке на старте
+  const hmac = crypto.createHmac('sha256', GITHUB_SECRET!); 
+  const digest = `sha256=${hmac.update(req.rawBody).digest('hex')}`;
+
+  try {
+    // Используем crypto.timingSafeEqual для защиты от атак по времени
+    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+  } catch (error) {
+    console.warn('Ошибка при сравнении подписей. Возможно, форматы подписей различаются.', error);
+    return false;
+  }
 }
 
-// Обработка корневого маршрута
+/**
+ * Создает переиспользуемый обработчик вебхуков, чтобы избежать дублирования кода.
+ * @param serviceName - Имя сервиса для логирования (например, "Backend").
+ * @param workingDir - Абсолютный путь к рабочей директории проекта.
+ * @param deployCommand - Команда, которую нужно выполнить для деплоя.
+ * @returns Обработчик запроса для Express.
+ */
+function createWebhookHandler(serviceName: string, workingDir: string, deployCommand: string) {
+  return (req: Request, res: Response) => {
+    // 1) Проверяем подпись
+    if (!verifySignature(req as RequestWithRawBody)) {
+      console.log(`[${serviceName}] Неверная подпись вебхука.`);
+      return res.status(401).send('Не авторизован');
+    }
+
+    // 2) Проверяем, что это событие 'push'
+    if (req.headers['x-github-event'] !== 'push') {
+      console.log(`[${serviceName}] Это не push-событие, игнорируем.`);
+      return res.status(200).send('Это не push-событие');
+    }
+    
+    // 3) Проверка ветки (опционально, но рекомендуется)
+    // Например, развертывать изменения только из ветки 'main' или 'prod'
+    // const ref = req.body.ref;
+    // if (ref !== 'refs/heads/main') {
+    //   console.log(`[${serviceName}] Push был в ветку ${ref}, а не в main. Игнорируем.`);
+    //   return res.status(200).send(`Push в ветку ${ref} проигнорирован.`);
+    // }
+
+    console.log(`[${serviceName}] Получено корректное push-событие. Начинаю развертывание...`);
+
+    // 4) Выполняем скрипт развертывания
+    exec(deployCommand, { cwd: workingDir }, (err, stdout, stderr) => {
+      // Логируем stdout и stderr для отладки
+      if (stdout) console.log(`[${serviceName}] STDOUT:\n${stdout}`);
+      if (stderr) console.log(`[${serviceName}] STDERR:\n${stderr}`);
+
+      if (err) {
+        console.error(`[${serviceName}] Ошибка во время развертывания:`, err);
+        // Не отправляем детальную информацию об ошибке клиенту
+        return res.status(500).send('Произошла ошибка при развертывании.');
+      }
+
+      console.log(`[${serviceName}] Развертывание успешно завершено.`);
+      return res.status(200).send('OK');
+    });
+  };
+}
+
+// --- Определение маршрутов (Routes) ---
 app.get('/', (_req: Request, res: Response) => {
-  res.status(200).send('Привет! Сервер работает.');
+  res.status(200).send('Сервис вебхуков запущен.');
 });
 
-// Роут /webhook
-app.post('/webhook', (req: Request, res: Response) => {
-  // 1) Проверяем подпись
-  if (!verifySignature(req)) {
-    console.log('Неверная подпись Webhook');
-    return res.status(401).send('Unauthorized');
-  }
+// Определяем конфигурации для развертывания
+const backendConfig = {
+  name: 'Backend',
+  path: 'D:/projects/pricer-back-ts',
+  command: 'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back'
+};
 
-  // 2) Проверяем, что это push-событие
-  if (req.headers['x-github-event'] !== 'push') {
-    console.log('Не push-событие, игнорируем');
-    return res.status(200).send('Not a push event');
-  }
+const frontendConfig = {
+  name: 'Frontend',
+  path: 'D:/projects/pricer-front',
+  // Предполагаем, что команда перезапуска для фронтенда такая же
+  command: 'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-front-service-name' // ИЗМЕНИТЕ ИМЯ СЕРВИСА
+};
 
-  console.log('Получен push Webhook, запускаю обновление...');
+// Регистрируем маршруты для вебхуков, используя общий обработчик
+app.post('/webhook', createWebhookHandler(backendConfig.name, backendConfig.path, backendConfig.command));
+app.post('/webhook-frontend', createWebhookHandler(frontendConfig.name, frontendConfig.path, frontendConfig.command));
 
-  // 3) Выполняем git pull, сборку, перезапуск главного сервиса
-  exec(
-    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
-    {
-      cwd: 'D:/projects/pricer-back-ts', // Папка, где лежат .git, package.json и т.д.
-    },
-    (err, stdout, stderr) => {
-      console.log('STDOUT:', stdout);
-      console.log('STDERR:', stderr);
-      if (err) {
-        console.error('Ошибка при деплое:', err);
-        return res.status(500).send('Ошибка деплоя');
-      }
-      console.log('Деплой успешно завершён');
-      return res.status(200).send('OK');
-    }
-  );
-});
 
-// Роут для фронта
-app.post('/webhook-frontend', (req: Request, res: Response) => {
-  // 1) Проверяем подпись
-  if (!verifySignature(req)) {
-    console.log('Неверная подпись Webhook для фронта');
-    return res.status(401).send('Unauthorized');
-  }
-
-  // 2) Проверяем что push-событие
-  if (req.headers['x-github-event'] !== 'push') {
-    console.log('Не push-событие, игнорируем');
-    return res.status(200).send('Not a push event');
-  }
-
-  console.log('Получен push Webhook для фронта, запускаю обновление...');
-
-  // 3) Выполняем нужные команды в папке фронтенда
-  exec(
-    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
-    {
-      cwd: 'D:/projects/pricer-front', // Папка, где фронтовой .git, package.json и т.д.
-    },
-    (err, stdout, stderr) => {
-      console.log('STDOUT:', stdout);
-      console.log('STDERR:', stderr);
-      if (err) {
-        console.error('Ошибка при деплое фронта:', err);
-        return res.status(500).send('Ошибка деплоя фронта');
-      }
-      console.log('Деплой фронта успешно завершён');
-      return res.status(200).send('OK');
-    }
-  );
-});
-
-// Запускаем Webhook-сервис на порту 3002
-const PORT = 3002;
+// --- Запуск сервера ---
 app.listen(PORT, () => {
-  console.log(`Webhook service listening on port ${PORT}...`);
+  console.log(`Сервис вебхуков слушает порт ${PORT}...`);
 });
+
