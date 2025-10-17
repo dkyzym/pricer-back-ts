@@ -31,7 +31,7 @@ const normalizeForComparison = (str: string): string =>
 
 /**
  * 🧩 Парсит карточку товара на странице поиска.
- * Возвращает null, если карточка неполная (без артикула, бренда или цены).
+ * Возвращает null, если карточка неполная, нет в наличии, или без цены.
  */
 const parseProductCard = (
   $: cheerio.CheerioAPI,
@@ -56,14 +56,25 @@ const parseProductCard = (
     .replace(',', '.')
     .replace(/\s+/g, '')
     .trim();
-
+  
   const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
+  
+  // Проверяем, есть ли товар в наличии
   const isOutOfStock = card.find('.product-post__status.out-of-stock').length > 0;
-  const availability = isOutOfStock ? 0 : '+';
+
+  // ❗ НОВОЕ ИЗМЕНЕНИЕ: Если товара нет, сразу возвращаем null
+  if (isOutOfStock) {
+    // logger.debug(`[avtoPartner] Пропущена карточка (нет в наличии): ${brand} ${article}`);
+    return null;
+  }
+
+  // Если товар есть, количество всегда будет '+'
+  const availability = '+';
 
   const imageUrlRaw = card.find('.product-card__picture img').attr('src') || '';
   const imageUrl = imageUrlRaw.startsWith('http') ? imageUrlRaw : `${baseURL}${imageUrlRaw}`;
 
+  // Старая проверка на неполные данные остается
   if (!article || !brand || price <= 0) {
     logger.debug(`[avtoPartner] Пропущена карточка — неполные данные (${brand} ${article})`);
     return null;
