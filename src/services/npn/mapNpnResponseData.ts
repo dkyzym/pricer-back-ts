@@ -6,7 +6,7 @@ import {
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 
-import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
+import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import { calculateNpnDeadlineHours } from '../../utils/npn/calculateNpnDeadline.js';
 
 export const mapNpnResponseData = (

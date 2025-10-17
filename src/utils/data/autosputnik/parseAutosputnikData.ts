@@ -4,7 +4,7 @@ import { v4 as uuidV4 } from 'uuid';
 import { Logger } from 'winston';
 import { SearchResultsParsed, TovarAutosputnik } from '../../../types/index.js';
 import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
-import { isRelevantBrand } from '../../isRelevantBrand.js';
+import { isRelevantBrand } from '../brand/isRelevantBrand.js';
 
 export const parseAutosputnikData = async (
   item: {

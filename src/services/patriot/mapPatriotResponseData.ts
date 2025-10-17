@@ -5,7 +5,7 @@ import {
   abcpArticleSearchResult,
 } from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
-import { isRelevantBrand } from '../../utils/isRelevantBrand.js';
+import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 
 export const mapPatriotResponseData = (
   data: abcpArticleSearchResult[],
