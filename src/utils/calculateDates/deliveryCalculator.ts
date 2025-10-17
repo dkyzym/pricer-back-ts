@@ -17,6 +17,7 @@ const isSearchResultsParsed = (
   return (result as SearchResultsParsed).deadline !== undefined;
 };
 
+// ... existing findNextAllowedDay and applyAvoidance functions ...
 const findNextAllowedDay = (
   startDate: DateTime,
   allowedWeekdays: number[],
@@ -44,6 +45,7 @@ const applyAvoidance = (
   return finalDate;
 };
 
+
 // --- Strategy Implementations ---
 
 function calculateDirectFromApi(
@@ -57,10 +59,7 @@ function calculateDirectFromApi(
   return null;
 }
 
-/**
- * FIXED: This function now correctly handles time checks and weekday ranges
- * that wrap around the end of the week (e.g., Saturday to Monday).
- */
+// ... existing calculateByRules and calculateBySchedule functions ...
 function calculateByRules(
   config: RuleBasedStrategy,
   now: DateTime
@@ -71,37 +70,29 @@ function calculateByRules(
 
     let isWeekdayMatch = false;
     if (from.weekday <= to.weekday) {
-      // Standard range: e.g., Monday -> Friday
       isWeekdayMatch = currentWeekday >= from.weekday && currentWeekday <= to.weekday;
     } else {
-      // Wrap-around range: e.g., Saturday -> Monday
       isWeekdayMatch = currentWeekday >= from.weekday || currentWeekday <= to.weekday;
     }
 
     if (!isWeekdayMatch) {
-      continue; // This rule's weekday range doesn't apply, check the next one.
+      continue;
     }
 
-    // A simple but effective time check using string comparison.
     const currentTimeStr = now.toFormat('HH:mm');
     
     let isTimeMatch = false;
     if (currentWeekday === from.weekday && currentWeekday === to.weekday) {
-        // Rule is for a single day
         isTimeMatch = currentTimeStr >= from.time && currentTimeStr <= to.time;
     } else if (currentWeekday === from.weekday) {
-        // We are on the first day of a multi-day rule
         isTimeMatch = currentTimeStr >= from.time;
     } else if (currentWeekday === to.weekday) {
-        // We are on the last day of a multi-day rule
         isTimeMatch = currentTimeStr <= to.time;
     } else {
-        // We are on a day fully inside the range (e.g., Wednesday in a Mon-Fri rule)
         isTimeMatch = true;
     }
 
     if (isTimeMatch) {
-      // The rule's conditions are met! Calculate the delivery date.
       if (rule.thenDeliver.type === 'ON_NEXT_SPECIFIC_WEEKDAY') {
         let delivery = now;
         while (delivery.weekday !== rule.thenDeliver.weekday) {
@@ -116,9 +107,8 @@ function calculateByRules(
       }
     }
   }
-  return null; // No matching rule was found
+  return null;
 }
-
 
 function calculateBySchedule(
   config: ScheduleBasedStrategy,
@@ -157,7 +147,7 @@ function calculateBySchedule(
       }
     }
   } else {
-    return null; // Should not happen with correct config
+    return null;
   }
 
   return findNextAllowedDay(
@@ -167,14 +157,67 @@ function calculateBySchedule(
   );
 }
 
+/**
+ * NEW: A dedicated parser for NPN's complex delivery strings.
+ * It determines the date when an item is ready at the supplier's warehouse.
+ * This is a starting point and can be expanded with more complex regex.
+ */
+function parseNpnDeliveryString(text: string, now: DateTime): DateTime | null {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+
+  // Case 1: 'На складе' (In stock) -> Ready now
+  if (lowerText.includes('на складе')) {
+    return now;
+  }
+
+  // Case 2: 'через X дня/дней/день' or 'X дня/дней/день' (in X days)
+  const daysMatch = lowerText.match(/(?:через\s*)?(\d+)\s*(?:дня|дней|день)/);
+  if (daysMatch && daysMatch[1]) {
+    const days = parseInt(daysMatch[1], 10);
+    return now.plus({ days });
+  }
+
+  // NOTE: More complex rules like "Среда до 13-00..." would require very
+  // advanced regular expressions and logic. The patterns below are examples
+  // of how one might start building them. They can be added here as needed.
+  /*
+  const complexRuleMatch = lowerText.match(/(\S+)\s*до\s*(\d{2}[:|-]\d{2}).*получение\s*(\S+)/);
+  if (complexRuleMatch) {
+    // ... complex parsing logic to calculate the exact date ...
+    // return calculatedDate;
+  }
+  */
+
+  // If no known pattern matches, we cannot determine the readiness date.
+  return null;
+}
+
 function calculateByShipmentSchedule(
   config: ShipmentScheduleBasedStrategy,
   result: SearchResultsParsed,
   now: DateTime
 ): DateTime | null {
-  const hours = result[config.readinessCalculation.sourceField] as number;
-  const readyForShipmentTime = now.plus({ hours: hours > 0 ? hours : 0 });
+  let readyForShipmentTime: DateTime | null;
+  const calc = config.readinessCalculation;
 
+  // Reworked readiness calculation
+  if (calc.type === 'PLUS_HOURS_FROM_RESULT') {
+    const hours = result[calc.sourceField] as number;
+    readyForShipmentTime = now.plus({ hours: hours > 0 ? hours : 0 });
+  } else if (calc.type === 'PARSE_DELIVERY_STRING') {
+    const deliveryString = result[calc.sourceField] as string;
+    readyForShipmentTime = parseNpnDeliveryString(deliveryString, now);
+  } else {
+    return null; // Should not happen with correct config
+  }
+
+  if (!readyForShipmentTime) {
+    // If parsing failed or date is invalid, we can't proceed.
+    return null;
+  }
+
+  // The rest of the logic remains the same, using the calculated readiness time.
   let nextShipmentDate = readyForShipmentTime.startOf('day');
   const [cutoffHour, cutoffMinute] = config.shipmentCutoffTime
     .split(':')
@@ -200,6 +243,7 @@ function calculateByShipmentSchedule(
 
   return null;
 }
+
 
 export const runCalculationEngine = (
   config: SupplierDatesConfig,

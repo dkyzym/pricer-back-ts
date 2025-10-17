@@ -1,53 +1,43 @@
 import { SupplierDatesConfig } from '../../../types/dateTypes.js';
 
-/**
- * Base configuration for suppliers where the delivery date is provided directly by the API.
- */
+// ... existing directFromApiBase and ugAndAvtodinamikaBaseConfig ...
 const directFromApiBase: SupplierDatesConfig['calculation'] = {
   strategy: 'DIRECT_FROM_API',
   sourceField: 'deliveryDate',
-  avoidDeliveryWeekdays: [7], // If API returns Sunday, shift to Monday
+  avoidDeliveryWeekdays: [7],
 };
-
-/**
- * Base configuration for 'ug' and 'avtodinamika' type suppliers.
- * This now accurately reflects the original logic using the 'CONDITIONAL_CUTOFF' strategy.
- */
 const ugAndAvtodinamikaBaseConfig: SupplierDatesConfig['calculation'] = {
   strategy: 'SCHEDULE_BASED',
-  deliveryWeekdays: [1, 4], // Monday, Thursday
-  allowSameDayDelivery: false, // Delivery must be strictly after the order day
+  deliveryWeekdays: [1, 4],
+  allowSameDayDelivery: false,
   avoidDeliveryWeekdays: [7],
   readinessCalculation: {
     type: 'CONDITIONAL_CUTOFF',
     conditionField: 'deadLineMax',
-    // if deadLineMax > 0
     positiveCase: {
       type: 'PLUS_HOURS_FROM_RESULT',
       sourceField: 'deadLineMax',
     },
-    // if deadLineMax <= 0
     negativeCase: {
       type: 'FROM_CUTOFF',
       cutoffTime: '14:00',
-      offsetBeforeCutoff: { days: 1 }, // before 14:00 -> +1 day
-      offsetAfterCutoff: { days: 2 }, // after 14:00 -> +2 days
+      offsetBeforeCutoff: { days: 1 },
+      offsetAfterCutoff: { days: 2 },
     },
   },
 };
 
+
 export const suppliersConfig: SupplierDatesConfig[] = [
-  // --- Strategy 1: DIRECT_FROM_API ---
+  // ... other suppliers ...
   { supplierName: 'profit', calculation: directFromApiBase },
   { supplierName: 'autosputnik', calculation: directFromApiBase },
   { supplierName: 'autosputnik_bn', calculation: directFromApiBase },
-
-  // --- Strategy 2: SCHEDULE_BASED ---
   {
     supplierName: 'patriot',
     calculation: {
       strategy: 'SCHEDULE_BASED',
-      deliveryWeekdays: [2, 3, 4, 5, 6], // Tue-Sat
+      deliveryWeekdays: [2, 3, 4, 5, 6],
       readinessCalculation: {
         type: 'FROM_CUTOFF',
         cutoffTime: '11:00',
@@ -58,7 +48,6 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       avoidDeliveryWeekdays: [7],
     },
   },
-  // ACCURATE CONFIGS FOR UG/AVTODINAMIKA
   { supplierName: 'ug', calculation: ugAndAvtodinamikaBaseConfig },
   { supplierName: 'ug_bn', calculation: ugAndAvtodinamikaBaseConfig },
   { supplierName: 'ug_f', calculation: ugAndAvtodinamikaBaseConfig },
@@ -66,8 +55,6 @@ export const suppliersConfig: SupplierDatesConfig[] = [
     supplierName: 'avtodinamika',
     calculation: ugAndAvtodinamikaBaseConfig,
   },
-
-  // --- Strategy 3: RULE_BASED ---
   {
     supplierName: 'avtoPartner',
     calculation: {
@@ -97,32 +84,28 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       rules: [
         {
           ifPlaced: { from: { weekday: 2, time: '00:00' }, to: { weekday: 2, time: '15:00' } },
-          thenDeliver: { type: 'AFTER_DAYS', days: 1 }, // Deliver Wed
+          thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
           ifPlaced: { from: { weekday: 2, time: '15:01' }, to: { weekday: 2, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }, // Deliver Sat
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
           ifPlaced: { from: { weekday: 5, time: '00:00' }, to: { weekday: 5, time: '15:00' } },
-          thenDeliver: { type: 'AFTER_DAYS', days: 1 }, // Deliver Sat
+          thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
           ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 }, // Deliver next Wed
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
         },
-        // --- FIX STARTS HERE ---
-        // Default rule for Wed, Thu: deliver on the nearest Saturday
         {
             ifPlaced: { from: { weekday: 3, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
             thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
         },
-        // Default rule for Sat, Sun, Mon: deliver on the nearest Wednesday
         {
             ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 1, time: '23:59'}},
             thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3}
         }
-        // --- FIX ENDS HERE ---
       ],
     },
   },
@@ -134,51 +117,50 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       rules: [
         {
           ifPlaced: { from: { weekday: 1, time: '00:00' }, to: { weekday: 1, time: '15:00' } },
-          thenDeliver: { type: 'AFTER_DAYS', days: 1 }, // Deliver Tue
+          thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
           ifPlaced: { from: { weekday: 1, time: '15:01' }, to: { weekday: 1, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }, // Deliver Sat
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
           ifPlaced: { from: { weekday: 5, time: '00:00' }, to: { weekday: 5, time: '15:00' } },
-          thenDeliver: { type: 'AFTER_DAYS', days: 1 }, // Deliver Sat
+          thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
           ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 }, // Deliver next Tue
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
         },
-        // --- FIX STARTS HERE ---
-        // Default rule for Tue, Wed, Thu: deliver on the nearest Saturday
         {
             ifPlaced: { from: { weekday: 2, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
             thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
         },
-        // Default rule for Sat, Sun: deliver on the nearest Tuesday
         {
             ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 7, time: '23:59'}},
             thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2}
         }
-        // --- FIX ENDS HERE ---
       ],
     },
   },
 
-  // --- Strategy 4 for npn ---
+  // --- UPDATED NPN CONFIGURATION ---
   {
     supplierName: 'npn',
     calculation: {
       strategy: 'SHIPMENT_SCHEDULE_BASED',
+      // The engine will now parse the string from 'description' to find readiness date.
       readinessCalculation: {
-        type: 'PLUS_HOURS_FROM_RESULT',
-        sourceField: 'deadline',
+        type: 'PARSE_DELIVERY_STRING',
+        // IMPORTANT: Change this to the actual field from your API that contains the text
+        sourceField: 'description',
       },
-      // When shipments are sent out from the supplier
+      // The rest of the logic remains the same. The engine will:
+      // 1. Get readiness date from the parser.
+      // 2. Find the next shipment day (Tue/Fri) after that date, respecting the cutoff time.
+      // 3. Add the delivery delay.
       shipmentWeekdays: [2, 5], // Tuesday, Friday
       shipmentCutoffTime: '15:00',
-      // Time from shipment to customer delivery
       deliveryDelay: { days: 1 },
-      // If delivery (+1 day) lands on Sunday, move it to Monday
       avoidDeliveryWeekdays: [7],
     },
   },
