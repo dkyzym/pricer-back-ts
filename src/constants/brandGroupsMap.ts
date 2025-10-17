@@ -28,5 +28,6 @@ export const brandGroupsMap = [
   ['seinsa', 'autofner', 'seinsa autofren'],
   ['transmaster', 'transmaster universal'],
   ['ника', 'ника антас'],
-  ['лукойл','lukoil']
+  ['лукойл','lukoil'],
+  ['вымпел','орион','нпп орион']
 ];
