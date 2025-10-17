@@ -6,7 +6,7 @@ import {
   getItemResultsParams,
   SearchResultsParsed,
 } from '../../../types/index.js';
-import { isRelevantBrand } from '../../../utils/isRelevantBrand.js';
+import { isRelevantBrand } from '../../../utils/data/brand/isRelevantBrand.js';
 
 export const handleArmtek = async (
   data: getItemResultsParams,

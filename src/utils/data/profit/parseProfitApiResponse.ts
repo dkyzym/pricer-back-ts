@@ -6,7 +6,7 @@ import {
 } from 'types/index.js';
 import { Logger } from 'winston';
 import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
-import { needToCheckBrand } from '../needToCheckBrand.js';
+import { needToCheckBrand } from '../brand/needToCheckBrand.js';
 
 const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';
