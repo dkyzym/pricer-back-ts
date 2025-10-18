@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getAutocomplete } from '../../services/getAutocomplete.js';
-import { ItemAutocompleteRow } from '../../types/search.types.js';
+import { ItemAutocompleteRow } from '../../types/index.js';
 
 export const autocompleteUgController = async (req: Request, res: Response) => {
   const term = req.query.term as string;

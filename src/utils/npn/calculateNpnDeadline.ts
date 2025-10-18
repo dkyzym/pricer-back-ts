@@ -1,6 +1,6 @@
 import { DateTime, WeekdayNumbers } from 'luxon';
 import { Logger } from 'winston';
-import { AbcpArticleSearchResult } from '../../types/abcpPlatform.types.js';
+import { abcpArticleSearchResult } from '../../types/index.js';
 
 const dayNameToIndex: { [key: string]: number } = {
   пон: 1,
@@ -26,7 +26,7 @@ const weeklyRuleRegex = new RegExp(
 );
 
 export const calculateNpnDeadlineHours = (
-  originalItem: AbcpArticleSearchResult,
+  originalItem: abcpArticleSearchResult,
   logger: Logger
 ): { deadline: number; deadLineMax: number } => {
   const now = DateTime.now().setZone('Europe/Moscow');

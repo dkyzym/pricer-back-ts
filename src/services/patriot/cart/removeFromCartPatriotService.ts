@@ -6,7 +6,7 @@ export const removeFromCartUgService = async (
   positions: BasketPositionUG[]
 ): Promise<UgCartResponse> => {
   try {
-    const axiosInstance = await createAxiosInstance('ug');
+    const axiosInstance = await createAxiosInstance('armtek');
     const params = new URLSearchParams();
 
     positions.forEach((position, index) => {

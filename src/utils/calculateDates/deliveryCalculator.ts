@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { ProductProfit } from '../../services/profit/profit.types.js';
+import { ProductProfit, SearchResultsParsed } from 'types/index.js';
 import {
   CalculationStrategy,
   DirectFromApiStrategy,
@@ -8,7 +8,6 @@ import {
   ShipmentScheduleBasedStrategy,
   SupplierDatesConfig,
 } from '../../types/dateTypes.js';
-import { SearchResultsParsed } from '../../types/search.types.js';
 
 // --- Helper Functions ---
 
@@ -81,16 +80,16 @@ function calculateByRules(
     }
 
     const currentTimeStr = now.toFormat('HH:mm');
-
+    
     let isTimeMatch = false;
     if (currentWeekday === from.weekday && currentWeekday === to.weekday) {
-      isTimeMatch = currentTimeStr >= from.time && currentTimeStr <= to.time;
+        isTimeMatch = currentTimeStr >= from.time && currentTimeStr <= to.time;
     } else if (currentWeekday === from.weekday) {
-      isTimeMatch = currentTimeStr >= from.time;
+        isTimeMatch = currentTimeStr >= from.time;
     } else if (currentWeekday === to.weekday) {
-      isTimeMatch = currentTimeStr <= to.time;
+        isTimeMatch = currentTimeStr <= to.time;
     } else {
-      isTimeMatch = true;
+        isTimeMatch = true;
     }
 
     if (isTimeMatch) {

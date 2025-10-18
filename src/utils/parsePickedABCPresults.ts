@@ -1,8 +1,10 @@
 import * as cheerio from 'cheerio';
-
+import {
+  ParallelSearchParams,
+  SearchResultsParsed,
+  SupplierName,
+} from 'types/index.js';
 import { Logger } from 'winston';
-import { SupplierName } from '../types/common.types.js';
-import { ParallelSearchParams, SearchResultsParsed } from '../types/search.types.js';
 import { calculateDeliveryDate } from './calculateDates/calculateDeliveryDate.js';
 import { filterEqualResults } from './data/filterEqualResults.js';
 

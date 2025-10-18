@@ -15,7 +15,7 @@ import {
   suppliers,
 } from '../config/api/config.js';
 import { logger } from '../config/logger/index.js';
-import { SupplierName } from '../types/common.types.js';
+import { SupplierName } from '../types/index.js';
 import { checkProxy } from '../utils/api/checkProxy.js';
 import { generateMD5 } from '../utils/generateMD5.js';
 import { getLocalIP } from '../utils/getLocalIP.js';

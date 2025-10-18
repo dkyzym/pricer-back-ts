@@ -1,13 +1,15 @@
 import { AxiosResponse } from 'axios';
 import { ABCP_SERVICE_PATHS } from '../../../config/api/config.js';
-
-import { AbcpArticleSearchResult, AbcpSupplierAlias } from '../../../types/abcpPlatform.types.js';
+import {
+  abcpArticleSearchResult,
+  abcpSupplierAlias,
+} from '../../../types/index.js';
 import { createAxiosInstance } from '../../apiClient.js';
 
 export const fetchAbcpData = async (
   article: string,
   brand: string,
-  supplier: AbcpSupplierAlias,
+  supplier: abcpSupplierAlias,
   useOnlineStocks?: number
 ) => {
   try {
@@ -23,7 +25,7 @@ export const fetchAbcpData = async (
       withOutAnalogs: 1,
     };
 
-    const response: AxiosResponse<AbcpArticleSearchResult[]> =
+    const response: AxiosResponse<abcpArticleSearchResult[]> =
       await axiosInstance.get(ABCP_SERVICE_PATHS.Article_search, {
         params: params,
       });

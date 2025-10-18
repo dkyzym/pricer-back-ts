@@ -4,11 +4,9 @@ import { addToCartAutosputnikService } from '../../services/autosputnik/cart/add
 import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
 import { addToCartPatriotNpnService } from '../../services/patriot/cart/addToCartPatriotNpnService.js';
 
-import { addToCartAutosputnikData } from '../../services/autosputnik/autosputnik.types.js';
 import { addToCartUgService } from '../../services/ug/cart/addToCartUgService.js';
-import { BasketPositionUG } from '../../types/cart.types.js';
-import { SupplierName } from '../../types/common.types.js';
-
+import { addToCartAutosputnikData } from '../../types/autosputnik.js';
+import { BasketPositionUG, SupplierName } from '../../types/index.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier }: { supplier: SupplierName } = req.body;

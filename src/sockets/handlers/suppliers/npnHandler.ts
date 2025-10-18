@@ -1,7 +1,10 @@
 import { Logger } from 'winston';
 import { mapNpnResponseData } from '../../../services/npn/mapNpnResponseData.js';
 import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
-import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
+import {
+  getItemResultsParams,
+  SearchResultsParsed,
+} from '../../../types/index.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
 
 export const handleNpn = async (

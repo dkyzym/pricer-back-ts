@@ -1,8 +1,7 @@
 import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
-// import { SearchResultsParsed } from '../../types';
-import { SearchResponseItem, StoreResponseItem } from './armtek.types.js';
-import { SearchResultsParsed } from '../../types/search.types.js';
+import { SearchResultsParsed } from '../../types';
+import { SearchResponseItem, StoreResponseItem } from '../../types/armtek';
 
 /**
  * Считает приблизительное количество рабочих часов (8 часов в день, 5 дней в неделю)

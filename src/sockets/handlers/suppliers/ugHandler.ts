@@ -1,7 +1,11 @@
 import { Logger } from 'winston';
+import {
+  getItemResultsParams,
+  SearchResultsParsed,
+} from '../../../types/index.js';
+
 import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { mapUgResponseData } from '../../../services/ug/mapUgResponseData.js';
-import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
 
 // Создаем функцию-проверку (type guard)

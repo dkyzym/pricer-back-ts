@@ -1,7 +1,10 @@
 import chalk from 'chalk';
+import {
+  ItemToParallelSearch,
+  SearchResultsParsed,
+  SupplierName,
+} from 'types/index.js';
 import { Logger } from 'winston';
-import { SupplierName } from '../types/common.types.js';
-import { ItemToParallelSearch, SearchResultsParsed } from '../types/search.types.js';
 
 export const logResultCount = (
   item: ItemToParallelSearch,

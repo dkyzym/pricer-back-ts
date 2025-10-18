@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CartContentAutosputnik } from '../autosputnik.types.js';
+import { CartContentAutosputnik } from '../../../types/autosputnik.js';
 
 export const getAutosputnikCart = async () => {
   const login = process.env.AUTOSPUTNIK_LOGIN;

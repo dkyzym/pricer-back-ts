@@ -1,5 +1,8 @@
 import { Logger } from 'winston';
-import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
+import {
+  getItemResultsParams,
+  SearchResultsParsed,
+} from '../../../types/index.js';
 
 import { mapAvtodinamikaResponseData } from '../../../services/avtodinamika/mapAvtodinamikaResponseData.js';
 import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';

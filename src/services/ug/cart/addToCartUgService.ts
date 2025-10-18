@@ -1,5 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
+
+import { BasketPositionUG, UgCartResponse } from '../../../types/index.js';
 import { createAxiosInstance } from '../../apiClient.js';
 import { removeFromCartUgService } from './removeFromCartUgService.js';
 

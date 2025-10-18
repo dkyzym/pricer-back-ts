@@ -1,6 +1,8 @@
 import { Logger } from 'winston';
-
-import { getItemResultsParams, SearchResultsParsed } from '../../types/search.types.js';
+import {
+  getItemResultsParams,
+  SearchResultsParsed,
+} from '../../types/index.js';
 import { handleArmtek } from './suppliers/armtekHandler.js';
 import { handleAutoImpulse } from './suppliers/autoImpulseHandler.js';
 import { handleAutosputnik } from './suppliers/autosputnikHandler.js';

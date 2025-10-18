@@ -1,4 +1,4 @@
-import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
+import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
 import { mikanoClient } from '../abcp/index.js';
 
 /**
