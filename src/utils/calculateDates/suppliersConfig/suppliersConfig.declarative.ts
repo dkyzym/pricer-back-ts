@@ -143,19 +143,18 @@ export const suppliersConfig: SupplierDatesConfig[] = [
     },
   },
 
-  // --- UPDATED NPN CONFIGURATION ---
+  // --- CORRECTED NPN CONFIGURATION ---
   {
     supplierName: 'npn',
     calculation: {
       strategy: 'SHIPMENT_SCHEDULE_BASED',
-      // The engine will now parse the string from 'description' to find readiness date.
+      // We now trust the pre-calculated hours in the `deadline` field.
       readinessCalculation: {
-        type: 'PARSE_DELIVERY_STRING',
-        // IMPORTANT: Change this to the actual field from your API that contains the text
-        sourceField: 'description',
+        type: 'PLUS_HOURS_FROM_RESULT',
+        sourceField: 'deadline', // Use the pre-calculated hours from the deadline field
       },
       // The rest of the logic remains the same. The engine will:
-      // 1. Get readiness date from the parser.
+      // 1. Get readiness date by adding `deadline` hours to the current time.
       // 2. Find the next shipment day (Tue/Fri) after that date, respecting the cutoff time.
       // 3. Add the delivery delay.
       shipmentWeekdays: [2, 5], // Tuesday, Friday
