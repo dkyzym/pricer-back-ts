@@ -1,14 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
-import {
-  SearchResultsParsed,
-  abcpArticleSearchResult,
-} from '../../types/index.js';
+
+import { AbcpArticleSearchResult } from '../../types/abcpPlatform.types.js';
+import { SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 
 export const mapPatriotResponseData = (
-  data: abcpArticleSearchResult[],
+  data: AbcpArticleSearchResult[],
   brand: string,
   userLogger: Logger,
   supplier: 'patriot'

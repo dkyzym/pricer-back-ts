@@ -1,10 +1,10 @@
 import axios, { AxiosError } from 'axios';
+import { Logger } from 'winston';
 import {
   ArmtekSearchResponse,
   SearchRequest,
   SearchResponseItem,
-} from '../../types/armtek';
-import { Logger } from 'winston';
+} from './armtek.types.js';
 
 /**
  * Функция для поиска артикула на сервисе Armtek.

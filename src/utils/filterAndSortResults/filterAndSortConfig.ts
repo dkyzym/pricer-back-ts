@@ -1,4 +1,4 @@
-import { SupplierName } from '../../types/index.js';
+import { SupplierName } from "../../types/common.types.js";
 
 /**
  * Конфигурация для отдельных поставщиков.

@@ -1,10 +1,7 @@
 import { Logger } from 'winston';
 import { mapPatriotResponseData } from '../../../services/patriot/mapPatriotResponseData.js';
 import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
-import {
-  getItemResultsParams,
-  SearchResultsParsed,
-} from '../../../types/index.js';
+import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
 
 export const handlePatriot = async (

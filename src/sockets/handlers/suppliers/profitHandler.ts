@@ -2,19 +2,17 @@ import { getItemsListByArticleService } from 'services/profit/getItemsListByArti
 import { getItemsWithRest } from 'services/profit/getItemsWithRest.js';
 import { parseProfitApiResponse } from 'utils/data/profit/parseProfitApiResponse.js';
 import { Logger } from 'winston';
-import {
-  getItemResultsParams,
-  itemsGroupProfit,
-  SearchResultsParsed,
-} from '../../../types/index.js';
+
 import { isRelevantBrand } from '../../../utils/data/brand/isRelevantBrand.js';
+import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
+import { ItemsGroupProfit } from '../../../services/profit/profit.types.js';
 
 export const handleProfit = async (
   data: getItemResultsParams,
   userLogger: Logger
 ): Promise<SearchResultsParsed[]> => {
   const { item } = data;
-  const items: itemsGroupProfit = await getItemsListByArticleService(
+  const items: ItemsGroupProfit = await getItemsListByArticleService(
     item.article
   );
   const itemsWithRest = await getItemsWithRest(items, userLogger);

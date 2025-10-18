@@ -1,6 +1,6 @@
-// removeFromCartUgService.ts
 import { AxiosError, AxiosResponse } from 'axios';
-import { BasketPositionUG, UgCartResponse } from '../../../types/index.js';
+
+import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
 import { createAxiosInstance } from '../../apiClient.js';
 
 export const removeFromCartUgService = async (

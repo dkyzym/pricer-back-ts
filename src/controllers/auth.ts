@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import { User } from '../types';
+import { User } from '../types/common.types.js';
+
 dotenv.config();
 
 const { JWT_SECRET, USERS } = process.env;
 
-// Разберём USERS="Den:admin:DenPass;Sergey:user:SergeyPass;Julia:user:JuliaPass"
 const parseUsersFromEnv = (): User[] => {
   if (!USERS) return [];
   return USERS.split(';').map((userStr) => {
@@ -30,7 +30,7 @@ export const authenticateUser = (
   return userWithoutPass;
 };
 
-// Генерация JWT с инфой о пользователе
+// Генерация JWT с инф. о пользователе
 export const signToken = (user: Omit<User, 'password'>): string => {
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET not provided');

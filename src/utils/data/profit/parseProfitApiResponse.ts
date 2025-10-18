@@ -1,10 +1,8 @@
-import {
-  ApiResponseItem,
-  ProductProfit,
-  SearchResultsParsed,
-  SupplierName,
-} from 'types/index.js';
+
 import { Logger } from 'winston';
+import { ApiResponseItem, ProductProfit } from '../../../services/profit/profit.types.js';
+import { SupplierName } from '../../../types/common.types.js';
+import { SearchResultsParsed } from '../../../types/search.types.js';
 import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
 import { needToCheckBrand } from '../brand/needToCheckBrand.js';
 
@@ -27,7 +25,6 @@ export const parseProfitApiResponse = (
         return typeof prob === 'number' ? prob : '';
       };
 
-      // Изменение здесь: извлечение чистого числа из product.quantity
       const availability =
         Number(String(product.quantity).replace(/[^\d.]/g, '')) || 0;
 

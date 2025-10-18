@@ -1,8 +1,8 @@
 import { AxiosError, AxiosResponse } from 'axios';
 
-import { BasketPositionUG, UgCartResponse } from '../../../types/index.js';
+
+import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
 import { createAxiosInstance } from '../../apiClient.js';
-import { removeFromCartUgService } from './removeFromCartPatriotService.js';
 
 export const addToCartPatriotNpnService = async (
   positions: BasketPositionUG[],
@@ -34,12 +34,11 @@ export const addToCartPatriotNpnService = async (
     if (
       response.data.status === 0 &&
       response.data.errorMessage ===
-        'Такой товар уже есть в корзине с этого online поставщика'
+      'Такой товар уже есть в корзине с этого online поставщика'
     ) {
       console.warn('Товар уже в корзине. Пытаемся обновить количество.');
 
-      // Удаляем существующий товар
-      await removeFromCartUgService(positions);
+
 
       // Повторно добавляем товар с новым количеством
       const retryResponse: AxiosResponse<UgCartResponse> =

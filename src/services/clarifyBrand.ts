@@ -1,9 +1,10 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { ItemAutocompleteRow } from '../types/index.js';
+import { Logger } from 'winston';
+import { ItemAutocompleteRow } from '../types/search.types.js';
 import { createAxiosInstance } from './apiClient.js';
 import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
-import { Logger } from 'winston';
+import { ProfitItem } from './profit/profit.types.js';
 
 interface UgBrandData {
   availability: number;
@@ -11,21 +12,6 @@ interface UgBrandData {
   description: string;
   number: string;
   numberFix: string;
-}
-
-interface ProfitItem {
-  availability: number;
-  brand: string;
-  description: string;
-  number: string;
-  numberFix: string;
-  article: string;
-  original: boolean;
-  own: boolean;
-  supplier: boolean;
-  rating: number;
-  brand_warranty: string;
-  countProducts: number;
 }
 
 interface ClarifyBrandResult {

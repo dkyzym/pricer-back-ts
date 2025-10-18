@@ -1,10 +1,10 @@
 import axios, { AxiosError } from 'axios';
 import https from 'https';
-import { itemsGroupProfit } from 'types/index.js';
 import { Logger } from 'winston';
+import { ItemsGroupProfit } from './profit.types.js';
 
 export const getItemsWithRest = async (
-  items: itemsGroupProfit,
+  items: ItemsGroupProfit,
   userLogger: Logger,
   maxRetries: number = 1,
   delayMs: number = 1000

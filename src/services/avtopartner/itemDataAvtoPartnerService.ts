@@ -2,10 +2,8 @@ import * as cheerio from 'cheerio';
 import { AnyNode } from 'domhandler';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../config/logger/index.js';
-import {
-  ParallelSearchParams,
-  SearchResultsParsed,
-} from '../../types/index.js';
+
+import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import { clientAvtoPartner } from './client.js';

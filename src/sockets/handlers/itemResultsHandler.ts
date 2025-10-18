@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
-import { getItemResultsParams, pageActionsResult } from '../../types/index.js';
+import { getItemResultsParams, PageActionsResult } from '../../types/search.types.js';
 import { AbcpError } from '../../utils/abcpErrorHandler.js';
 import { filterAndSortAllResults } from '../../utils/filterAndSortResults/filterAndSortAllResults.js';
 import { logResultCount } from '../../utils/stdLogs.js';
@@ -44,7 +44,7 @@ export const createItemResultsHandler = (
         )
       );
 
-      const response: pageActionsResult = {
+      const response: PageActionsResult = {
         success: true,
         message: `Data fetched for ${supplier}`,
         data: filteredItems,
@@ -59,7 +59,7 @@ export const createItemResultsHandler = (
       if (error instanceof AbcpError && error.isSuccessWithNoData) {
         // Это не ошибка, а "ничего не найдено" от ABCP
         userLogger.warn(`${supplier} supplier: "no results" from provider.`);
-        const result: pageActionsResult = {
+        const result: PageActionsResult = {
           success: true,
           message: error.message,
           data: [],

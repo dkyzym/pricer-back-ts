@@ -1,4 +1,5 @@
-import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
+
+import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 import { autoImpulseClient } from '../abcp/index.js';
 
 /**

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { logger } from 'config/logger/index.js';
-import { AddToCartConfig } from 'types/index.js';
+import { AddToCartConfig } from '../../types/cart.types';
 
 export const addToCartProfitService = async ({
   id,

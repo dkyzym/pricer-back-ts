@@ -1,16 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
-import {
-  SearchResultsParsed,
-  abcpArticleSearchResult,
-} from '../../types/index.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
-
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
+
+import { AbcpArticleSearchResult } from '../../types/abcpPlatform.types.js';
+import { SearchResultsParsed } from '../../types/search.types.js';
 import { calculateNpnDeadlineHours } from '../../utils/npn/calculateNpnDeadline.js';
 
 export const mapNpnResponseData = (
-  data: abcpArticleSearchResult[],
+  data: AbcpArticleSearchResult[],
   brand: string,
   userLogger: Logger,
   supplier: 'npn'

@@ -4,9 +4,9 @@ import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import { CookieJar } from 'tough-cookie';
 
-import { ParallelSearchParams, SearchResultsParsed } from 'types/index.js';
 import { logger } from '../../config/logger/index.js';
 import { ugHeaders } from '../../constants/headers.js';
+import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn.js';
 import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults.js';
 
@@ -83,7 +83,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     }
     return response;
   };
-  
+
   const searchItem = async ({ item, supplier, userLogger }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
     const { baseUrl } = config;
     const searchUrl = `${baseUrl}/search?pcode=${encodeURIComponent(item.article)}`;
@@ -91,21 +91,21 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     const $ = cheerio.load(response.data);
     const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.article)}`;
     const elements = $('.startSearching').filter((_, el) => {
-        const dataLink = $(el).attr('data-link') || '';
-        return dataLink.toLowerCase() === `/search/${dataLinkContent.toLowerCase()}`;
+      const dataLink = $(el).attr('data-link') || '';
+      return dataLink.toLowerCase() === `/search/${dataLinkContent.toLowerCase()}`;
     });
 
     let finalHtml: string;
     if (elements.length > 0) {
-        userLogger.info(`[${supplier}] Exact item found, making a second request.`);
-        const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
-        const detailResponse = await makeRequest(detailUrl, { headers: ugHeaders });
-        finalHtml = detailResponse.data;
+      userLogger.info(`[${supplier}] Exact item found, making a second request.`);
+      const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
+      const detailResponse = await makeRequest(detailUrl, { headers: ugHeaders });
+      finalHtml = detailResponse.data;
     } else {
-        userLogger.info(`[${supplier}] Exact item not found. Parsing search results page.`);
-        finalHtml = response.data;
+      userLogger.info(`[${supplier}] Exact item not found. Parsing search results page.`);
+      finalHtml = response.data;
     }
-    
+
     return parsePickedABCPresults({ html: finalHtml, item, supplier, userLogger });
   };
 

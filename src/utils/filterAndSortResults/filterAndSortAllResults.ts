@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
-import { SearchResultsParsed, SupplierName } from '../../types/index.js';
+import { SupplierName } from '../../types/common.types.js';
+import { SearchResultsParsed } from '../../types/search.types.js';
 import { FILTERED_SUPPLIERS, SUPPLIER_CONFIG } from './filterAndSortConfig.js';
 
 const MIN_PROBABILITY = 80;
