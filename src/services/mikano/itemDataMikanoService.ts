@@ -1,5 +1,5 @@
 import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
-import { mikanoClient } from '../abcp/parcer/index.js';
+import { mikanoClient } from '../abcp/parser/index.js';
 
 /**
  * Сервис для поиска товаров у поставщика Mikano.
