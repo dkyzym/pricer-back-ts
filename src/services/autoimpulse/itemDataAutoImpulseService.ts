@@ -1,6 +1,6 @@
 
 import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
-import { autoImpulseClient } from '../abcp/index.js';
+import { autoImpulseClient } from '../abcp_parsed/index.js';
 
 /**
  * Сервис для поиска товаров у поставщика AutoImpulse.

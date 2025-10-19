@@ -10,7 +10,6 @@ import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.ty
 import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn.js';
 import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults.js';
 
-// Интерфейс для конфигурации остаётся тем же
 export interface AbcpClientConfig {
   supplierName: string;
   baseUrl: string;
