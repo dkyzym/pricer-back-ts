@@ -3,11 +3,11 @@ import { AnyNode } from 'domhandler';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../config/logger/index.js';
 
+import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
-import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 
 const baseURL = 'https://avtopartner-yug.ru';
 const userAgent =
@@ -67,7 +67,7 @@ const parseProductCard = (
   }
 
   // Если товар есть, количество всегда будет '+'
-  const availability = '+';
+  const availability = 100;
 
   const imageUrlRaw = card.find('.product-card__picture img').attr('src') || '';
   const imageUrl = imageUrlRaw.startsWith('http') ? imageUrlRaw : `${baseURL}${imageUrlRaw}`;
