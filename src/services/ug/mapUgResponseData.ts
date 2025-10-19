@@ -1,65 +1,14 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
-import {
-  SearchResultsParsed,
-  abcpArticleSearchResult,
-} from '../../types/index.js';
-import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
-import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
+import { AbcpArticleSearchResult, UgSupplierAlias } from '../../types/abcpPlatform.types.js';
+import { SearchResultsParsed } from '../../types/search.types.js';
+import { ugConfig } from '../abcp/abcp.configs.js';
+import { mapAbcpResponse } from '../abcp/abcpResponseMapper.js';
 
 export const mapUgResponseData = (
-  data: abcpArticleSearchResult[],
+  data: AbcpArticleSearchResult[],
   brand: string,
   userLogger: Logger,
-  supplier: 'ug' | 'ug_f' | 'ug_bn'
+  supplier: UgSupplierAlias
 ): SearchResultsParsed[] => {
-  const ownWarehouses = ['краснодар', 'ростов']; // «родные» склады ЮГ
-
-  const mappedResponseData: SearchResultsParsed[] = data.map((item) => {
-    /** 1. Гарантируем, что строки не равны null/undefined */
-    const supplierDescription = item.supplierDescription ?? '';
-    const supplierDescriptionLower = supplierDescription.toLowerCase();
-
-    /** 2. deliveryProbability тоже может отсутствовать */
-    const probability = ownWarehouses.some((w) =>
-      supplierDescriptionLower.includes(w)
-    )
-      ? 95
-      : (item.deliveryProbability ?? 0);
-
-    return {
-      id: uuidv4(),
-      article: item.number,
-      brand: item.brand,
-      description: item.description,
-      availability: item.availability, // «под заказ» по умолчанию
-      price: item.price,
-      warehouse: supplierDescription,
-      imageUrl: '',
-
-      /** 3. Любое undefined → безопасное значение */
-      deadline: item.deliveryPeriod || 1,
-      deadLineMax: item.deliveryPeriodMax || 1,
-
-      supplier,
-      probability,
-      needToCheckBrand: !isRelevantBrand(brand, item.brand),
-      returnable: Number(!item.noReturn),
-      multi: item.packing || 1,
-      allow_return: !item.noReturn,
-      warehouse_id: String(item.supplierCode),
-      inner_product_code: item.itemKey,
-
-      [supplier]: {
-        itemKey: item.itemKey,
-        supplierCode: String(item.supplierCode),
-      },
-    };
-  });
-
-  /** 4. Сразу добавляем дату поставки */
-  return mappedResponseData.map((result) => ({
-    ...result,
-    deliveryDate: calculateDeliveryDate(result, userLogger),
-  }));
+  return mapAbcpResponse(data, brand, userLogger, supplier, ugConfig);
 };

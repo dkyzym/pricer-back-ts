@@ -6,6 +6,8 @@ export type AbcpSupplierAlias =
   | 'ug_bn'
   | 'avtodinamika';
 
+export type UgSupplierAlias = 'ug' | 'ug_f' | 'ug_bn'
+
 export interface AbcpArticleSearchResult {
   distributorId: number;
   grp: null;
