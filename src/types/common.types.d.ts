@@ -15,6 +15,8 @@ export type SupplierName =
 
 export type AccountAlias = 'nal' | 'bezNal';
 
+export type UgSupplierAlias = 'ug' | 'ug_f' | 'ug_bn'
+
 /** Структура данных о пользователе в памяти */
 export interface User {
   username: string;

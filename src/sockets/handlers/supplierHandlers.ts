@@ -1,8 +1,5 @@
 import { Logger } from 'winston';
-import {
-  getItemResultsParams,
-  SearchResultsParsed,
-} from '../../types/index.js';
+
 import { handleArmtek } from './suppliers/armtekHandler.js';
 import { handleAutoImpulse } from './suppliers/autoImpulseHandler.js';
 import { handleAutosputnik } from './suppliers/autosputnikHandler.js';
@@ -13,6 +10,7 @@ import { handleNpn } from './suppliers/npnHandler.js';
 import { handlePatriot } from './suppliers/patriotHandler.js';
 import { handleProfit } from './suppliers/profitHandler.js';
 import { handleUg } from './suppliers/ugHandler.js';
+import { getItemResultsParams, SearchResultsParsed } from '../../types/search.types.js';
 
 type SupplierHandler = (
   data: getItemResultsParams,

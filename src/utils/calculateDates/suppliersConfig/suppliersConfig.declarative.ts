@@ -1,4 +1,4 @@
-import { SupplierDatesConfig } from '../../../types/dateTypes.js';
+import { SupplierDatesConfig } from '../../../types/date.types.js';
 
 // ... existing directFromApiBase and ugAndAvtodinamikaBaseConfig ...
 const directFromApiBase: SupplierDatesConfig['calculation'] = {
@@ -99,12 +99,12 @@ export const suppliersConfig: SupplierDatesConfig[] = [
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
         },
         {
-            ifPlaced: { from: { weekday: 3, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
-            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
+          ifPlaced: { from: { weekday: 3, time: '00:00' }, to: { weekday: 4, time: '23:59' } },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }
         },
         {
-            ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 1, time: '23:59'}},
-            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3}
+          ifPlaced: { from: { weekday: 6, time: '00:00' }, to: { weekday: 1, time: '23:59' } },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 }
         }
       ],
     },
@@ -132,12 +132,12 @@ export const suppliersConfig: SupplierDatesConfig[] = [
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
         },
         {
-            ifPlaced: { from: { weekday: 2, time: '00:00'}, to: { weekday: 4, time: '23:59'}},
-            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6}
+          ifPlaced: { from: { weekday: 2, time: '00:00' }, to: { weekday: 4, time: '23:59' } },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }
         },
         {
-            ifPlaced: { from: { weekday: 6, time: '00:00'}, to: { weekday: 7, time: '23:59'}},
-            thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2}
+          ifPlaced: { from: { weekday: 6, time: '00:00' }, to: { weekday: 7, time: '23:59' } },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 }
         }
       ],
     },

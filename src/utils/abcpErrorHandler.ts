@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
-import { ProviderErrorData } from 'types/index.js';
+
 import { Logger } from 'winston';
+import { ProviderErrorData } from '../types/error.types';
 
 enum ProviderErrorCodes {
   ObjectNotFound = 301,

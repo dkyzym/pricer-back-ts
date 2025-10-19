@@ -1,12 +1,10 @@
-import {
-  ApiResponseItem,
-  ProductProfit,
-  SearchResultsParsed,
-  SupplierName,
-} from 'types/index.js';
+
 import { Logger } from 'winston';
 import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
 import { needToCheckBrand } from '../brand/needToCheckBrand.js';
+import { ApiResponseItem, ProductProfit } from '../../../services/profit/profit.types.js';
+import { SearchResultsParsed } from '../../../types/search.types.js';
+import { SupplierName } from '../../../types/common.types.js';
 
 const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';

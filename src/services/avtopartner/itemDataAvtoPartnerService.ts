@@ -2,14 +2,12 @@ import * as cheerio from 'cheerio';
 import { AnyNode } from 'domhandler';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../config/logger/index.js';
-import {
-  ParallelSearchParams,
-  SearchResultsParsed,
-} from '../../types/index.js';
+
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
+import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 
 const baseURL = 'https://avtopartner-yug.ru';
 const userAgent =
@@ -56,9 +54,9 @@ const parseProductCard = (
     .replace(',', '.')
     .replace(/\s+/g, '')
     .trim();
-  
+
   const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
-  
+
   // Проверяем, есть ли товар в наличии
   const isOutOfStock = card.find('.product-post__status.out-of-stock').length > 0;
 

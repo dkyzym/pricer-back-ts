@@ -1,4 +1,5 @@
-import { SupplierName } from '../../types/index.js';
+import { SupplierName } from "../../types/common.types";
+
 
 /**
  * Конфигурация для отдельных поставщиков.
@@ -38,7 +39,7 @@ export const SUPPLIER_CONFIG: Record<
   npn: {},
   mikano: {},
   avtodinamika: { maxItems: 2 },
-  avtoPartner:{}
+  avtoPartner: {}
 };
 
 /**

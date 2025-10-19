@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
-import { SearchResultsParsed } from '../../types';
-import { SearchResponseItem, StoreResponseItem } from '../../types/armtek';
+import { SearchResponseItem, StoreResponseItem } from './armtek.types';
+import { SearchResultsParsed } from '../../types/search.types';
+
 
 /**
  * Считает приблизительное количество рабочих часов (8 часов в день, 5 дней в неделю)
@@ -106,9 +107,9 @@ export function parseArmtekResults(
     const deliveryDate =
       res.WRNTDT || res.DLVDT
         ? (DateTime.fromFormat(
-            res.WRNTDT || res.DLVDT || '',
-            'yyyyMMddHHmmss'
-          ).toISODate() ?? '2999-01-01')
+          res.WRNTDT || res.DLVDT || '',
+          'yyyyMMddHHmmss'
+        ).toISODate() ?? '2999-01-01')
         : '2999-01-01';
 
     // Собираем итоговый объект

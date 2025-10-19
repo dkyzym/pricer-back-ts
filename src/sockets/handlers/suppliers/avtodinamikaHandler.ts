@@ -1,11 +1,8 @@
 import { Logger } from 'winston';
-import {
-  getItemResultsParams,
-  SearchResultsParsed,
-} from '../../../types/index.js';
+import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 
+import { fetchAbcpData } from '../../../services/abcp/api/fetchAbcpData.js';
 import { mapAvtodinamikaResponseData } from '../../../services/avtodinamika/mapAvtodinamikaResponseData.js';
-import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
 
 export const handleAvtodinamika = async (

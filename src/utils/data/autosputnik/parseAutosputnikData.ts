@@ -2,9 +2,11 @@ import { DateTime } from 'luxon';
 import { getAutosputnikItemsListByArticleService } from 'services/autosputnik/getItemsListByArticleService.js';
 import { v4 as uuidV4 } from 'uuid';
 import { Logger } from 'winston';
-import { SearchResultsParsed, TovarAutosputnik } from '../../../types/index.js';
+
 import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../brand/isRelevantBrand.js';
+import { TovarAutosputnik } from '../../../services/autosputnik/autosputnik.types.js';
+import { SearchResultsParsed } from '../../../types/search.types.js';
 
 export const parseAutosputnikData = async (
   item: {

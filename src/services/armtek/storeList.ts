@@ -1,4 +1,5 @@
-import { StoreResponseItem } from '../../types/armtek';
+
+import { StoreResponseItem } from './armtek.types.js';
 import { getArmtekStoresList } from './getArmtekStoresList.js';
 
 let storeListCache: StoreResponseItem[] = [];

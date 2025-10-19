@@ -1,13 +1,10 @@
 import { Logger } from 'winston';
-import {
-  getItemResultsParams,
-  SearchResultsParsed,
-} from '../../../types/index.js';
 
-import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
+import { fetchAbcpData } from '../../../services/abcp/api/fetchAbcpData.js';
 import { mapUgResponseData } from '../../../services/ug/mapUgResponseData.js';
+import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
-import { UgSupplierAlias } from '../../../types/abcpPlatform.types.js';
+import { UgSupplierAlias } from '../../../types/common.types.js';
 
 // Создаем функцию-проверку (type guard)
 const isUgSupplier = (

@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { ArmtekSearchResponse, StoreResponseItem } from '../../types/armtek';
+import { ArmtekSearchResponse, StoreResponseItem } from './armtek.types';
+
 
 /**
  * Функция для получения списка складов.

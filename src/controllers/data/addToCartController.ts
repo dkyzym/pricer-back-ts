@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
-import { updateAbcpCart } from '../../services/abcp/abcpCartService.js';
-import { addToCartAutosputnikData } from '../../services/autosputnik/autosputnik.types.js';
-import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService.js';
-import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
+import { AbcpSupplierAlias } from '../../services/abcp/abcpPlatform.types.js';
+import { updateAbcpCart } from '../../services/abcp/api/abcpCartService.js';
 import { addToCartProfitService } from '../../services/profit/addToCartProfitService.js';
-import { AbcpSupplierAlias } from '../../types/abcpPlatform.types.js';
 import { BasketPositionUG } from '../../types/cart.types.js';
 import { SupplierName } from '../../types/common.types.js';
 
@@ -46,22 +43,6 @@ export const addToCartController = async (req: Request, res: Response) => {
       return res.status(200).json({ success: true, data: result });
     }
 
-    if (supplier === 'autosputnik') {
-      const { amount, articul, brand, id_shop_prices, price } = req.body;
-      if (!amount || !articul || !brand || !id_shop_prices || !price) {
-        return res.status(400).json({
-          success: false,
-          message: `${supplier} Некоторые обязательные поля отсутствуют`,
-        });
-      }
-      const data: addToCartAutosputnikData = { amount, articul, brand, id_shop_prices, price };
-      const result = await addToCartAutosputnikService(data);
-      await getAutosputnikCart(); // Assuming this is for debug or has a side-effect
-      return res.status(200).json({
-        success: result.requestInfo.Status === 'ok',
-        message: result.requestAnswer.added,
-      });
-    }
 
     // Если поставщик не опознан
     return res.status(400).json({

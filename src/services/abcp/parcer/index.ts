@@ -15,12 +15,12 @@ export const mikanoClient = createAbcpClient({
 
 // --- Конфигурация для AutoImpulse ---
 export const autoImpulseClient = createAbcpClient({
-    supplierName: 'AutoImpulse',
-    baseUrl: 'https://lnr-auto-impulse.ru',
-    credentials: {
-      username: process.env.AUTOIMPULSE_USERNAME,
-      password: process.env.AUTOIMPULSE_PASSWORD,
-    },
-    loggedInIndicator: 'Кизим',
+  supplierName: 'AutoImpulse',
+  baseUrl: 'https://lnr-auto-impulse.ru',
+  credentials: {
+    username: process.env.AUTOIMPULSE_USERNAME,
+    password: process.env.AUTOIMPULSE_PASSWORD,
+  },
+  loggedInIndicator: 'Кизим',
 });
 
