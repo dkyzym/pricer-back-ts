@@ -1,16 +1,16 @@
+import chalk from 'chalk';
 import { Socket } from 'socket.io';
 import { Logger } from 'winston';
-import { supplierHandlers } from './supplierHandlers.js'; // Импортируем вашу карту
+import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
 import {
     getItemResultsParams,
     PageActionsResult,
     SearchResultsParsed,
 } from '../../types/search.types.js';
-import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
+import { AbcpError } from '../../utils/abcpErrorHandler.js';
 import { filterAndSortAllResults } from '../../utils/filterAndSortResults/filterAndSortAllResults.js';
 import { logResultCount } from '../../utils/stdLogs.js';
-import { AbcpError } from '../../utils/abcpErrorHandler.js';
-import chalk from 'chalk';
+import { supplierHandlers } from './supplierHandlers.js';
 
 /**
  * Единый обработчик для поиска товаров у любого поставщика.
