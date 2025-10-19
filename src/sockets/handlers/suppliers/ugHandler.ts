@@ -3,11 +3,12 @@ import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.
 import { mapUgResponseData } from '../../../services/ug/mapUgResponseData.js';
 import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
+import { UgSupplierAlias } from '../../../types/abcpPlatform.types.js';
 
 // Создаем функцию-проверку (type guard)
 const isUgSupplier = (
   supplier: string
-): supplier is 'ug' | 'ug_f' | 'ug_bn' => {
+): supplier is UgSupplierAlias => {
   return ['ug', 'ug_f', 'ug_bn'].includes(supplier);
 };
 
