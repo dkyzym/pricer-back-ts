@@ -1,7 +1,7 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { BasketPositionUG, UgCartResponse } from '../../types/cart.types.js';
-import { createAxiosInstance } from '../apiClient.js';
-import { AbcpSupplierAlias } from '../../types/abcpPlatform.types.js';
+import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
+import { createAxiosInstance } from '../../apiClient.js';
+import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 
 // Примечание: Эта функция не экспортируется, так как она является вспомогательной.
 // Она отправляет сырой запрос к API.

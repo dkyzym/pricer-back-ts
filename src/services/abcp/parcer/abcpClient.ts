@@ -4,11 +4,11 @@ import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import { CookieJar } from 'tough-cookie';
 
-import { logger } from '../../config/logger/index.js';
-import { ugHeaders } from '../../constants/headers.js';
-import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
-import { checkIsLoggedIn } from '../../utils/auth/checkIsLoggedIn.js';
-import { parsePickedABCPresults } from '../../utils/parsePickedABCPresults.js';
+import { logger } from '../../../config/logger/index.js';
+import { ugHeaders } from '../../../constants/headers.js';
+import { ParallelSearchParams, SearchResultsParsed } from '../../../types/search.types.js';
+import { checkIsLoggedIn } from '../../../utils/auth/checkIsLoggedIn.js';
+import { parsePickedABCPresults } from '../../../utils/parsePickedABCPresults.js';
 
 export interface AbcpClientConfig {
   supplierName: string;

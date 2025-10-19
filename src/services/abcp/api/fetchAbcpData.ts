@@ -1,8 +1,8 @@
 import { AxiosResponse } from 'axios';
 import { ABCP_SERVICE_PATHS } from '../../../config/api/config.js';
 
-import { AbcpArticleSearchResult, AbcpSupplierAlias } from '../../../types/abcpPlatform.types.js';
 import { createAxiosInstance } from '../../apiClient.js';
+import { AbcpArticleSearchResult, AbcpSupplierAlias } from '../abcpPlatform.types.js';
 
 export const fetchAbcpData = async (
   article: string,

@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
-import { AbcpArticleSearchResult, AbcpSupplierAlias } from '../../types/abcpPlatform.types.js';
 import { SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
+import { AbcpArticleSearchResult, AbcpSupplierAlias } from './abcpPlatform.types.js';
 
 /**
  * Интерфейс конфигурации для маппера.

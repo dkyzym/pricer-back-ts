@@ -1,6 +1,6 @@
 import { Logger } from 'winston';
+import { fetchAbcpData } from '../../../services/abcp/api/fetchAbcpData.js';
 import { mapPatriotResponseData } from '../../../services/patriot/mapPatriotResponseData.js';
-import { fetchAbcpData } from '../../../services/ug/fetchAbcpData/fetchAbcpData.js';
 import { getItemResultsParams, SearchResultsParsed } from '../../../types/search.types.js';
 import { createAbcpError } from '../../../utils/abcpErrorHandler.js';
 

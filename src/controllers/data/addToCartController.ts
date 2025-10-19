@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { updateAbcpCart } from '../../services/abcp/abcpCartService.js';
+import { AbcpSupplierAlias } from '../../services/abcp/abcpPlatform.types.js';
+import { updateAbcpCart } from '../../services/abcp/api/abcpCartService.js';
 import { addToCartAutosputnikData } from '../../services/autosputnik/autosputnik.types.js';
 import { addToCartAutosputnikService } from '../../services/autosputnik/cart/addToCartAutosputnikService.js';
 import { getAutosputnikCart } from '../../services/autosputnik/cart/getAutosputnikCart.js';
 import { addToCartProfitService } from '../../services/profit/addToCartProfitService.js';
-import { AbcpSupplierAlias } from '../../types/abcpPlatform.types.js';
 import { BasketPositionUG } from '../../types/cart.types.js';
 import { SupplierName } from '../../types/common.types.js';
 
