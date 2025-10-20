@@ -1,10 +1,10 @@
 import * as cheerio from 'cheerio';
 
 import { Logger } from 'winston';
+import { SupplierName } from '../types/common.types.js';
+import { ParallelSearchParams, SearchResultsParsed } from '../types/search.types.js';
 import { calculateDeliveryDate } from './calculateDates/calculateDeliveryDate.js';
 import { filterEqualResults } from './data/filterEqualResults.js';
-import { ParallelSearchParams, SearchResultsParsed } from '../types/search.types.js';
-import { SupplierName } from '../types/common.types.js';
 
 interface ParseParams extends ParallelSearchParams {
   html: string;
@@ -48,10 +48,10 @@ export const parseData = async (
     const priceText = $row.attr('data-output-price') || '0';
     const deadlineText = $row.attr('data-deadline') || '0';
     const deadLineMaxText = $row.attr('data-deadline-max') || '0';
-    const isMicanoChangePlusNeed =
+    const isMikanoChangePlusNeed =
       supplier === 'mikano' && availabilityText === '-1'; // для того чтобы знать нужно менять значение наличия с + на число или нет.
 
-    let availability = isMicanoChangePlusNeed
+    let availability = isMikanoChangePlusNeed
       ? 50
       : parseInt(availabilityText, 10) || 0;
     const price = parseFloat(priceText) || 0;
@@ -98,7 +98,6 @@ export const parsePickedABCPresults = async ({
     const resultsWithSupplier = currentData
       .map((product) => {
         if (
-          supplier === 'patriot' ||
           supplier === 'autoImpulse' ||
           supplier === 'mikano'
         ) {
