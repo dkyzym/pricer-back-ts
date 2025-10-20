@@ -4,7 +4,7 @@ export const brandGroupsMap = [
   ['hans-pries', 'topran'],
   ['KNECHT', 'MAHLE', 'mahle/knecht', 'mahle original'],
   ['Белебей', 'БЗАК'],
-  ['змз', 'дайдо металл русь', 'дайдо метал'],
+  ['змз', 'дайдо металл русь', 'дайдо метал', 'zmz'],
   ['lada', 'ваз', 'вис', 'оат', 'лада-имидж', 'lada image'],
   ['HYUNDAI', 'KIA', 'MOBIS'],
   ['total', 'TotalEnergies'],
@@ -28,6 +28,6 @@ export const brandGroupsMap = [
   ['seinsa', 'autofner', 'seinsa autofren'],
   ['transmaster', 'transmaster universal'],
   ['ника', 'ника антас'],
-  ['лукойл','lukoil'],
-  ['вымпел','орион','нпп орион']
+  ['лукойл', 'lukoil'],
+  ['вымпел', 'орион', 'нпп орион']
 ];
