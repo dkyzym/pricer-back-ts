@@ -10,6 +10,7 @@ interface SupplierConfig {
   username: string;
   password: string;
   baseUrl: string;
+  needAuth: boolean;
 }
 
 /**
@@ -23,13 +24,14 @@ interface SupplierConfig {
 const createAbcpConfig = (
   abcpIdEnvVar: string,
   userEnvVar: string,
-  passEnvVar: string
+  passEnvVar: string,
 ): SupplierConfig => {
   const abcpId = getEnvVar(abcpIdEnvVar);
   return {
     username: getEnvVar(userEnvVar),
     password: getEnvVar(passEnvVar),
     baseUrl: `https://${abcpId}.public.api.abcp.ru`,
+    needAuth: true
   };
 };
 

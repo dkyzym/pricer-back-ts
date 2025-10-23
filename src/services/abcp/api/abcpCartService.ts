@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
-import { createAxiosInstance } from '../../apiClient.js';
+import { createAxiosInstance } from '../../apiClient/apiClient.js';
 import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 
 // Примечание: Эта функция не экспортируется, так как она является вспомогательной.

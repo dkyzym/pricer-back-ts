@@ -1,10 +1,10 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
-import { createAxiosInstance } from './apiClient.js';
-import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
 import { Logger } from 'winston';
 import { ItemAutocompleteRow } from '../types/search.types.js';
+import { createAxiosInstance } from './apiClient/apiClient.js';
+import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
 
 interface UgBrandData {
   availability: number;

@@ -13,13 +13,13 @@ import {
   PROXY_HOST,
   PROXY_PORT,
   suppliers,
-} from '../config/api/config.js';
-import { logger } from '../config/logger/index.js';
+} from '../../config/api/config.js';
+import { logger } from '../../config/logger/index.js';
 
-import { checkProxy } from '../utils/api/checkProxy.js';
-import { generateMD5 } from '../utils/generateMD5.js';
-import { getLocalIP } from '../utils/getLocalIP.js';
-import { SupplierName } from '../types/common.types.js';
+import { SupplierName } from '../../types/common.types.js';
+import { checkProxy } from '../../utils/api/checkProxy.js';
+import { generateMD5 } from '../../utils/generateMD5.js';
+import { getLocalIP } from '../../utils/getLocalIP.js';
 
 type AxiosInstanceSupplierName = SupplierName;
 
@@ -41,7 +41,7 @@ export async function initProxyCheck() {
   }
 
   // 3) Если IP не совпадает – по умолчанию используем прокси.
-  //    Но проверим сразу «жив ли» прокси, если хотите.
+
   const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
   const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
   const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
@@ -133,13 +133,8 @@ export const createAxiosInstance = async (
       }
       config.headers.set('Accept-Encoding', 'gzip, deflate');
 
-      // Пример логики для конкретных поставщиков
-      if (
-        supplierKey.startsWith('ug') ||
-        supplierKey === 'patriot' ||
-        supplierKey === 'npn' ||
-        supplierKey === 'avtodinamika'
-      ) {
+
+      if (supplier.needAuth) {
         config.params = {
           ...config.params,
           userlogin: supplier.username,
