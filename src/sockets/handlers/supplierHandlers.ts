@@ -23,7 +23,7 @@ import { autoImpulseClient, mikanoClient } from '../../services/abcp/parser/inde
 // Profit
 import { getItemsListByArticleService } from '../../services/profit/getItemsListByArticleService.js';
 import { getItemsWithRest } from '../../services/profit/getItemsWithRest.js';
-import { parseProfitApiResponse } from '../../utils/data/profit/parseProfitApiResponse.js';
+import { parseProfitApiResponse } from '../../services/profit/parseProfitApiResponse.js';
 
 // Armtek
 import { parseArmtekResults } from '../../services/armtek/parseArmtekResults.js';
@@ -31,13 +31,12 @@ import { searchArmtekArticle } from '../../services/armtek/searchArmtekArticle.j
 import { getCachedStoreList } from '../../services/armtek/storeList.js';
 
 // Autosputnik
-import { parseAutosputnikData } from '../../utils/data/autosputnik/parseAutosputnikData.js';
+import { parseAutosputnikData } from '../../services/autosputnik/parseAutosputnikData.js';
 
 // AvtoPartner
 import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataAvtoPartnerService.js';
 
 // Общие утилиты
-import { UgSupplierAlias } from '../../types/common.types.js';
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 
@@ -114,7 +113,7 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
  */
 function createAbcpApiHandler(
   config: any, // Используем any для гибкости конфигов
-  allowedSuppliers: (AbcpSupplierAlias | UgSupplierAlias)[]
+  allowedSuppliers: (AbcpSupplierAlias)[]
 ): SupplierHandler {
   return async (data: getItemResultsParams, userLogger: Logger) => {
     const { item, supplier } = data;

@@ -1,10 +1,10 @@
 
 import { Logger } from 'winston';
-import { calculateDeliveryDate } from '../../calculateDates/calculateDeliveryDate.js';
-import { needToCheckBrand } from '../brand/needToCheckBrand.js';
-import { ApiResponseItem, ProductProfit } from '../../../services/profit/profit.types.js';
-import { SearchResultsParsed } from '../../../types/search.types.js';
-import { SupplierName } from '../../../types/common.types.js';
+import { SupplierName } from '../../types/common.types.js';
+import { SearchResultsParsed } from '../../types/search.types.js';
+import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
+import { needToCheckBrand } from '../../utils/data/brand/needToCheckBrand.js';
+import { ApiResponseItem, ProductProfit } from './profit.types.js';
 
 const getImageUrl = (product: ProductProfit): string => {
   return product.imageUrl || 'default-image-url.jpg';

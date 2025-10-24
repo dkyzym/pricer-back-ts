@@ -47,7 +47,6 @@ export const initializeSocket = (server: HTTPServer) => {
 
     // Отправляем событие об успешном подключении клиенту
     socket.emit(SOCKET_EVENTS.CONNECT, { message: 'Connected to server' });
-    // --- КОНЕЦ ВОССТАНОВЛЕННОЙ ЛОГИКИ ---
 
     // ---  Регистрация обработчиков событий ---
     socket.on(
