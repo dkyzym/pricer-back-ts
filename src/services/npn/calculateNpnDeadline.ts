@@ -1,6 +1,6 @@
 import { DateTime, WeekdayNumbers } from 'luxon';
 import { Logger } from 'winston';
-import { AbcpArticleSearchResult } from '../../services/abcp/abcpPlatform.types.js';
+import { AbcpArticleSearchResult } from '../abcp/abcpPlatform.types.js';
 
 const dayNameToIndex: { [key: string]: number } = {
   пон: 1,
