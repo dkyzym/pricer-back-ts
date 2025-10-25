@@ -2,7 +2,7 @@ import {
   ItemToParallelSearch,
   SearchResultsParsed,
 } from '../../types/search.types.js';
-import { standardizeString } from './brand/standardizeString.js';
+import { standardizeString } from './standardizeString.js';
 
 export const filterEqualResults = (
   results: SearchResultsParsed[],

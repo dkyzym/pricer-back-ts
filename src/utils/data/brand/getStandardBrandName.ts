@@ -1,5 +1,5 @@
 import { brandGroupsMap } from '@constants/brandGroupsMap.js';
-import { standardizeString } from './standardizeString.js';
+import { standardizeString } from '../standardizeString.js';
 
 export const getStandardBrandName = (brand: string): string | null => {
   const normalizedBrand = standardizeString(brand);
