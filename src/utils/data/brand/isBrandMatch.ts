@@ -1,6 +1,6 @@
 import stringSimilarity from 'string-similarity';
 import { getStandardBrandName } from './getStandardBrandName.js';
-import { normalizeBrandName } from './normalizeBrandName.js';
+import { standardizeString } from './standardizeString.js';
 
 export const isBrandMatch = (
   expectedBrand: string,
@@ -13,8 +13,8 @@ export const isBrandMatch = (
     return expectedStandard === actualStandard;
   }
 
-  const normalizedExpected = normalizeBrandName(expectedBrand);
-  const normalizedActual = normalizeBrandName(actualBrand);
+  const normalizedExpected = standardizeString(expectedBrand);
+  const normalizedActual = standardizeString(actualBrand);
   const similarity = stringSimilarity.compareTwoStrings(
     normalizedExpected,
     normalizedActual

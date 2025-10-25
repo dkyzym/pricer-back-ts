@@ -1,6 +1,6 @@
 import { transliterate as tr } from 'transliteration';
 
-export const normalizeBrandName = (brand: string): string => {
+export const standardizeString = (brand: string): string => {
   let normalized = brand.toUpperCase(); // Приводим к верхнему регистру
 
   normalized = normalized.replace(/[\s\-]/g, ''); // Удаляем пробелы и дефисы

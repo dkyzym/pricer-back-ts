@@ -1,13 +1,13 @@
 import { brandGroupsMap } from '@constants/brandGroupsMap.js';
-import { normalizeBrandName } from './normalizeBrandName.js';
+import { standardizeString } from './standardizeString.js';
 
 export const getStandardBrandName = (brand: string): string | null => {
-  const normalizedBrand = normalizeBrandName(brand);
+  const normalizedBrand = standardizeString(brand);
 
   for (const group of brandGroupsMap) {
     for (const variant of group) {
-      if (normalizeBrandName(variant) === normalizedBrand) {
-        return normalizeBrandName(group[0]);
+      if (standardizeString(variant) === normalizedBrand) {
+        return standardizeString(group[0]);
       }
     }
   }

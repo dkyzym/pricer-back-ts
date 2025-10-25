@@ -1,11 +1,11 @@
-import { normalizeBrandName } from './normalizeBrandName.js';
+import { standardizeString } from './standardizeString.js';
 
 export const isContainsBrandName = (
   expectedBrand: string,
   actualBrand: string
 ): boolean => {
-  const normalizedExpected = normalizeBrandName(expectedBrand);
-  const normalizedActual = normalizeBrandName(actualBrand);
+  const normalizedExpected = standardizeString(expectedBrand);
+  const normalizedActual = standardizeString(actualBrand);
 
   return (
     normalizedExpected.includes(normalizedActual) ||

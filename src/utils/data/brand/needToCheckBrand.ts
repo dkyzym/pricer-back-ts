@@ -1,8 +1,8 @@
-import { formatText } from '../formatText.js';
+import { standardizeString } from './standardizeString.js';
 
 export const needToCheckBrand = (
   expectedBrand: string,
   actualBrand: string
 ) => {
-  return formatText(expectedBrand) !== formatText(actualBrand);
+  return standardizeString(expectedBrand) !== standardizeString(actualBrand);
 };
