@@ -1,4 +1,4 @@
-import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService';
+import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
 import { addToCartProfitService } from '../../../services/profit/addToCartProfitService.js';
 import {
   BasketPositionUG,
