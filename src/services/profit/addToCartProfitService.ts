@@ -1,14 +1,16 @@
 import axios from 'axios';
 import { logger } from 'config/logger/index.js';
-import { AddToCartConfig } from '../../types/cart.types';
-
+import {
+  AddToCartConfig,
+  ProfitAPIresponse,
+} from '../../controllers/data/cart/cart.types.js';
 
 export const addToCartProfitService = async ({
   id,
   warehouse,
   quantity,
   code,
-}: AddToCartConfig) => {
+}: AddToCartConfig): Promise<ProfitAPIresponse> => {
   try {
     const apiKey = process.env.PROFIT_API_KEY;
 

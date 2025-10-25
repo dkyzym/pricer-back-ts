@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { BasketPositionUG, UgCartResponse } from '../../../types/cart.types.js';
+import { BasketPositionUG, UgCartResponse } from '../../../controllers/data/cart/cart.types.js';
 import { createAxiosInstance } from '../../apiClient/apiClient.js';
 import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 

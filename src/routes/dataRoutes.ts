@@ -1,4 +1,4 @@
-import { addToCartController } from 'controllers/data/addToCartController.js';
+import { addToCartController } from '@controllers/data/cart/addToCartController.js';
 import { Router } from 'express';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
 import { autocompleteUgController } from '../controllers/data/autocompleteUgController.js';

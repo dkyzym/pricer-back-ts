@@ -40,3 +40,16 @@ export interface AddResultXML {
     OrderedCode: string;
   };
 }
+
+export type CartHandlerResponse = {
+  success: boolean;
+  message: string;
+  data?: any;
+};
+
+export type CartHandler = (data: any) => Promise<CartHandlerResponse>;
+
+export type ProfitAPIresponse = { status: "success" | 'no - quantity' | 'less' | 'error', total: number, count: number }
+
+
+
