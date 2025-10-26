@@ -18,7 +18,10 @@ import { mapAbcpResponse } from '../../services/abcp/abcpResponseMapper.js';
 import { fetchAbcpData } from '../../services/abcp/api/fetchAbcpData.js';
 
 // ABCP (Парсеры)
-import { autoImpulseClient, mikanoClient } from '../../services/abcp/parser/index.js';
+import {
+  autoImpulseClient,
+  mikanoClient,
+} from '../../services/abcp/parser/index.js';
 
 // Profit
 import { getItemsListByArticleService } from '../../services/profit/getItemsListByArticleService.js';
@@ -39,6 +42,7 @@ import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataA
 // Общие утилиты
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
+import { transformArticleByBrand } from '../../utils/data/brand/transformArticleByBrand.js';
 
 /**
  * Единая карта обработчиков для всех поставщиков.
@@ -64,8 +68,15 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
 
   // --- Profit ---
   profit: async (data, userLogger) => {
-    const { item } = data;
-    const items = await getItemsListByArticleService(item.article);
+    const { item, supplier } = data;
+
+    const articleToSearch = transformArticleByBrand(
+      item.article,
+      item.brand,
+      supplier
+    );
+
+    const items = await getItemsListByArticleService(articleToSearch);
     const itemsWithRest = await getItemsWithRest(items, userLogger);
     const relevantItems = itemsWithRest.filter(({ brand }: any) =>
       isRelevantBrand(item.brand, brand)
@@ -75,8 +86,18 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
 
   // --- Armtek ---
   armtek: async (data, userLogger) => {
-    const { item } = data;
-    const { RESP } = await searchArmtekArticle({ PIN: item.article }, userLogger);
+    const { item, supplier } = data;
+
+    const articleToSearch = transformArticleByBrand(
+      item.article,
+      item.brand,
+      supplier
+    );
+
+    const { RESP } = await searchArmtekArticle(
+      { PIN: articleToSearch },
+      userLogger
+    );
     if (!RESP || !RESP.length) return [];
     const relevantItems = RESP.filter((resItem) =>
       isRelevantBrand(item.brand, resItem.BRAND || '')
@@ -88,6 +109,7 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   // --- Autosputnik ---
   autosputnik: (data, userLogger) => {
     const { item, supplier } = data;
+
     if (supplier === 'autosputnik' || supplier === 'autosputnik_bn') {
       return parseAutosputnikData(item, userLogger, supplier);
     }
@@ -113,7 +135,7 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
  */
 function createAbcpApiHandler(
   config: any, // Используем any для гибкости конфигов
-  allowedSuppliers: (AbcpSupplierAlias)[]
+  allowedSuppliers: AbcpSupplierAlias[]
 ): SupplierHandler {
   return async (data: getItemResultsParams, userLogger: Logger) => {
     const { item, supplier } = data;
@@ -124,10 +146,20 @@ function createAbcpApiHandler(
 
     try {
       // Для UG определяем useOnlineStocks, для остальных - undefined (по умолчанию)
-      const useOnlineStocks = (['ug_f', 'ug_bn'].includes(supplier)) ? 0 : (supplier === 'ug' ? 1 : undefined);
+      const useOnlineStocks = ['ug_f', 'ug_bn'].includes(supplier)
+        ? 0
+        : supplier === 'ug'
+          ? 1
+          : undefined;
+
+      const articleToSearch = transformArticleByBrand(
+        item.article,
+        item.brand,
+        supplier
+      );
 
       const responseData = await fetchAbcpData(
-        item.article,
+        articleToSearch,
         item.brand,
         supplier as AbcpSupplierAlias,
         useOnlineStocks

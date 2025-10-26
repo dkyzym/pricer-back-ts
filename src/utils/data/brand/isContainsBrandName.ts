@@ -1,4 +1,4 @@
-import { standardizeString } from '../standardizeString.js';
+import { standardizeString } from './standardizeString.js';
 
 export const isContainsBrandName = (
   expectedBrand: string,

@@ -6,6 +6,7 @@ import { SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import { TovarAutosputnik } from './autosputnik.types.js';
+import { transformArticleByBrand } from '../../utils/data/brand/transformArticleByBrand.js';
 
 export const parseAutosputnikData = async (
   item: {
@@ -16,9 +17,14 @@ export const parseAutosputnikData = async (
   supplier: 'autosputnik' | 'autosputnik_bn'
 ) => {
   try {
+    const articleToSearch = transformArticleByBrand(
+      item.article,
+      item.brand,
+      supplier
+    );
     // Шаг 1: Получаем первоначальные данные без указания бренда
     const initialData = await getAutosputnikItemsListByArticleService(
-      item.article,
+      articleToSearch,
       userLogger,
       supplier
     );
@@ -43,7 +49,7 @@ export const parseAutosputnikData = async (
     // Шаг 3: Делаем повторные запросы с каждым идентификатором бренда
     const promises = uniqueBrandIds.map((brandId: string) =>
       getAutosputnikItemsListByArticleService(
-        item.article,
+        articleToSearch,
         userLogger,
         supplier,
         brandId
