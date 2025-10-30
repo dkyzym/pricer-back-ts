@@ -4,19 +4,20 @@ import express, { Request, Response } from 'express';
 import { logger } from './config/logger/index.js';
 import { verifyGithubSignature } from './utils/verifySignature.js';
 
-
 dotenv.config();
 
-
 const GITHUB_SECRET = process.env.GITHUB_SECRET;
-const PORT = process.env.PORT || 3002;
-
+const PORT = process.env.WEBHOOK_PORT || 3002;
 
 const app = express();
 
 if (!GITHUB_SECRET) {
-  logger.error('КРИТИЧЕСКАЯ ОШИБКА: GITHUB_SECRET не определен в переменных окружения.');
-  logger.error('Пожалуйста, создайте файл .env с GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.');
+  logger.error(
+    'КРИТИЧЕСКАЯ ОШИБКА: GITHUB_SECRET не определен в переменных окружения.'
+  );
+  logger.error(
+    'Пожалуйста, создайте файл .env с GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.'
+  );
   process.exit(1);
 }
 
@@ -42,7 +43,11 @@ app.use(
  * @param deployCommand - Команда, которую нужно выполнить для деплоя.
  * @returns Обработчик запроса для Express.
  */
-function createWebhookHandler(serviceName: string, workingDir: string, deployCommand: string) {
+function createWebhookHandler(
+  serviceName: string,
+  workingDir: string,
+  deployCommand: string
+) {
   return (req: Request, res: Response) => {
     // ✅ 2. Используем импортированную функцию. Код чистый и понятный.
     // Мы уверены, что GITHUB_SECRET существует, благодаря проверке на старте.
@@ -56,7 +61,9 @@ function createWebhookHandler(serviceName: string, workingDir: string, deployCom
       return res.status(200).send('Это не push-событие');
     }
 
-    logger.info(`[${serviceName}] Получено корректное push-событие. Начинаю развертывание...`);
+    logger.info(
+      `[${serviceName}] Получено корректное push-событие. Начинаю развертывание...`
+    );
 
     exec(deployCommand, { cwd: workingDir }, (err, stdout, stderr) => {
       if (stdout) logger.info(`[${serviceName}] STDOUT:\n${stdout}`);
@@ -81,17 +88,33 @@ app.get('/', (_req: Request, res: Response) => {
 const backendConfig = {
   name: 'Backend',
   path: 'D:/projects/pricer-back-ts',
-  command: 'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back'
+  command:
+    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
 };
 
 const frontendConfig = {
   name: 'Frontend',
   path: 'D:/projects/pricer-front',
-  command: 'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-front-service-name'
+  command:
+    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-front-service-name',
 };
 
-app.post('/webhook', createWebhookHandler(backendConfig.name, backendConfig.path, backendConfig.command));
-app.post('/webhook-frontend', createWebhookHandler(frontendConfig.name, frontendConfig.path, frontendConfig.command));
+app.post(
+  '/webhook',
+  createWebhookHandler(
+    backendConfig.name,
+    backendConfig.path,
+    backendConfig.command
+  )
+);
+app.post(
+  '/webhook-frontend',
+  createWebhookHandler(
+    frontendConfig.name,
+    frontendConfig.path,
+    frontendConfig.command
+  )
+);
 
 // --- Запуск сервера ---
 app.listen(PORT, () => {
