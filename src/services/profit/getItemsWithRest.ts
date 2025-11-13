@@ -18,7 +18,7 @@ export const getItemsWithRest = async (
 
   const uri = `https://api.pr-lg.ru/search/items?secret=${apiKey}&article=${items[0].article}&brand=${items[0].brand}`;
 
-  // Создаем HTTPS агент для игнорирования SSL ошибок
+  // Создаем HTTPS агент для игнорирования SSL  ошибок
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
   });
