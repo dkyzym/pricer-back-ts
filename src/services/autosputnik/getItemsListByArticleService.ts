@@ -1,4 +1,5 @@
 import axios from 'axios';
+import https from 'https';
 import { Logger } from 'winston';
 
 export const getAutosputnikItemsListByArticleService = async (
@@ -25,6 +26,11 @@ export const getAutosputnikItemsListByArticleService = async (
     );
   }
 
+  // 👇 создаём агент, который отключает проверку SSL у поставщика беда с сертификатом.
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+
   try {
     const payload = {
       options: {
@@ -40,6 +46,7 @@ export const getAutosputnikItemsListByArticleService = async (
 
     const response = await axios.post(BASE_URL, payload, {
       headers: { 'Content-Type': 'application/json' },
+      httpsAgent,
     });
 
     if (response.data.error) {

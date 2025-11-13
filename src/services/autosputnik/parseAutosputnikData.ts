@@ -5,8 +5,8 @@ import { Logger } from 'winston';
 import { SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
-import { TovarAutosputnik } from './autosputnik.types.js';
 import { transformArticleByBrand } from '../../utils/data/brand/transformArticleByBrand.js';
+import { TovarAutosputnik } from './autosputnik.types.js';
 
 export const parseAutosputnikData = async (
   item: {
@@ -22,6 +22,7 @@ export const parseAutosputnikData = async (
       item.brand,
       supplier
     );
+
     // Шаг 1: Получаем первоначальные данные без указания бренда
     const initialData = await getAutosputnikItemsListByArticleService(
       articleToSearch,
