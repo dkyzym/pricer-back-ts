@@ -24,7 +24,7 @@ if (!GITHUB_SECRET) {
 
 logger.info(`Запуск Webhook. Порт: ${PORT}`);
 logger.info(
-  `Статус GITHUB_SECRET: ${GITHUB_SECRET ? 'ЗАГРУЖЕН (OK)' : 'ПУСТО (ERROR)'}`
+  `Статус  GITHUB_SECRET: ${GITHUB_SECRET ? 'ЗАГРУЖЕН (OK)' : 'ПУСТО (ERROR)'}`
 );
 
 // --- Middleware ---
