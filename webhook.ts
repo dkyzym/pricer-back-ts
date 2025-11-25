@@ -1,11 +1,11 @@
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
-import path from 'path';
-import { logger } from './config/logger/index.js';
-import { verifyGithubSignature } from './utils/verifySignature.js';
 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+import { logger } from './src/config/logger/index.js';
+import { verifyGithubSignature } from './src/utils/verifySignature.js';
+
+dotenv.config();
 
 const GITHUB_SECRET = process.env.GITHUB_SECRET;
 const PORT = process.env.WEBHOOK_PORT || 3002;

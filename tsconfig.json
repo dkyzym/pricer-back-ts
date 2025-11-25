@@ -7,7 +7,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "rootDir": "./src",
     "outDir": "./dist",
     "resolveJsonModule": true,
     "types": ["node"],
@@ -23,10 +22,8 @@
       "@utils/*": ["utils/*"],
       "@constants/*": ["constants/*"]
     }
+    // УДАЛЕНО: "rootDir": "./src" — это убирает ошибку в редакторе
   },
-  "include": ["src/**/*.ts", "src/controllers/data/autocompleteController.ts"],
-  "exclude": ["node_modules", "dist"],
-  "ts-node": {
-    "esm": true
-  }
+  "include": ["src/**/*.ts", "webhook.ts"],
+  "exclude": ["node_modules", "dist"]
 }
