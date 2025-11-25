@@ -17,7 +17,7 @@ if (!GITHUB_SECRET) {
     'КРИТИЧЕСКАЯ ОШИБКА: GITHUB_SECRET не определен в переменных окружения.'
   );
   logger.error(
-    'Пожалуйста, создайте файл .env с GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.'
+    'Пожалуйста, создайте файл .env с  GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.'
   );
   process.exit(1);
 }
