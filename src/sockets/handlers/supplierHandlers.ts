@@ -4,8 +4,7 @@ import {
   SupplierHandler,
 } from '../../types/search.types.js';
 
-// --- Импорты бизнес-логики НАПРЯМУЮ из сервисов и утилит ---
-
+// --- Импорты бизнес-логики ---
 // ABCP (API)
 import {
   avtodinamikaConfig,
@@ -42,12 +41,13 @@ import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataA
 // Общие утилиты
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
-import { transformArticleByBrand } from '../../utils/data/brand/transformArticleByBrand.js';
+import {
+  isBrtBrand,
+  transformArticleByBrand,
+} from '../../utils/data/brand/transformArticleByBrand.js';
 
 /**
  * Единая карта обработчиков для всех поставщиков.
- * Логика из папки `src/sockets/handlers/suppliers/` теперь находится здесь
- * в виде анонимных функций, которые напрямую вызывают сервисы.
  */
 export const supplierHandlers: Record<string, SupplierHandler> = {
   // --- Поставщики на API ABCP ---
@@ -58,24 +58,19 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   npn: createAbcpApiHandler(npnConfig, ['npn']),
   avtodinamika: createAbcpApiHandler(avtodinamikaConfig, ['avtodinamika']),
 
-  // --- Поставщики-парсеры ABCP ---
-  autoImpulse: (data, userLogger) => {
-    return autoImpulseClient.searchItem({ ...data, userLogger });
-  },
-  mikano: (data, userLogger) => {
-    return mikanoClient.searchItem({ ...data, userLogger });
-  },
+  // --- Поставщики-парсеры ABCP (Refactored) ---
+  // Теперь здесь чисто: логика ретрая спрятана внутри фабрики
+  autoImpulse: createParserHandlerWithRetry(autoImpulseClient),
+  mikano: createParserHandlerWithRetry(mikanoClient),
 
   // --- Profit ---
   profit: async (data, userLogger) => {
     const { item, supplier } = data;
-
     const articleToSearch = transformArticleByBrand(
       item.article,
       item.brand,
       supplier
     );
-
     const items = await getItemsListByArticleService(articleToSearch);
     const itemsWithRest = await getItemsWithRest(items, userLogger);
     const relevantItems = itemsWithRest.filter(({ brand }: any) =>
@@ -87,13 +82,11 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   // --- Armtek ---
   armtek: async (data, userLogger) => {
     const { item, supplier } = data;
-
     const articleToSearch = transformArticleByBrand(
       item.article,
       item.brand,
       supplier
     );
-
     const { RESP } = await searchArmtekArticle(
       { PIN: articleToSearch },
       userLogger
@@ -109,7 +102,6 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   // --- Autosputnik ---
   autosputnik: (data, userLogger) => {
     const { item, supplier } = data;
-
     if (supplier === 'autosputnik' || supplier === 'autosputnik_bn') {
       return parseAutosputnikData(item, userLogger, supplier);
     }
@@ -129,12 +121,49 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   },
 };
 
+// =========================================================================
+//                             FACTORIES & HELPERS
+// =========================================================================
+
+/**
+ * Фабрика для парсеров с поддержкой "умного ретрая" для БРТ.
+ * Устраняет дублирование кода между mikano и autoImpulse.
+ */
+function createParserHandlerWithRetry(client: any): SupplierHandler {
+  return async (data, userLogger) => {
+    // 1. Первая попытка: ищем как есть
+    const results = await client.searchItem({ ...data, userLogger });
+
+    // 2. Логика ретрая: Если пусто, бренд БРТ и артикул кончается на цифру
+    if (
+      results.length === 0 &&
+      isBrtBrand(data.item.brand) &&
+      /[0-9]$/.test(data.item.article)
+    ) {
+      userLogger.info(
+        `[${data.supplier}] No results. Retrying with suffix 'Р'...`
+      );
+
+      const retryData = {
+        ...data,
+        item: {
+          ...data.item,
+          article: data.item.article + 'Р', // Добавляем кириллическую Р
+        },
+      };
+
+      return client.searchItem({ ...retryData, userLogger });
+    }
+
+    return results;
+  };
+}
+
 /**
  * Вспомогательная функция-фабрика для создания хендлеров ABCP API.
- * Это позволяет избежать дублирования try/catch и логики вызова.
  */
 function createAbcpApiHandler(
-  config: any, // Используем any для гибкости конфигов
+  config: any,
   allowedSuppliers: AbcpSupplierAlias[]
 ): SupplierHandler {
   return async (data: getItemResultsParams, userLogger: Logger) => {
@@ -145,7 +174,6 @@ function createAbcpApiHandler(
     }
 
     try {
-      // Для UG определяем useOnlineStocks, для остальных - undefined (по умолчанию)
       const useOnlineStocks = ['ug_f', 'ug_bn'].includes(supplier)
         ? 0
         : supplier === 'ug'

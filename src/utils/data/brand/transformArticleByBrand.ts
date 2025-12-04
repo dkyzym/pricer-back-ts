@@ -17,6 +17,14 @@ const TARGET_BRAND_SET = new Set([
 ]);
 
 /**
+ * Проверяет, относится ли бренд к группе БРТ/Tadem/Балаково.
+ * Экспортируем для использования в фильтрации результатов.
+ */
+export const isBrtBrand = (brand: string): boolean => {
+  return TARGET_BRAND_SET.has(standardizeString(brand));
+};
+
+/**
  * Трансформирует артикул на основе специфичных правил для бренда.
  * (e.g., для 'БРТ' превращает 'РК15' -> 'РЕМКОМПЛЕКТ15').
  */
@@ -31,8 +39,7 @@ export const transformArticleByBrand = (
   }
 
   // Шаг 2: Проверяем, наш ли это бренд
-  const standardizedBrand = standardizeString(rawBrand);
-  if (!TARGET_BRAND_SET.has(standardizedBrand)) {
+  if (!isBrtBrand(rawBrand)) {
     // Это не 'БРТ' — выходим
     return rawArticle;
   }
