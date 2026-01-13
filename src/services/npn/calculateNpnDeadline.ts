@@ -86,7 +86,13 @@ export const calculateNpnDeadlineHours = (
       }
 
       // ... (остальные правила остаются без изменений)
-      const daysMatch = rule.match(/на наш склад через\s+(\d+)\s+д/);
+      // const daysMatch = rule.match(/на наш склад через\s+(\d+)\s+д/);
+
+      // 2. Правило дней (через N дней)
+      // UPDATED: Сделал "на наш склад" опциональным и добавил поддержку просто "через N д"
+      // Ловит: "на наш склад через 2 д", "через 2 дня", "через 2 дн"
+      const daysMatch = rule.match(/(?:на наш склад\s+)?через\s+(\d+)\s+д/);
+
       if (daysMatch) {
         let arrivalDate = now.plus({ days: parseInt(daysMatch[1], 10) });
         if (arrivalDate.weekday === 6)
