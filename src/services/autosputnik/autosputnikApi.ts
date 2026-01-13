@@ -99,7 +99,6 @@ export const getAutosputnikProducts = async (
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log('response.data', JSON.stringify(response.data.data[0]));
 
     return response.data;
   } catch (error) {

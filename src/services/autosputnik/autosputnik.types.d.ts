@@ -236,6 +236,7 @@ export interface AutosputnikProductItem {
   vozvrat: boolean; // Возврат
   official_diler: boolean;
   ismark: boolean;
+  shipping_proc: number; // вероятность поставки в сроке, может быть 0 когда нет данных
 }
 
 // Ответ getproducts
