@@ -8,13 +8,17 @@ import {
 
 const BASE_URL = 'https://newapi.auto-sputnik.ru';
 
-// Кэш токена
-let cachedToken: string | null = null;
+// ИЗМЕНЕНИЕ: Используем Map для хранения токенов под каждого поставщика отдельно
+// Key: 'autosputnik' | 'autosputnik_bn', Value: token
+const tokenCache = new Map<string, string>();
 
 async function getToken(
   supplier: 'autosputnik' | 'autosputnik_bn'
 ): Promise<string> {
-  if (cachedToken) return cachedToken;
+  // Проверяем наличие токена конкретно для этого поставщика
+  if (tokenCache.has(supplier)) {
+    return tokenCache.get(supplier)!;
+  }
 
   const login =
     supplier === 'autosputnik'
@@ -27,7 +31,7 @@ async function getToken(
       : process.env.AUTOSPUTNIK_PASS_BN;
 
   if (!login || !password) {
-    throw new Error('Missing AUTOSPUTNIK credentials in env');
+    throw new Error(`Missing credentials in env for supplier: ${supplier}`);
   }
 
   try {
@@ -40,11 +44,13 @@ async function getToken(
       throw new Error(`Auth failed: ${data.error}`);
     }
 
-    cachedToken = data.token;
+    // Сохраняем токен в Map с привязкой к поставщику
+    tokenCache.set(supplier, data.token);
+
     return data.token;
   } catch (error) {
     throw new Error(
-      `Autosputnik Login Error: ${error instanceof Error ? error.message : error}`
+      `Autosputnik Login Error (${supplier}): ${error instanceof Error ? error.message : error}`
     );
   }
 }
@@ -67,8 +73,10 @@ export const getAutosputnikBrands = async (
 
     return response.data;
   } catch (error) {
+    // Если ошибка 401, удаляем токен именно этого поставщика
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      cachedToken = null;
+      tokenCache.delete(supplier);
+      userLogger.warn(`Token invalid for ${supplier}, cache cleared.`);
     }
     userLogger.error('Error fetching Autosputnik brands:', error);
     return { error: 'Fetch error', data: [] };
@@ -102,8 +110,10 @@ export const getAutosputnikProducts = async (
 
     return response.data;
   } catch (error) {
+    // Если ошибка 401, удаляем токен именно этого поставщика
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      cachedToken = null;
+      tokenCache.delete(supplier);
+      userLogger.warn(`Token invalid for ${supplier}, cache cleared.`);
     }
     userLogger.error(`Error fetching products for brand ${brandName}:`, error);
     return { error: 'Fetch error', data: [] };

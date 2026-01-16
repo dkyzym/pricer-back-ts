@@ -11,15 +11,6 @@ import {
   getAutosputnikProducts,
 } from './autosputnikApi.js';
 
-/**
- * Расчет вероятности на основе флагов API
- */
-function calculateProbability(item: AutosputnikProductItem): number {
-  if (item.our) return 95; // Собственный склад
-  if (item.official_diler) return 90; // Официальный дилер
-  return 80; // Обычный поставщик
-}
-
 export const parseAutosputnikData = async (
   item: {
     article: string;
