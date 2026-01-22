@@ -20,7 +20,7 @@ export const initializeSocket = (server: HTTPServer) => {
     transportAttached = true;
   }
 
-  //   Middleware для аутентификации
+  //  Middleware для аутентификации
   io.use((socket, next) => {
     try {
       const token = socket.handshake.query.token as string | undefined;
