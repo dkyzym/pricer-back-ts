@@ -16,19 +16,11 @@ if (!GITHUB_SECRET) {
   logger.error(
     'КРИТИЧЕСКАЯ ОШИБКА: GITHUB_SECRET не определен в переменных окружения.'
   );
-  logger.error(
-    'Пожалуйста, создайте файл .env с  GITHUB_SECRET="your_strong_secret" или установите переменную в вашем окружении.'
-  );
   process.exit(1);
 }
 
 logger.info(`Запуск Webhook. Порт: ${PORT}`);
-logger.info(
-  `Статус  GITHUB_SECRET: ${GITHUB_SECRET ? 'ЗАГРУЖЕН (OK)' : 'ПУСТО (ERROR)'}`
-);
 
-// --- Middleware ---
-// Расширяем интерфейс Request, чтобы TypeScript знал о свойстве rawBody
 interface RequestWithRawBody extends Request {
   rawBody: Buffer;
 }
@@ -40,23 +32,13 @@ app.use(
     },
   })
 );
-// --- Вспомогательные функции ---
 
-/**
- * Создает переиспользуемый обработчик вебхуков, чтобы избежать дублирования кода.
- * @param serviceName - Имя сервиса для логирования (например, "Backend").
- * @param workingDir - Абсолютный путь к рабочей директории проекта.
- * @param deployCommand - Команда, которую нужно выполнить для деплоя.
- * @returns Обработчик запроса для Express.
- */
 function createWebhookHandler(
   serviceName: string,
   workingDir: string,
   deployCommand: string
 ) {
   return (req: Request, res: Response) => {
-    // ✅ 2. Используем импортированную функцию. Код чистый и понятный.
-    // Мы уверены, что GITHUB_SECRET существует, благодаря проверке на старте.
     if (!verifyGithubSignature(req as RequestWithRawBody, GITHUB_SECRET!)) {
       logger.warn(`[${serviceName}] Неверная подпись вебхука.`);
       return res.status(401).send('Не авторизован');
@@ -86,25 +68,23 @@ function createWebhookHandler(
   };
 }
 
-// --- Определение маршрутов (Routes) ---
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).send('Сервис вебхуков запущен.');
 });
 
+// Конфигурация ТОЛЬКО для бекенда, так как он собирает и раздает фронт
 const backendConfig = {
   name: 'Backend',
   path: 'D:/projects/pricer-back-ts',
+  // Добавил npm run build для фронта внутрь команды бекенда,
+  // если у тебя скрипт бека не билдит фронт сам.
+  // Если у тебя бек просто раздает папку dist, которую ты билдишь руками -
+  // то оставь как было. Но лучше автоматизировать.
   command:
     'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-back',
 };
 
-const frontendConfig = {
-  name: 'Frontend',
-  path: 'D:/projects/pricer-front',
-  command:
-    'git pull origin main && npm install && npm run build && "C:/nssm/nssm.exe" restart pricer-front-service-name',
-};
-
+// Маршрут для фронта убрал, так как отдельного сервиса нет
 app.post(
   '/webhook',
   createWebhookHandler(
@@ -113,16 +93,7 @@ app.post(
     backendConfig.command
   )
 );
-app.post(
-  '/webhook-frontend',
-  createWebhookHandler(
-    frontendConfig.name,
-    frontendConfig.path,
-    frontendConfig.command
-  )
-);
 
-// --- Запуск сервера ---
 app.listen(PORT, () => {
   logger.info(`Сервис вебхуков слушает порт ${PORT}...`);
 });
