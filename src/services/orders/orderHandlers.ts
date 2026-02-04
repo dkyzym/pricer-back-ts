@@ -4,9 +4,11 @@ import { mapAbcpOrdersToUnified } from '../abcp/api/abcpOrdersMapper.js';
 import { fetchAbcpOrders } from '../abcp/api/fetchAbcpOrders.js';
 import { mapAutosputnikOrdersToUnified } from '../autosputnik/orders/autosputnikOrdersMapper.js';
 import { fetchAutosputnikOrders } from '../autosputnik/orders/fetchAutosputnikOrders.js';
+import { fetchProfitOrders } from '../profit/orders/fetchProfitOrders.js';
+import { mapProfitOrdersToUnified } from '../profit/orders/profitMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
 
-// ИЗМЕНЕНИЕ: Хендлер теперь ожидает logger для контекстного логирования
+//  Хендлер теперь ожидает logger для контекстного логирования
 type OrderHandler = (logger: Logger) => Promise<UnifiedOrderItem[]>;
 
 /**
@@ -14,24 +16,19 @@ type OrderHandler = (logger: Logger) => Promise<UnifiedOrderItem[]>;
  */
 const createAbcpOrderHandler = (alias: AbcpSupplierAlias): OrderHandler => {
   return async (logger: Logger) => {
-    // Логируем начало запроса с контекстом
     logger.debug(`[${alias}] Starting ABCP fetch...`, { supplier: alias });
 
     try {
-      // format: 'p' обязателен, чтобы получить массив позиций внутри заказа
-      // TODO: В будущем добавить logger внутрь fetchAbcpOrders для детальной отладки
       const rawData = await fetchAbcpOrders(alias, { format: 'p' });
-
       const mapped = mapAbcpOrdersToUnified(rawData, alias);
       logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
         supplier: alias,
         count: mapped.length,
       });
-
       return mapped;
     } catch (error) {
       logger.error(`[${alias}] ABCP fetch failed`, { supplier: alias, error });
-      throw error; // Пробрасываем ошибку, чтобы Promise.allSettled записал её в rejected
+      throw error;
     }
   };
 };
@@ -46,11 +43,28 @@ const createAutosputnikHandler = (
     logger.debug(`[${alias}] Starting Autosputnik fetch...`, {
       supplier: alias,
     });
-
-    // Передаем logger внутрь, так как мы обновили fetchAutosputnikOrders
     const rawData = await fetchAutosputnikOrders(alias, logger);
-
     const mapped = mapAutosputnikOrdersToUnified(rawData, alias);
+    logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
+      supplier: alias,
+      count: mapped.length,
+    });
+    return mapped;
+  };
+};
+
+/**
+ * Фабрика для Profit (API)
+ */
+const createProfitHandler = (): OrderHandler => {
+  return async (logger: Logger) => {
+    const alias = 'profit';
+    logger.debug(`[${alias}] Starting Profit fetch...`, { supplier: alias });
+
+    // Profit не требует alias при вызове, так как он один, но для унификации структуры
+    const rawData = await fetchProfitOrders(logger);
+
+    const mapped = mapProfitOrdersToUnified(rawData, alias);
     logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
       supplier: alias,
       count: mapped.length,
@@ -73,6 +87,10 @@ export const orderHandlers: Record<string, OrderHandler> = {
   autosputnik: createAutosputnikHandler('autosputnik'),
   autosputnik_bn: createAutosputnikHandler('autosputnik_bn'),
 
+  // Добавляем Profit
+  profit: createProfitHandler(),
+
   // --- Парсеры (Non-ABCP) ---
-  // profit: ...
+  // mikano: ...
+  // autoImpulse: ...
 };

@@ -59,3 +59,39 @@ export interface ProfitItem {
   brand_warranty: string;
   countProducts: number;
 }
+
+export interface ProfitProductRaw {
+  id: number;
+  article_id: number;
+  product_code: string;
+  price: number;
+  quantity: number;
+  comment: string;
+  article: string;
+  brand: string;
+  description: string;
+  status_id: number;
+  status: string;
+  status_update: string;
+  delivery_date?: string;
+}
+
+export interface ProfitOrderRaw {
+  order_id: string;
+  comment: string;
+  datetime: string;
+
+  // --- Добавленные поля ---
+  payment_id?: string; // "1" или "2"
+  payment_name?: string; // "Безналичные", "Наличные / Банковской картой"
+  // ------------------------
+
+  products: ProfitProductRaw[];
+}
+
+export interface ProfitGetOrdersResponse {
+  pages: number;
+  currentPage: number;
+  pageSize: number;
+  data: ProfitOrderRaw[];
+}
