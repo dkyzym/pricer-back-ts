@@ -3,6 +3,7 @@ import { error } from '@middleware/errorsMiddleware.js';
 import authRoutes from '@routes/authRoutes.js';
 import dataRoutes from '@routes/dataRoutes.js';
 import logsRoutes from '@routes/logsRoutes.js';
+import ordersRoutes from '@routes/ordersRoutes.js';
 import { RouteNotFoundError } from '@utils/errors.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -13,6 +14,7 @@ import { corsOptions } from './config/index.js';
 import { morganMiddleware } from './config/logger/morganMiddleware.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
+// import { fetchAbcpOrders } from './services/abcp/api/fetchAbcpOrders.js';
 import { initProxyCheck } from './services/apiClient/apiClient.js';
 
 dotenv.config();
@@ -38,6 +40,7 @@ app.use(express.static(distPath));
 app.use('/api', authRoutes);
 app.use('/api', dataRoutes);
 app.use('/api', logsRoutes);
+app.use('/api', ordersRoutes);
 app.use('/test', helloController);
 
 app.get('*', (req, res, next) => {
@@ -55,3 +58,5 @@ app.use(error);
 
 await initProxyCheck();
 await startServer(app);
+// const log = await fetchAbcpOrders('ug', { limit: 1, format: 'p' });
+// console.log(JSON.stringify(log.items, null, 2));

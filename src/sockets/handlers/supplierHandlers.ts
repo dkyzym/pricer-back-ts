@@ -39,6 +39,7 @@ import { parseAutosputnikData } from '../../services/autosputnik/parseAutosputni
 import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataAvtoPartnerService.js';
 
 // Общие утилиты
+import { fetchAbcpOrders } from '../../services/abcp/api/fetchAbcpOrders.js';
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import {
@@ -192,6 +193,10 @@ function createAbcpApiHandler(
         supplier as AbcpSupplierAlias,
         useOnlineStocks
       );
+
+      const orders = await fetchAbcpOrders('npn', { format: 'p', limit: 2 });
+      console.log(JSON.stringify(orders));
+
       return mapAbcpResponse(
         responseData,
         item.brand,
