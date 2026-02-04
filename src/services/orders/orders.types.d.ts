@@ -2,6 +2,8 @@
 //                             УНИФИЦИРОВАННЫЕ ТИПЫ
 // =========================================================================
 
+import { SupplierName } from '../../types/common.types.js';
+
 /**
  * Единый список статусов для всех поставщиков.
  * Используем camelCase для удобства в коде.
@@ -52,6 +54,6 @@ export interface UnifiedOrderItem {
 export interface UnifiedOrderGroup {
   orderId: string;
   date: string;
-  supplier: string;
+  supplier: SupplierName;
   items: UnifiedOrderItem[];
 }

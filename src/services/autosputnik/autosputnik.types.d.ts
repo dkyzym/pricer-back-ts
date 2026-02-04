@@ -244,3 +244,34 @@ export interface AutosputnikGetProductsResponse {
   error: string | null;
   data: AutosputnikProductItem[];
 }
+
+export interface AutosputnikProductRaw {
+  id: number;
+  orderid: number;
+  articul: string;
+  brand_id: number;
+  brand_name: string;
+  product_name: string;
+  statusid: number;
+  status: string; // "Отгружено поставщиком"
+  date_delivery: string; // "2026-02-06T12:00:00"
+  price: number;
+  quantity: number;
+  amount: number; // Итоговая сумма
+  comment_product?: string;
+}
+
+export interface AutosputnikOrderRaw {
+  id: number;
+  userid: number;
+  date: string; // "2026-02-04T10:36:15"
+  comment: string;
+  products: AutosputnikProductRaw[];
+}
+
+export interface AutosputnikGetOrdersResponse {
+  error: string | null;
+  countorders: number;
+  totalpages: number;
+  data: AutosputnikOrderRaw[];
+}

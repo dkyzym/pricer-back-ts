@@ -1,56 +1,78 @@
+import { randomUUID } from 'crypto'; // Нативный модуль Node.js
 import { NextFunction, Request, Response } from 'express';
+import { logger } from '../../../config/logger/index.js';
 import { orderHandlers } from '../../../services/orders/orderHandlers.js';
 import { UnifiedOrderItem } from '../../../services/orders/orders.types.js';
-
 export const getOrders = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    // 1. Получаем список поставщиков от фронта (?suppliers=ug,patriot)
-    const suppliersQuery = req.query.suppliers as string;
+  // Генерируем ID запроса для трассировки (tracing)
+  const requestId = randomUUID();
 
-    // Если параметр передан, разбиваем строку. Если нет — берем всех доступных из хендлеров.
+  // Создаем дочерний логгер с контекстом
+  const requestLogger = logger.child({
+    requestId,
+    module: 'OrdersController',
+    user: (req as any).user?.uid || 'anonymous', // Если есть авторизация
+  });
+
+  try {
+    requestLogger.info('Received request for orders');
+
+    // 1. Получаем список поставщиков
+    const suppliersQuery = req.query.suppliers as string;
     const targets = suppliersQuery
       ? suppliersQuery.split(',')
       : Object.keys(orderHandlers);
 
-    // 2. Формируем массив промисов только для существующих хендлеров
+    requestLogger.debug('Targets resolved', { targets });
+
+    // 2. Формируем промисы, внедряя логгер в каждый хендлер
     const promises = targets
       .filter((key) => {
         const handlerExists = !!orderHandlers[key];
         if (!handlerExists) {
-          console.warn(
-            `[Orders] Warning: Requested unknown supplier handler '${key}'`
-          );
+          requestLogger.warn(`Unknown supplier requested: ${key}`);
         }
         return handlerExists;
       })
-      .map((key) => orderHandlers[key]());
+      .map((key) => orderHandlers[key](requestLogger)); // <-- ВНЕДРЕНИЕ ЗАВИСИМОСТИ
 
-    // 3. Запускаем параллельно (Promise.allSettled не падает, если один поставщик отвалился)
+    // 3. Запускаем параллельно
     const results = await Promise.allSettled(promises);
 
-    // 4. Собираем результаты
-    // Берем только fulfilled (успешные) и объединяем массивы через flatMap
-    const flatOrders: UnifiedOrderItem[] = results.flatMap((r) =>
-      r.status === 'fulfilled' ? r.value : []
-    );
+    // 4. Анализ результатов
+    const flatOrders: UnifiedOrderItem[] = [];
+    const failedSuppliers: string[] = [];
 
-    // (Опционально) Можно залогировать ошибки rejected промисов, чтобы знать, кто упал
     results.forEach((r, index) => {
-      if (r.status === 'rejected') {
-        console.error(
-          `[Orders] Error fetching from one of the suppliers:`,
-          r.reason
-        );
+      // Так как targets были отфильтрованы, индекс совпадает (почти, но лучше мапить аккуратнее если фильтр сложный)
+      // В данном простом случае targets[index] соответствует промису, так как filter был до map
+      const supplierName = targets.filter((k) => !!orderHandlers[k])[index];
+
+      if (r.status === 'fulfilled') {
+        flatOrders.push(...r.value);
+      } else {
+        failedSuppliers.push(supplierName);
+        // Детальную ошибку уже залогировал сам хендлер (createAbcpOrderHandler/createAutosputnikHandler),
+        // но здесь можно добавить summary.
+        requestLogger.warn(`Failed to fetch from ${supplierName}`, {
+          reason: r.reason,
+        });
       }
     });
 
-    // 5. Отдаем чистый JSON на фронт
+    requestLogger.info('Orders aggregation finished', {
+      totalOrders: flatOrders.length,
+      failedSuppliers,
+      successCount: targets.length - failedSuppliers.length,
+    });
+
     res.json(flatOrders);
   } catch (e) {
+    requestLogger.error('Critical error in orders controller', { error: e });
     next(e);
   }
 };
