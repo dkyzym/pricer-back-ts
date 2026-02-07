@@ -1,178 +1,139 @@
 import axios, { AxiosInstance } from 'axios';
-import https from 'https';
+import { wrapper } from 'axios-cookiejar-support';
+import * as cheerio from 'cheerio';
+import * as qs from 'querystring';
+import { CookieJar } from 'tough-cookie';
 import { Logger } from 'winston';
-import { ProfitGetOrdersResponse, ProfitOrderRaw } from '../profit.types.js';
+import { ProfitGetOrdersResponse } from '../profit.types.js';
 
 const BASE_URL = 'https://api.pr-lg.ru';
+const SITE_URL = 'https://pr-lg.ru';
 
-/**
- * КОНФИГУРАЦИЯ
- */
-const CONFIG = {
-  // Минимальная задержка (мс)
-  DELAY_MIN: 2000,
-  // Случайная добавка к задержке (мс)
-  DELAY_JITTER: 500,
-  // Таймаут одного запроса
-  TIMEOUT: 30000,
-  // Макс. попыток при ошибке
-  MAX_RETRIES: 3,
-  // СКОЛЬКО ПОСЛЕДНИХ СТРАНИЦ ГРУЗИТЬ
-  // 2 страницы = 200 последних заказов. Этого обычно достаточно для синхронизации.
-  // Если нужно выкачать всю историю за год, поставьте 100.
-  FETCH_DEPTH_LIMIT: 1,
-};
-
-/**
- * Настройка HTTPS агента
- * keepAlive: true критически важен для серийных запросов
- */
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-  keepAlive: true,
-  maxSockets: 1,
-});
-
-/**
- * Создаем инстанс axios с предустановками
- */
-const apiClient: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
-  timeout: CONFIG.TIMEOUT,
-  httpsAgent,
-  headers: {
-    'User-Agent': 'ProfitIntegration/1.0 (NodeJS)',
-    Connection: 'keep-alive',
+const ORGANIZATIONS = [
+  {
+    name: 'IP_Kizim_Cash', // Название для логов
+    switchId: '14869822', // ID из ссылок переключения
   },
-});
+  {
+    name: 'IP_Kizim_Bank',
+    switchId: '495435',
+  },
+];
 
-interface RequestParams {
-  secret: string;
-  page: number;
-  payment_id?: string;
-}
+const DELAY_BETWEEN_REQUESTS = 2000; // Увеличил, чтобы сервер успевал "осознать" переключение
+const MAX_RETRIES = 3;
 
-const REQUEST_VARIANTS = [
-  { payment_id: '1' }, // Наличные
-  { payment_id: '2' }, // Безналичные
-] as const;
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Умная задержка с рандомизацией (Jitter)
+ * Класс-клиент для инкапсуляции работы с сессией и куками
  */
-const smartDelay = (ms: number) => {
-  const jitter = Math.floor(Math.random() * CONFIG.DELAY_JITTER);
-  const totalDelay = ms + jitter;
-  return new Promise((resolve) => setTimeout(resolve, totalDelay));
-};
+class ProfitSessionClient {
+  private client: AxiosInstance;
+  private logger: Logger;
 
-/**
- * Выполнение одного запроса с ретраями
- */
-const fetchPageWithRetry = async (
-  params: RequestParams,
-  logger: Logger,
-  retryCount = 0
-): Promise<ProfitGetOrdersResponse | null> => {
-  try {
-    const response = await apiClient.get<ProfitGetOrdersResponse>(
-      '/orders/list',
+  constructor(logger: Logger) {
+    this.logger = logger;
+    const jar = new CookieJar();
+
+    this.client = wrapper(
+      axios.create({
+        jar,
+        // httpsAgent,
+        withCredentials: true,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        timeout: 15000,
+      })
+    );
+  }
+
+  /**
+   * Авторизация с парсингом CSRF
+   */
+  async login(): Promise<void> {
+    const email = process.env.PROFIT_LOGIN;
+    const password = process.env.PROFIT_PASSWORD;
+
+    if (!email || !password) {
+      throw new Error('PROFIT_LOGIN or PROFIT_PASSWORD is missing in env');
+    }
+
+    try {
+      this.logger.debug('[profit] Starting login sequence...');
+
+      // 1. Получаем страницу логина и CSRF токен
+      const loginPage = await this.client.get(`${SITE_URL}/login`);
+      const $ = cheerio.load(loginPage.data);
+      const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+      // 2. Отправляем форму
+      const formData = {
+        _csrf: csrfToken || '',
+        'UserForm[email]': email,
+        'UserForm[password]': password,
+        'UserForm[rememberMe]': '1',
+      };
+
+      const response = await this.client.post(
+        `${SITE_URL}/login`,
+        qs.stringify(formData),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Referer: `${SITE_URL}/login`,
+          },
+          maxRedirects: 5,
+        }
+      );
+
+      // 3. Проверяем успех
+      if (!response.data.includes('Оптовый клиент')) {
+        // Иногда редирект не срабатывает как надо, проверяем куки или URL
+        // Но наличие текста надежнее
+        throw new Error('Login failed: marker "Оптовый клиент" not found');
+      }
+
+      this.logger.info('[profit] Login successful');
+    } catch (error) {
+      this.logger.error('[profit] Login failed', {
+        error: error instanceof Error ? error.message : error,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Переключение активной организации
+   */
+  async switchContext(orgId: string): Promise<void> {
+    try {
+      await this.client.get(`${SITE_URL}/account/legals/select/id/${orgId}`, {
+        maxRedirects: 5,
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to switch context to ${orgId}: ${error instanceof Error ? error.message : 'Unknown'}`
+      );
+    }
+  }
+
+  /**
+   * Запрос к API (обертка для использования внутри fetchWithRetry)
+   */
+  async getOrders(params: any): Promise<ProfitGetOrdersResponse> {
+    const response = await this.client.get<ProfitGetOrdersResponse>(
+      `${BASE_URL}/orders/list`,
       { params }
     );
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const isRateLimit = error.response?.status === 429;
-      const isServerError =
-        error.response?.status && error.response.status >= 500;
-
-      if ((isRateLimit || isServerError) && retryCount < CONFIG.MAX_RETRIES) {
-        // При 429 увеличиваем паузу агрессивно
-        const backoffBase = isRateLimit ? 2500 : 1000;
-        const waitTime = Math.pow(2, retryCount) * backoffBase;
-
-        logger.warn(
-          `[profit] ${isRateLimit ? 'Rate limit hit' : 'Server error'}, retrying after ${waitTime}ms`,
-          {
-            attempt: retryCount + 1,
-            status: error.response?.status,
-            page: params.page,
-          }
-        );
-
-        await smartDelay(waitTime);
-        return fetchPageWithRetry(params, logger, retryCount + 1);
-      }
-
-      logger.error('[profit] Request failed', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        page: params.page,
-        payment_id: params.payment_id,
-      });
-    }
-    return null;
   }
-};
+}
 
 /**
- * Сбор страниц (с ограничением глубины)
- */
-const collectAllPages = async (
-  variant: (typeof REQUEST_VARIANTS)[number],
-  secret: string,
-  logger: Logger
-): Promise<ProfitOrderRaw[]> => {
-  const orders: ProfitOrderRaw[] = [];
-  let currentPage = 1;
-  let totalPages = 1;
-
-  logger.info(`[profit] Starting fetch for payment_id: ${variant.payment_id}`);
-
-  do {
-    const result = await fetchPageWithRetry(
-      { secret, page: currentPage, payment_id: variant.payment_id },
-      logger
-    );
-
-    if (!result || !result.data) {
-      logger.warn(`[profit] Broken page ${currentPage}, skipping remainder.`);
-      break;
-    }
-
-    orders.push(...result.data);
-
-    if (currentPage === 1) {
-      totalPages = result.pages || 1;
-    }
-
-    logger.debug(
-      `[profit] Page ${currentPage}/${totalPages} ok. (+${result.data.length} orders)`
-    );
-
-    currentPage++;
-
-    // Условие выхода:
-    // 1. Кончились страницы в API
-    // 2. ИЛИ мы достигли нашего лимита глубины (например, скачали 2 страницы)
-    const limitReached = currentPage - 1 >= CONFIG.FETCH_DEPTH_LIMIT;
-    if (limitReached && currentPage <= totalPages) {
-      logger.info(
-        `[profit] Depth limit reached (${CONFIG.FETCH_DEPTH_LIMIT} pages). Stopping fetch.`
-      );
-      break;
-    }
-
-    if (currentPage <= totalPages) {
-      await smartDelay(CONFIG.DELAY_MIN);
-    }
-  } while (currentPage <= totalPages);
-
-  return orders;
-};
-
-/**
- * ГЛАВНАЯ ФУНКЦИЯ
+ * ОСНОВНАЯ ФУНКЦИЯ
  */
 export const fetchProfitOrders = async (
   logger: Logger
@@ -180,34 +141,105 @@ export const fetchProfitOrders = async (
   const secret = process.env.PROFIT_API_KEY;
   if (!secret) throw new Error('PROFIT_API_KEY is missing');
 
-  const allOrdersMap = new Map<string, ProfitOrderRaw>();
-  let totalFetchedCount = 0;
+  // Инициализируем сессионного клиента
+  const sessionClient = new ProfitSessionClient(logger);
 
-  for (const variant of REQUEST_VARIANTS) {
-    const variantOrders = await collectAllPages(variant, secret, logger);
-    totalFetchedCount += variantOrders.length;
+  // 1. Сначала логинимся (один раз на весь цикл)
+  await sessionClient.login();
 
-    for (const order of variantOrders) {
-      allOrdersMap.set(order.order_id, order);
+  const combinedData: ProfitGetOrdersResponse = {
+    pages: 0,
+    currentPage: 1,
+    pageSize: 0,
+    data: [],
+  };
+
+  let successCount = 0;
+  let failedCount = 0;
+
+  // Итерируемся по ОРГАНИЗАЦИЯМ, а не по типам оплаты
+  for (let i = 0; i < ORGANIZATIONS.length; i++) {
+    const org = ORGANIZATIONS[i];
+
+    logger.info(
+      `[profit] Processing org ${org.name} (${i + 1}/${ORGANIZATIONS.length})`
+    );
+
+    try {
+      // 2. Переключаем контекст
+      await sessionClient.switchContext(org.switchId);
+
+      // Даем серверу немного времени на применение контекста
+      await delay(1000);
+
+      // 3. Выполняем запрос к API (с ретраями)
+      const baseParams = { secret, action: 'list', page: 1 };
+
+      // Локальная функция ретрая, привязанная к текущей сессии
+      const fetchWithRetryLocal = async (
+        retry = 0
+      ): Promise<ProfitGetOrdersResponse | null> => {
+        try {
+          return await sessionClient.getOrders(baseParams);
+        } catch (error) {
+          if (
+            axios.isAxiosError(error) &&
+            error.response?.status === 429 &&
+            retry < MAX_RETRIES
+          ) {
+            const waitTime = Math.pow(2, retry) * 2000;
+            logger.warn(`[profit] Rate limit, retry in ${waitTime}ms`);
+            await delay(waitTime);
+            return fetchWithRetryLocal(retry + 1);
+          }
+          throw error;
+        }
+      };
+
+      const result = await fetchWithRetryLocal();
+
+      if (result && result.data && Array.isArray(result.data)) {
+        combinedData.data.push(...result.data);
+        successCount++;
+
+        logger.info(
+          `[profit] Org ${org.name} success: ${result.data.length} orders`
+        );
+
+        if (result.pages > combinedData.pages) {
+          combinedData.pages = result.pages;
+        }
+      }
+    } catch (error) {
+      failedCount++;
+      logger.warn(`[profit] Failed to fetch for ${org.name}`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
 
-    if (variant !== REQUEST_VARIANTS[REQUEST_VARIANTS.length - 1]) {
-      await smartDelay(CONFIG.DELAY_MIN);
+    // Задержка между организациями
+    if (i < ORGANIZATIONS.length - 1) {
+      await delay(DELAY_BETWEEN_REQUESTS);
     }
   }
 
-  const uniqueOrders = Array.from(allOrdersMap.values());
+  if (successCount === 0) {
+    throw new Error(
+      `All Profit orgs failed (${failedCount}/${ORGANIZATIONS.length})`
+    );
+  }
 
-  logger.info('[profit] Sync complete', {
-    totalFetched: totalFetchedCount,
-    unique: uniqueOrders.length,
-    depthLimit: CONFIG.FETCH_DEPTH_LIMIT,
+  // Удаляем дубликаты
+  const uniqueOrders = new Map();
+  for (const order of combinedData.data) {
+    uniqueOrders.set(order.order_id, order);
+  }
+  combinedData.data = Array.from(uniqueOrders.values());
+
+  logger.info('[profit] Orders fetched successfully', {
+    totalOrders: combinedData.data.length,
+    successfulSources: successCount,
   });
 
-  return {
-    pages: 1,
-    currentPage: 1,
-    pageSize: uniqueOrders.length,
-    data: uniqueOrders,
-  };
+  return combinedData;
 };
