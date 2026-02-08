@@ -1,153 +1,189 @@
 import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
+import chalk from 'chalk';
 import * as cheerio from 'cheerio';
-import * as qs from 'querystring';
 import { CookieJar } from 'tough-cookie';
 import { Logger } from 'winston';
-import { ProfitGetOrdersResponse } from '../profit.types.js';
+import { ProfitGetOrdersResponse } from '../profit.types.js'; // Убедись, что путь верен
 
-const BASE_URL = 'https://api.pr-lg.ru';
-const SITE_URL = 'https://pr-lg.ru';
+// --- Configuration & Constants ---
+const CONFIG = {
+  baseUrl: 'https://api.pr-lg.ru',
+  siteUrl: 'https://pr-lg.ru',
+  delayBetweenRequests: 2000,
+  contextSwitchDelay: 1000,
+  timeout: 15000,
+  maxRetries: 3,
+  userAgent:
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+} as const;
 
 const ORGANIZATIONS = [
-  {
-    name: 'IP_Kizim_Cash', // Название для логов
-    switchId: '14869822', // ID из ссылок переключения
-  },
-  {
-    name: 'IP_Kizim_Bank',
-    switchId: '495435',
-  },
-];
+  { name: 'IP_Kizim_Cash', switchId: '14869822' },
+  { name: 'IP_Kizim_Bank', switchId: '495435' },
+] as const;
 
-const DELAY_BETWEEN_REQUESTS = 2000; // Увеличил, чтобы сервер успевал "осознать" переключение
-const MAX_RETRIES = 3;
+// --- Types ---
+type ProfitClient = AxiosInstance;
+type Organization = (typeof ORGANIZATIONS)[number];
 
+// --- Helpers ---
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Класс-клиент для инкапсуляции работы с сессией и куками
+ * Создает настроенный экземпляр Axios с поддержкой CookieJar
  */
-class ProfitSessionClient {
-  private client: AxiosInstance;
-  private logger: Logger;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-    const jar = new CookieJar();
-
-    this.client = wrapper(
-      axios.create({
-        jar,
-        // httpsAgent,
-        withCredentials: true,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-        timeout: 15000,
-      })
-    );
-  }
-
-  /**
-   * Авторизация с парсингом CSRF
-   */
-  async login(): Promise<void> {
-    const email = process.env.PROFIT_LOGIN;
-    const password = process.env.PROFIT_PASSWORD;
-
-    if (!email || !password) {
-      throw new Error('PROFIT_LOGIN or PROFIT_PASSWORD is missing in env');
-    }
-
-    try {
-      this.logger.debug('[profit] Starting login sequence...');
-
-      // 1. Получаем страницу логина и CSRF токен
-      const loginPage = await this.client.get(`${SITE_URL}/login`);
-      const $ = cheerio.load(loginPage.data);
-      const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-      // 2. Отправляем форму
-      const formData = {
-        _csrf: csrfToken || '',
-        'UserForm[email]': email,
-        'UserForm[password]': password,
-        'UserForm[rememberMe]': '1',
-      };
-
-      const response = await this.client.post(
-        `${SITE_URL}/login`,
-        qs.stringify(formData),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Referer: `${SITE_URL}/login`,
-          },
-          maxRedirects: 5,
-        }
-      );
-
-      // 3. Проверяем успех
-      if (!response.data.includes('Оптовый клиент')) {
-        // Иногда редирект не срабатывает как надо, проверяем куки или URL
-        // Но наличие текста надежнее
-        throw new Error('Login failed: marker "Оптовый клиент" not found');
-      }
-
-      this.logger.info('[profit] Login successful');
-    } catch (error) {
-      this.logger.error('[profit] Login failed', {
-        error: error instanceof Error ? error.message : error,
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Переключение активной организации
-   */
-  async switchContext(orgId: string): Promise<void> {
-    try {
-      await this.client.get(`${SITE_URL}/account/legals/select/id/${orgId}`, {
-        maxRedirects: 5,
-      });
-    } catch (error) {
-      throw new Error(
-        `Failed to switch context to ${orgId}: ${error instanceof Error ? error.message : 'Unknown'}`
-      );
-    }
-  }
-
-  /**
-   * Запрос к API (обертка для использования внутри fetchWithRetry)
-   */
-  async getOrders(params: any): Promise<ProfitGetOrdersResponse> {
-    const response = await this.client.get<ProfitGetOrdersResponse>(
-      `${BASE_URL}/orders/list`,
-      { params }
-    );
-    return response.data;
-  }
-}
+const createClient = (): ProfitClient => {
+  const jar = new CookieJar();
+  return wrapper(
+    axios.create({
+      jar,
+      withCredentials: true,
+      headers: { 'User-Agent': CONFIG.userAgent },
+      timeout: CONFIG.timeout,
+    })
+  );
+};
 
 /**
- * ОСНОВНАЯ ФУНКЦИЯ
+ * Обертка для повторного выполнения промисов (Retry Pattern)
  */
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  retries: number = CONFIG.maxRetries,
+  delayMs: number = 2000,
+  logger?: Logger
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) throw error;
+
+    // Проверяем статус 429 или сетевые ошибки
+    const isRateLimit =
+      axios.isAxiosError(error) && error.response?.status === 429;
+
+    if (isRateLimit || retries > 0) {
+      const waitTime = delayMs * (CONFIG.maxRetries - retries + 1); // Exponential-ish backoff
+
+      if (logger) {
+        logger.warn(
+          chalk.yellow(
+            `[profit] Retry needed. Attempts left: ${chalk.bold(retries)}. Waiting ${waitTime}ms...`
+          )
+        );
+      }
+
+      await delay(waitTime);
+      return withRetry(fn, retries - 1, delayMs * 2, logger);
+    }
+    throw error;
+  }
+};
+
+// --- Core Business Logic ---
+
+/**
+ * Выполняет вход в систему
+ */
+const performLogin = async (
+  client: ProfitClient,
+  logger: Logger
+): Promise<void> => {
+  const { PROFIT_LOGIN: email, PROFIT_PASSWORD: password } = process.env;
+
+  if (!email || !password) {
+    throw new Error('PROFIT_LOGIN or PROFIT_PASSWORD is missing in env');
+  }
+
+  logger.debug(chalk.blue('[profit] Starting login sequence...'));
+
+  try {
+    // 1. Получаем CSRF токен
+    const { data: html } = await client.get(`${CONFIG.siteUrl}/login`);
+    const $ = cheerio.load(html);
+    const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
+
+    // 2. Подготавливаем данные (используем URLSearchParams вместо querystring)
+    const params = new URLSearchParams();
+    params.append('_csrf', csrfToken);
+    params.append('UserForm[email]', email);
+    params.append('UserForm[password]', password);
+    params.append('UserForm[rememberMe]', '1');
+
+    // 3. Отправляем форму
+    const { data } = await client.post(`${CONFIG.siteUrl}/login`, params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Referer: `${CONFIG.siteUrl}/login`,
+      },
+      maxRedirects: 5,
+    });
+
+    if (!data.includes('Оптовый клиент')) {
+      throw new Error('Marker "Оптовый клиент" not found in response');
+    }
+
+    logger.info(chalk.green('✔ [profit] Login successful'));
+  } catch (error) {
+    logger.error(chalk.red('[profit] Login failed'));
+    throw error;
+  }
+};
+
+/**
+ * Переключает контекст организации
+ */
+const switchContext = async (
+  client: ProfitClient,
+  org: Organization,
+  logger: Logger
+): Promise<void> => {
+  try {
+    await client.get(
+      `${CONFIG.siteUrl}/account/legals/select/id/${org.switchId}`,
+      {
+        maxRedirects: 5,
+      }
+    );
+    logger.debug(`[profit] Switched context to ${chalk.cyan(org.name)}`);
+  } catch (error) {
+    throw new Error(
+      `Failed to switch to ${org.name}: ${error instanceof Error ? error.message : 'Unknown'}`
+    );
+  }
+};
+
+/**
+ * Получает список заказов
+ */
+const fetchOrders = async (
+  client: ProfitClient,
+  secret: string
+): Promise<ProfitGetOrdersResponse> => {
+  const params = { secret, action: 'list', page: 1 };
+  const { data } = await client.get<ProfitGetOrdersResponse>(
+    `${CONFIG.baseUrl}/orders/list`,
+    { params }
+  );
+  return data;
+};
+
+// --- Main Workflow ---
+
 export const fetchProfitOrders = async (
   logger: Logger
 ): Promise<ProfitGetOrdersResponse> => {
   const secret = process.env.PROFIT_API_KEY;
   if (!secret) throw new Error('PROFIT_API_KEY is missing');
 
-  // Инициализируем сессионного клиента
-  const sessionClient = new ProfitSessionClient(logger);
+  const client = createClient();
 
-  // 1. Сначала логинимся (один раз на весь цикл)
-  await sessionClient.login();
+  // Инициализация сессии
+  await performLogin(client, logger);
 
-  const combinedData: ProfitGetOrdersResponse = {
+  // Аккумулятор результатов
+  const result: ProfitGetOrdersResponse = {
     pages: 0,
     currentPage: 1,
     pageSize: 0,
@@ -155,91 +191,71 @@ export const fetchProfitOrders = async (
   };
 
   let successCount = 0;
-  let failedCount = 0;
+  const errors: string[] = [];
 
-  // Итерируемся по ОРГАНИЗАЦИЯМ, а не по типам оплаты
-  for (let i = 0; i < ORGANIZATIONS.length; i++) {
-    const org = ORGANIZATIONS[i];
-
+  // Последовательная обработка организаций (reduce для последовательности промисов был бы сложнее для чтения здесь,
+  // for..of с await - идиоматичный способ для последовательных асинхронных операций в JS)
+  for (const [index, org] of ORGANIZATIONS.entries()) {
     logger.info(
-      `[profit] Processing org ${org.name} (${i + 1}/${ORGANIZATIONS.length})`
+      `[profit] Processing: ${chalk.magenta(org.name)} ${chalk.gray(`(${index + 1}/${ORGANIZATIONS.length})`)}`
     );
 
     try {
-      // 2. Переключаем контекст
-      await sessionClient.switchContext(org.switchId);
+      // 1. Переключаем
+      await withRetry(
+        () => switchContext(client, org, logger),
+        2,
+        1000,
+        logger
+      );
 
-      // Даем серверу немного времени на применение контекста
-      await delay(1000);
+      // 2. Ждем применения кук на сервере
+      await delay(CONFIG.contextSwitchDelay);
 
-      // 3. Выполняем запрос к API (с ретраями)
-      const baseParams = { secret, action: 'list', page: 1 };
+      // 3. Забираем данные с ретраями
+      const response = await withRetry(
+        () => fetchOrders(client, secret),
+        CONFIG.maxRetries,
+        2000,
+        logger
+      );
 
-      // Локальная функция ретрая, привязанная к текущей сессии
-      const fetchWithRetryLocal = async (
-        retry = 0
-      ): Promise<ProfitGetOrdersResponse | null> => {
-        try {
-          return await sessionClient.getOrders(baseParams);
-        } catch (error) {
-          if (
-            axios.isAxiosError(error) &&
-            error.response?.status === 429 &&
-            retry < MAX_RETRIES
-          ) {
-            const waitTime = Math.pow(2, retry) * 2000;
-            logger.warn(`[profit] Rate limit, retry in ${waitTime}ms`);
-            await delay(waitTime);
-            return fetchWithRetryLocal(retry + 1);
-          }
-          throw error;
-        }
-      };
-
-      const result = await fetchWithRetryLocal();
-
-      if (result && result.data && Array.isArray(result.data)) {
-        combinedData.data.push(...result.data);
+      if (response?.data && Array.isArray(response.data)) {
+        result.data.push(...response.data);
+        result.pages = Math.max(result.pages, response.pages);
         successCount++;
 
         logger.info(
-          `[profit] Org ${org.name} success: ${result.data.length} orders`
+          `[profit] ${chalk.green('Success')} for ${org.name}: found ${chalk.yellow(response.data.length)} orders`
         );
-
-        if (result.pages > combinedData.pages) {
-          combinedData.pages = result.pages;
-        }
       }
     } catch (error) {
-      failedCount++;
-      logger.warn(`[profit] Failed to fetch for ${org.name}`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      const msg = error instanceof Error ? error.message : String(error);
+      errors.push(`${org.name}: ${msg}`);
+      logger.error(chalk.red(`[profit] Failed processing ${org.name}: ${msg}`));
     }
 
-    // Задержка между организациями
-    if (i < ORGANIZATIONS.length - 1) {
-      await delay(DELAY_BETWEEN_REQUESTS);
+    // Задержка перед следующей итерацией, если она не последняя
+    if (index < ORGANIZATIONS.length - 1) {
+      await delay(CONFIG.delayBetweenRequests);
     }
   }
 
   if (successCount === 0) {
-    throw new Error(
-      `All Profit orgs failed (${failedCount}/${ORGANIZATIONS.length})`
-    );
+    throw new Error(`All Profit orgs failed. Errors: ${errors.join('; ')}`);
   }
 
-  // Удаляем дубликаты
-  const uniqueOrders = new Map();
-  for (const order of combinedData.data) {
-    uniqueOrders.set(order.order_id, order);
-  }
-  combinedData.data = Array.from(uniqueOrders.values());
+  // Дедупликация (Функциональный подход через Map)
+  const uniqueOrders = Array.from(
+    new Map(result.data.map((order) => [order.order_id, order])).values()
+  );
 
-  logger.info('[profit] Orders fetched successfully', {
-    totalOrders: combinedData.data.length,
+  result.data = uniqueOrders;
+
+  logger.info(chalk.bold.green('[profit] Fetch cycle completed'), {
+    totalUniqueOrders: uniqueOrders.length,
     successfulSources: successCount,
   });
 
-  return combinedData;
+  return result;
 };
