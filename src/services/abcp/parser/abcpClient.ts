@@ -104,6 +104,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     }
     return response;
   };
+  
   const searchItem = async ({
     item,
     supplier,
@@ -164,61 +165,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     });
   };
 
-  // const searchItem = async ({
-  //   item,
-  //   supplier,
-  //   userLogger,
-  // }: ParallelSearchParams): Promise<SearchResultsParsed[]> => {
-  //   const { baseUrl } = config;
-  //   const articleToSearch = transformArticleByBrand(
-  //     item.article,
-  //     item.brand,
-  //     supplier
-  //   );
-
-  //   const searchUrl = `${baseUrl}/search?pcode=${encodeURIComponent(articleToSearch)}`;
-  //   const response = await makeRequest(searchUrl, { headers: ugHeaders });
-  //   const $ = cheerio.load(response.data);
-  //   const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(articleToSearch)}`;
-
-  //   const elements = $('.globalResult').filter((_, el) => {
-  //     const dataLink = $(el).attr('data-link') || '';
-  //     return (
-  //       dataLink.toLowerCase() === `/search/${dataLinkContent.toLowerCase()}`
-  //     );
-  //   });
-
-  //   let finalHtml: string;
-  //   if ($('.searchResultsTableWrapper').length > 0) {
-  //     userLogger.info(`[${supplier}] Landed directly on product page.`);
-  //     finalHtml = response.data; // Эта страница - уже то, что нам нужно
-  //   }
-  //   // Иначе, это страница со списком
-  //   else if (elements.length > 0) {
-  //     userLogger.info(
-  //       `[${supplier}] Exact item found, making a second request.`
-  //     );
-  //     const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
-  //     const detailResponse = await makeRequest(detailUrl, {
-  //       headers: ugHeaders,
-  //     });
-  //     finalHtml = detailResponse.data;
-  //   } else {
-  //     userLogger.info(
-  //       `[${supplier}] Exact item not found. Parsing search results page.`
-  //     );
-  //     finalHtml = response.data;
-  //   }
-
-  //   return parsePickedABCPresults({
-  //     html: finalHtml,
-  //     item,
-  //     supplier,
-  //     userLogger,
-  //   });
-  // };
-
-  // Возвращаем объект с публичными методами
+   // Возвращаем объект с публичными методами
   return {
     searchItem,
     makeRequest,
