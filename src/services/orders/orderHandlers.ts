@@ -8,93 +8,90 @@ import { fetchProfitOrders } from '../profit/orders/fetchProfitOrders.js';
 import { mapProfitOrdersToUnified } from '../profit/orders/profitMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
 
-import { AbcpOrderParser } from '../abcp/parser/AbcpOrderParser.js';
+import { parseAbcpHtml } from '../abcp/parser/AbcpOrderParser.js';
 import {
-  abcpOrderServiceParser,
+  createAbcpOrderService,
   IAbcpClientWrapper,
   SupplierConfigABCP,
 } from '../abcp/parser/abcpOrderServiceParser.js';
 
-// !!! ИМПОРТИРУЕМ СИНГЛТОНЫ КЛИЕНТОВ, А НЕ СОЗДАЕМ ИХ ЗАНОВО !!!
-// Путь зависит от того, где лежит твой index.ts с экспортами.
-// Предполагаю: src/services/abcp/parser/index.ts (или где у тебя лежит index.ts с клиентами)
 import { ugHeaders } from '../../constants/headers.js';
 import { autoImpulseClient, mikanoClient } from '../abcp/parser/index.js';
 
-// Хендлер ожидает logger для контекстного логирования
-type OrderHandler = (logger: Logger) => Promise<UnifiedOrderItem[]>;
+// --- Types ---
 
-// --- Фабрики API (существующие) ---
-const createAbcpOrderHandler = (alias: AbcpSupplierAlias): OrderHandler => {
+type OrderHandler = (logger: Logger) => Promise<UnifiedOrderItem[]>;
+type FetcherStrategy<T> = (logger: Logger) => Promise<T>;
+type MapperStrategy<T> = (data: T) => UnifiedOrderItem[];
+
+// --- 1. Functional Middleware (Monitoring & Error Handling) ---
+
+/**
+ * Обертка высшего порядка (HOF) для стандартизации логов и обработки ошибок.
+ * Убирает дублирование try-catch и logger.info из каждого хендлера.
+ */
+const withMonitoring = (
+  alias: string,
+  fn: (logger: Logger) => Promise<UnifiedOrderItem[]>
+): OrderHandler => {
   return async (logger: Logger) => {
-    logger.debug(`[${alias}] Starting ABCP fetch...`, { supplier: alias });
+    logger.debug(`[${alias}] Starting fetch...`, { supplier: alias });
     try {
-      const rawData = await fetchAbcpOrders(alias, { format: 'p' });
-      const mapped = mapAbcpOrdersToUnified(rawData, alias);
-      logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
+      const result = await fn(logger);
+      logger.info(`[${alias}] Fetched ${result.length} orders`, {
         supplier: alias,
-        count: mapped.length,
+        count: result.length,
       });
-      return mapped;
+      return result;
     } catch (error) {
-      logger.error(`[${alias}] ABCP fetch failed`, { supplier: alias, error });
+      logger.error(`[${alias}] Fetch failed`, { supplier: alias, error });
       throw error;
     }
   };
 };
 
-const createAutosputnikHandler = (
-  alias: 'autosputnik' | 'autosputnik_bn'
+/**
+ * Фабрика для создания простого API-хендлера.
+ * Разделяет получение данных (Side Effect) и их преобразование (Pure Function).
+ */
+const createApiHandler = <T>(
+  alias: string,
+  fetcher: FetcherStrategy<T>,
+  mapper: MapperStrategy<T>
 ): OrderHandler => {
-  return async (logger: Logger) => {
-    logger.debug(`[${alias}] Starting Autosputnik fetch...`, {
-      supplier: alias,
-    });
-    const rawData = await fetchAutosputnikOrders(alias, logger);
-    const mapped = mapAutosputnikOrdersToUnified(rawData, alias);
-    logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
-      supplier: alias,
-      count: mapped.length,
-    });
-    return mapped;
+  const handler = async (logger: Logger) => {
+    const rawData = await fetcher(logger);
+    return mapper(rawData);
   };
+  return withMonitoring(alias, handler);
 };
 
-const createProfitHandler = (): OrderHandler => {
-  return async (logger: Logger) => {
-    const alias = 'profit';
-    logger.debug(`[${alias}] Starting Profit fetch...`, { supplier: alias });
-    const rawData = await fetchProfitOrders(logger);
-    const mapped = mapProfitOrdersToUnified(rawData, alias);
-    logger.info(`[${alias}] Fetched ${mapped.length} orders`, {
-      supplier: alias,
-      count: mapped.length,
-    });
-    return mapped;
-  };
-};
+// --- 2. Parsing Logic Isolation ---
 
-// --- Новая Фабрика для парсинга HTML ---
-
-interface ParsingHandlerConfig {
-  client: IAbcpClientWrapper; // Теперь принимаем готовый инстанс
+interface ParserConfig {
+  alias: string;
+  client: IAbcpClientWrapper;
   serviceConfig: SupplierConfigABCP;
-  disablePagination?: boolean; // Флаг для поставщиков, отдающих всё одной страницей
+  paginationStrategy: 'allow' | 'block_subsequent_pages';
 }
 
-const createParsingOrderHandler = (
-  config: ParsingHandlerConfig
-): OrderHandler => {
-  // 1. Создаем прокси-клиента.
-  const clientWithHeaders: IAbcpClientWrapper = {
+/**
+ * Создает прокси-клиент для перехвата запросов.
+ * Явно выделяем логику блокировки пагинации и инъекции заголовков.
+ */
+const createConfiguredClient = (
+  baseClient: IAbcpClientWrapper,
+  strategy: ParserConfig['paginationStrategy']
+): IAbcpClientWrapper => {
+  return {
     makeRequest: async (url, options = {}) => {
-      // INTERCEPTION:
-      // Если отключена пагинация и сервис запрашивает следующую страницу (start > 0),
-      // мы принудительно возвращаем пустой ответ.
-      // Это предотвращает бесконечный цикл для поставщиков типа AutoImpulse.
-      if (config.disablePagination && options.params?.start > 0) {
+      // Logic Guard: Блокируем запросы глубже первой страницы для flat-листов
+      if (
+        strategy === 'block_subsequent_pages' &&
+        (options.params?.start ?? 0) > 0
+      ) {
         return {
-          data: '', // Пустой HTML
+          data: '', // Empty HTML response
           status: 200,
           statusText: 'OK',
           headers: {},
@@ -102,72 +99,100 @@ const createParsingOrderHandler = (
         };
       }
 
-      // Иначе делаем реальный запрос
-      const headers = {
-        ...ugHeaders,
-        ...(options.headers || {}),
-      };
-      return config.client.makeRequest(url, { ...options, headers });
+      // Header Injection
+      const mergedHeaders = { ...ugHeaders, ...(options.headers || {}) };
+      return baseClient.makeRequest(url, {
+        ...options,
+        headers: mergedHeaders,
+      });
     },
-  };
-
-  // 2. Инициализация парсера
-  const parser = new AbcpOrderParser();
-
-  // 3. Инициализация сервиса (DI)
-  // Передаем нашего "умного" клиента
-  const service = new abcpOrderServiceParser(clientWithHeaders, parser);
-
-  return async (logger: Logger) => {
-    return service.syncSupplier(config.serviceConfig, logger);
   };
 };
 
-// --- Конфигурация Хендлеров ---
+const createParserHandler = (config: ParserConfig): OrderHandler => {
+  // Dependency Injection:
+  const smartClient = createConfiguredClient(
+    config.client,
+    config.paginationStrategy
+  );
 
-// Mikano Config
-const mikanoHandler = createParsingOrderHandler({
-  client: mikanoClient, // Используем импортированный клиент
+  // ВАЖНО: Мы больше не делаем new AbcpOrderParser().
+  // Мы передаем функцию parseAbcpHtml прямо в фабрику.
+  const service = createAbcpOrderService(smartClient, parseAbcpHtml);
+
+  const handler = async (logger: Logger) => {
+    return service.syncSupplier(config.serviceConfig, logger);
+  };
+
+  return withMonitoring(config.alias, handler);
+};
+
+// --- 3. Configurations ---
+
+// API Handlers
+const createAbcp = (alias: AbcpSupplierAlias) =>
+  createApiHandler(
+    alias,
+    () => fetchAbcpOrders(alias, { format: 'p' }),
+    (data) => mapAbcpOrdersToUnified(data, alias)
+  );
+
+const createAutosputnik = (alias: 'autosputnik' | 'autosputnik_bn') =>
+  createApiHandler(
+    alias,
+    (logger) => fetchAutosputnikOrders(alias, logger),
+    (data) => mapAutosputnikOrdersToUnified(data, alias)
+  );
+
+const createProfit = () =>
+  createApiHandler(
+    'profit',
+    (logger) => fetchProfitOrders(logger),
+    (data) => mapProfitOrdersToUnified(data, 'profit')
+  );
+
+// Parsing Handlers
+const mikanoHandler = createParserHandler({
+  alias: 'mikano',
+  client: mikanoClient,
+  paginationStrategy: 'allow',
   serviceConfig: {
     key: 'mikano',
-    baseUrl: `${(process.env.MIKANO_LOGIN_URL || '').replace(/\/+$/, '')}/orders`,
+    baseUrl: `${process.env.MIKANO_LOGIN_URL}orders`,
     queryType: 'nested',
     historyDays: 60,
   },
-  disablePagination: false, // У Mikano есть пагинация
 });
 
-// AutoImpulse Config
-const autoImpulseHandler = createParsingOrderHandler({
-  client: autoImpulseClient, // Используем импортированный клиент
+const autoImpulseHandler = createParserHandler({
+  alias: 'autoImpulse',
+  client: autoImpulseClient,
+  paginationStrategy: 'block_subsequent_pages',
   serviceConfig: {
     key: 'autoImpulse',
-    // ХАК: Вшиваем обязательные параметры фильтрации прямо в URL.
-    baseUrl:
-      'https://lnr-auto-impulse.ru/orders?id_order=-1&allOrders=1&paymentTypeId=0&accurateCodeSearch=on',
+    baseUrl: process.env.AUTOIMPULSE_ORDERS_URL!,
     queryType: 'flat',
     historyDays: 60,
   },
-  disablePagination: true, // ВАЖНО: AutoImpulse отдает все заказы сразу. Отключаем цикл.
 });
 
-// --- Экспорт Хендлеров ---
+// --- Exports ---
 
 export const orderHandlers: Record<string, OrderHandler> = {
-  // --- ABCP (API) ---
-  ug: createAbcpOrderHandler('ug'),
-  ug_f: createAbcpOrderHandler('ug_f'),
-  ug_bn: createAbcpOrderHandler('ug_bn'),
-  patriot: createAbcpOrderHandler('patriot'),
-  npn: createAbcpOrderHandler('npn'),
-  avtodinamika: createAbcpOrderHandler('avtodinamika'),
+  // ABCP API
+  ug: createAbcp('ug'),
+  ug_f: createAbcp('ug_f'),
+  ug_bn: createAbcp('ug_bn'),
+  patriot: createAbcp('patriot'),
+  npn: createAbcp('npn'),
+  avtodinamika: createAbcp('avtodinamika'),
 
-  // --- Non-ABCP (API) ---
-  autosputnik: createAutosputnikHandler('autosputnik'),
-  autosputnik_bn: createAutosputnikHandler('autosputnik_bn'),
-  profit: createProfitHandler(),
+  // Other APIs
+  autosputnik: createAutosputnik('autosputnik'),
+  autosputnik_bn: createAutosputnik('autosputnik_bn'),
+  profit: createProfit(),
 
-  // --- Non-ABCP (Parsing) ---
+  // HTML Parsers
   mikano: mikanoHandler,
   autoImpulse: autoImpulseHandler,
 };

@@ -1,7 +1,12 @@
 import * as cheerio from 'cheerio';
 import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
 
-// --- Mappings ---
+// --- Constants & Types ---
+
+type LayoutStrategy = (
+  $: cheerio.CheerioAPI,
+  supplier: string
+) => UnifiedOrderItem[];
 
 const STATUS_MAP: Record<string, OrderStatus> = {
   // Positive / Active
@@ -28,169 +33,171 @@ const STATUS_MAP: Record<string, OrderStatus> = {
   снято: 'refused',
 };
 
-export class AbcpOrderParser {
-  /**
-   * Парсит HTML страницу с историей заказов ABCP.
-   * Автоматически определяет тип верстки (Блочная или Табличная).
-   */
-  public parse(html: string, supplier: string): UnifiedOrderItem[] {
-    const $ = cheerio.load(html);
+// --- Helpers (Pure) ---
 
-    // Стратегия 1: Блочная верстка (как у Mikano)
-    if ($('.allOrdersOrder').length > 0) {
-      return this.parseBlockLayout($, supplier);
-    }
+const cleanText = (text: string | undefined): string =>
+  text ? text.replace(/\s+/g, ' ').trim() : '';
 
-    // Стратегия 2: Табличная верстка (как у AutoImpulse)
-    // FIX: Проверяем наличие строк с data-order-id, это надежнее чем классы
-    if ($('tr[data-order-id]').length > 0) {
-      return this.parseTableLayout($, supplier);
-    }
+const parsePrice = (raw: string | undefined): number => {
+  if (!raw) return 0;
+  // Удаляем пробелы, знак рубля, меняем запятую на точку
+  const clean = raw.replace(/\s/g, '').replace('₽', '').replace(',', '.');
+  const num = parseFloat(clean);
+  return isNaN(num) ? 0 : num;
+};
 
-    return [];
+const parseDate = (raw: string | undefined): string => {
+  if (!raw) return new Date().toISOString();
+
+  const dateMatch = raw.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  if (dateMatch) {
+    // Месяцы в JS 0-indexed
+    const dateObj = new Date(
+      parseInt(dateMatch[3], 10),
+      parseInt(dateMatch[2], 10) - 1,
+      parseInt(dateMatch[1], 10)
+    );
+    return dateObj.toISOString();
+  }
+  return new Date().toISOString();
+};
+
+const mapStatus = (raw: string): OrderStatus => {
+  const lower = raw.toLowerCase();
+
+  // 1. Прямое совпадение (O(1))
+  if (STATUS_MAP[lower]) {
+    return STATUS_MAP[lower];
   }
 
-  /**
-   * Парсинг табличной верстки (AutoImpulse)
-   * Используем tr[data-order-id], чтобы поймать ВСЕ строки
-   */
-  private parseTableLayout(
-    $: cheerio.CheerioAPI,
-    supplier: string
-  ): UnifiedOrderItem[] {
-    const result: UnifiedOrderItem[] = [];
+  // 2. Поиск подстроки (O(N)) - fallback
+  const foundEntry = Object.entries(STATUS_MAP).find(([key]) =>
+    lower.includes(key)
+  );
+  return foundEntry ? foundEntry[1] : 'unknown';
+};
 
-    $('tr[data-order-id]').each((rowIndex, rowEl) => {
-      const $row = $(rowEl);
-      const $tds = $row.find('td');
+// --- Strategies ---
 
-      // 1. Номер заказа и ID строки из data-атрибутов (Самый надежный источник)
-      const orderId = $row.attr('data-order-id') || $tds.eq(1).text().trim();
+/**
+ * Стратегия для табличной верстки (AutoImpulse и подобные).
+ * Опирается на data-order-id как признак строки заказа.
+ */
+const parseTableLayout: LayoutStrategy = ($, supplier) => {
+  const rows = $('tr[data-order-id]');
+  if (rows.length === 0) return [];
 
-      // 2. Дата (обычно 1-я колонка)
-      const dateText =
-        $row.find('.wrapper-date').text().trim() || $tds.eq(0).text().trim();
-      const createdAt = this.parseDate(dateText);
+  return rows.toArray().map((rowEl) => {
+    const $row = $(rowEl);
+    const $tds = $row.find('td');
 
-      // 3. Бренд (3-я колонка, index 2)
-      const brand = $tds.eq(2).text().trim();
+    // Data Extraction
+    const orderId = $row.attr('data-order-id') || cleanText($tds.eq(1).text());
+    const dateText =
+      cleanText($row.find('.wrapper-date').text()) ||
+      cleanText($tds.eq(0).text());
+    const brand = cleanText($tds.eq(2).text());
 
-      // 4. Артикул (4-я колонка, index 3)
-      // Часто внутри .columnArticlePosition, но лучше брать текст ячейки целиком и чистить
-      const article =
-        $row.find('.columnArticlePosition').text().trim() ||
-        $tds.eq(3).text().trim();
+    // Артикул: приоритет классу, фоллбэк на колонку
+    const article =
+      cleanText($row.find('.columnArticlePosition').text()) ||
+      cleanText($tds.eq(3).text());
 
-      // 5. Наименование
-      const name = $row
-        .find('.allOrdersListDescription')
-        .text()
-        .replace(/\s+/g, ' ')
-        .trim();
+    const name = cleanText($row.find('.allOrdersListDescription').text());
 
-      // 6. Количество (8-я колонка, index 7)
-      const quantityRaw = $tds.eq(7).text().trim();
-      const quantity = parseInt(quantityRaw.replace(/\D/g, ''), 10) || 1;
+    const quantityRaw = cleanText($tds.eq(7).text());
+    const quantity = parseInt(quantityRaw.replace(/\D/g, ''), 10) || 1;
 
-      // 7. Цена (10-я колонка, index 9)
-      // FIX: Берем из data-атрибута, если он есть (надежнее)
-      const priceAttr = $row.attr('data-position-price');
-      const priceRaw = priceAttr || $tds.eq(9).text().trim();
-      const price = this.parsePrice(priceRaw);
+    const priceAttr = $row.attr('data-position-price');
+    const price = parsePrice(priceAttr || $tds.eq(9).text());
 
-      // 8. Сумма
-      const totalPrice = Number((price * quantity).toFixed(2));
+    const statusRaw = cleanText($row.find('.orderPosStatus').text());
 
-      // 9. Статус
-      const statusRaw = $row.find('.orderPosStatus').text().trim();
-      const status = this.mapStatus(statusRaw);
+    // ID Generation
+    const positionId = $row.attr('data-position-id');
+    // Используем индекс строки как соль, если нет positionId
+    const rowIndex = $row.index();
+    const id = positionId
+      ? `${supplier}_${positionId}`
+      : `${supplier}_${orderId}_${article}_${rowIndex}`;
 
-      // Генерация ID
-      // Используем data-position-id если есть, это гарантия уникальности от ABCP
-      const positionId = $row.attr('data-position-id');
-      const id = positionId
-        ? `${supplier}_${positionId}`
-        : `${supplier}_${orderId}_${article}_${rowIndex}`;
+    return {
+      id,
+      orderId,
+      supplier,
+      brand,
+      article,
+      name,
+      quantity,
+      price,
+      totalPrice: Number((price * quantity).toFixed(2)),
+      currency: 'RUB',
+      status: mapStatus(statusRaw),
+      statusRaw,
+      createdAt: parseDate(dateText),
+    };
+  });
+};
 
-      result.push({
-        id,
-        orderId,
-        supplier,
-        brand,
-        article,
-        name,
-        quantity,
-        price,
-        totalPrice,
-        currency: 'RUB',
-        status,
-        statusRaw,
-        createdAt,
-      });
-    });
+/**
+ * Стратегия для блочной верстки (Mikano).
+ * Вложенная структура: Заказ -> Строки позиций.
+ */
+const parseBlockLayout: LayoutStrategy = ($, supplier) => {
+  const orders = $('.allOrdersOrder');
+  if (orders.length === 0) return [];
 
-    return result;
-  }
+  // flatMap позволяет развернуть структуру "Заказы -> Позиции" в плоский список "Позиции"
+  return orders.toArray().flatMap((orderEl) => {
+    const $order = $(orderEl);
 
-  /**
-   * Парсинг блочной верстки (Mikano)
-   */
-  private parseBlockLayout(
-    $: cheerio.CheerioAPI,
-    supplier: string
-  ): UnifiedOrderItem[] {
-    const result: UnifiedOrderItem[] = [];
+    // Header Info
+    const headerInfo = cleanText(
+      $order.find('.allOrdersOrder__header__info').text()
+    );
+    const orderId = cleanText(
+      $order.find('.allOrdersOrder__header__info strong').text()
+    );
+    const createdAt = parseDate(headerInfo);
 
-    $('.allOrdersOrder').each((_, orderEl) => {
-      const $order = $(orderEl);
-
-      const headerInfo = $order
-        .find('.allOrdersOrder__header__info')
-        .text()
-        .trim();
-      const orderId = $order
-        .find('.allOrdersOrder__header__info strong')
-        .text()
-        .trim();
-      const createdAt = this.parseDate(headerInfo);
-
-      const $rows = $order.find('.allOrdersOrder__row');
-
-      $rows.each((rowIndex, rowEl) => {
+    // Rows Processing
+    return $order
+      .find('.allOrdersOrder__row')
+      .toArray()
+      .reduce<UnifiedOrderItem[]>((acc, rowEl, index) => {
         const $row = $(rowEl);
 
-        const brand = $row.find('.allOrdersOrder__productBrand').text().trim();
-        const article = $row
-          .find('.allOrdersOrder__productNumber')
-          .text()
-          .trim();
-        const name = $row
-          .find('.allOrdersOrder__item_descr')
-          .text()
-          .replace(/\s+/g, ' ')
-          .trim();
+        const article = cleanText(
+          $row.find('.allOrdersOrder__productNumber').text()
+        );
 
-        const quantityRaw = $row
-          .find('.allOrdersOrder__item_quantity span')
-          .first()
-          .text()
-          .trim();
+        // VALIDATION GUARD:
+        // Вместо `if (!article) return` (костыль), мы используем reduce.
+        // Если данных недостаточно для формирования валидной сущности, мы просто не добавляем её в аккумулятор.
+        if (!article) {
+          return acc;
+        }
+
+        const brand = cleanText(
+          $row.find('.allOrdersOrder__productBrand').text()
+        );
+        const name = cleanText($row.find('.allOrdersOrder__item_descr').text());
+
+        const quantityRaw = cleanText(
+          $row.find('.allOrdersOrder__item_quantity span').first().text()
+        );
         const quantity = parseInt(quantityRaw.replace(/\D/g, ''), 10) || 1;
 
-        const priceRaw = $row
-          .find('.allOrdersOrder__item_price')
-          .last()
-          .text()
-          .trim();
-        const price = this.parsePrice(priceRaw);
-        const totalPrice = Number((price * quantity).toFixed(2));
+        const priceRaw = cleanText(
+          $row.find('.allOrdersOrder__item_price').last().text()
+        );
+        const price = parsePrice(priceRaw);
 
-        const statusRaw = $row.find('.statusName').text().trim();
-        const status = this.mapStatus(statusRaw);
+        const statusRaw = cleanText($row.find('.statusName').first().text());
 
-        const id = `${supplier}_${orderId}_${article}_${rowIndex}`;
+        const id = `${supplier}_${orderId}_${article}_${index}`;
 
-        result.push({
+        acc.push({
           id,
           orderId,
           supplier,
@@ -199,54 +206,45 @@ export class AbcpOrderParser {
           name,
           quantity,
           price,
-          totalPrice,
+          totalPrice: Number((price * quantity).toFixed(2)),
           currency: 'RUB',
-          status,
+          status: mapStatus(statusRaw),
           statusRaw,
           createdAt,
         });
-      });
-    });
 
-    return result;
-  }
+        return acc;
+      }, []);
+  });
+};
 
-  // --- Helpers ---
+// --- Main Parser Function ---
 
-  private parseDate(raw: string): string {
-    const dateMatch = raw.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-    if (dateMatch) {
-      const dateObj = new Date(
-        parseInt(dateMatch[3], 10),
-        parseInt(dateMatch[2], 10) - 1,
-        parseInt(dateMatch[1], 10)
-      );
-      return dateObj.toISOString();
+/**
+ * Основная функция парсинга.
+ * Применяет стратегии по очереди.
+ */
+export const parseAbcpHtml = (
+  html: string,
+  supplier: string
+): UnifiedOrderItem[] => {
+  if (!html) return [];
+
+  const $ = cheerio.load(html);
+
+  // Список стратегий. Порядок важен, если есть риск ложных срабатываний,
+  // но здесь мы проверяем конкретные селекторы внутри стратегий.
+  const strategies = [parseBlockLayout, parseTableLayout];
+
+  for (const strategy of strategies) {
+    const results = strategy($, supplier);
+    if (results.length > 0) {
+      return results;
     }
-    return new Date().toISOString();
   }
 
-  private parsePrice(raw: string): number {
-    if (!raw) return 0;
-    const clean = raw.replace(/\s/g, '').replace('₽', '').replace(',', '.');
+  return [];
+};
 
-    const num = parseFloat(clean);
-    return isNaN(num) ? 0 : num;
-  }
-
-  private mapStatus(raw: string): OrderStatus {
-    const lower = raw.toLowerCase();
-
-    if (STATUS_MAP[lower]) {
-      return STATUS_MAP[lower];
-    }
-
-    for (const [key, val] of Object.entries(STATUS_MAP)) {
-      if (lower.includes(key)) {
-        return val;
-      }
-    }
-
-    return 'unknown';
-  }
-}
+// Для обратной совместимости, если где-то используется как тип
+export type AbcpParserFn = typeof parseAbcpHtml;
