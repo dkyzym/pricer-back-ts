@@ -77,7 +77,7 @@ export interface AbcpOrdersResponse {
 
 // Параметры для запроса (помимо логина/пароля, которые вставит интерсептор)
 export interface FetchOrdersParams {
-  limit?: number; // по умолчанию 100
+  limit?: number; // по умолчанию 150
   skip?: number; // по умолчанию 0
   format?: 'p'; // 'p' для вывода позиций
 }

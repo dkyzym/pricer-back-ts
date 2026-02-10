@@ -160,7 +160,7 @@ const mikanoHandler = createParserHandler({
     key: 'mikano',
     baseUrl: `${process.env.MIKANO_LOGIN_URL}orders`,
     queryType: 'nested',
-    historyDays: 60,
+    historyDays: 90,
   },
 });
 
@@ -172,7 +172,7 @@ const autoImpulseHandler = createParserHandler({
     key: 'autoImpulse',
     baseUrl: process.env.AUTOIMPULSE_ORDERS_URL!,
     queryType: 'flat',
-    historyDays: 60,
+    historyDays: 90,
   },
 });
 

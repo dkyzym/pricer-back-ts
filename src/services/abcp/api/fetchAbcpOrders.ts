@@ -22,7 +22,7 @@ export const fetchAbcpOrders = async (
     // 2. Формируем параметры (limit, skip, format)
     // Логин и пароль тут НЕ указываем, они добавятся сами!
     const params = {
-      limit: queryParams.limit ?? 100,
+      limit: queryParams.limit ?? 200,
       skip: queryParams.skip ?? 0,
       ...(queryParams.format ? { format: queryParams.format } : {}),
     };

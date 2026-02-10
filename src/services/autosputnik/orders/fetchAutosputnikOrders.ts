@@ -5,11 +5,11 @@ import { AutosputnikGetOrdersResponse } from '../autosputnik.types.js';
 import { BASE_URL, getToken, tokenCache } from '../autosputnikApi.js';
 
 /**
- * Запрашивает заказы за последние 60 дней.
+ * Запрашивает заказы за последние 90 дней.
  * Использует внедренный logger для отслеживания хода выполнения.
  */
 
-const ordersPeriod = 60;
+const ordersPeriod = 90;
 
 export const fetchAutosputnikOrders = async (
   supplier: 'autosputnik' | 'autosputnik_bn',
