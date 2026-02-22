@@ -21,65 +21,78 @@ import { checkProxy } from '../../utils/api/checkProxy.js';
 import { generateMD5 } from '../../utils/generateMD5.js';
 import { getLocalIP } from '../../utils/getLocalIP.js';
 
-type AxiosInstanceSupplierName = SupplierName;
+// 1. Храним ПРОМИС инициализации, а не просто boolean.
+// Это позволит любым параллельным запросам дождаться одной и той же проверки.
+let proxyInitPromise: Promise<boolean> | null = null;
 
-// Храним флаг использования прокси в модуле (или в global)
-let shouldUseProxy: boolean | null = null;
+// 2. Кэш инстансов. Экономим память и переиспользуем TCP-соединения (keepAlive)
+const axiosInstancesCache = new Map<SupplierName, AxiosInstance>();
 
-// Функция-инициализатор (один раз при старте приложения)
-export async function initProxyCheck() {
-  // 1) Получаем внешний IP
-  const localIP = await getLocalIP();
+/**
+ * Инициализирует проверку прокси. Можно вызывать сколько угодно раз,
+ * реальная проверка пройдет только один раз.
+ */
+export const initProxyCheck = (): Promise<boolean> => {
+  if (!proxyInitPromise) {
+    proxyInitPromise = (async () => {
+      try {
+        const localIP = await getLocalIP();
 
-  // 2) Сравниваем с PROXY_HOST
-  if (localIP === PROXY_HOST) {
-    logger.info(
-      `Текущий IP (${localIP}) = PROXY_HOST (${PROXY_HOST}). Прокси использовать не будем.`
-    );
-    shouldUseProxy = false;
-    return;
+        if (localIP === PROXY_HOST) {
+          logger.info(
+            `Текущий IP (${localIP}) = PROXY_HOST. Прокси использовать не будем.`
+          );
+          return false;
+        }
+
+        const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
+        const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
+        const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
+
+        const isProxyWorking = await checkProxy(agent);
+
+        if (!isProxyWorking) {
+          logger.error(
+            chalk.red(`Прокси ${proxyUrl} не работает, возможны отказы.`)
+          );
+        } else {
+          logger.info(
+            chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`)
+          );
+        }
+
+        return isProxyWorking;
+      } catch (error) {
+        logger.error('Критическая ошибка при проверке прокси', { error });
+        return false; // Fallback: без прокси
+      }
+    })();
   }
+  return proxyInitPromise;
+};
 
-  // 3) Если IP не совпадает – по умолчанию используем прокси.
-
-  const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
-  const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
-  const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
-  const isProxyWorking = await checkProxy(agent);
-
-  shouldUseProxy = isProxyWorking;
-  if (!isProxyWorking) {
-    logger.error(
-      chalk.red(
-        `Прокси ${proxyUrl} не работает, будут отказы в запросах через прокси.`
-      )
-    );
-  } else {
-    logger.info(chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`));
-  }
-}
-
-// Собственно создание axios-инстанса
-export const createAxiosInstance = async (
-  supplierKey: AxiosInstanceSupplierName
+/**
+ * Получает кэшированный или создает новый инстанс Axios для поставщика.
+ * Безопасно вызывать сразу при старте приложения — дождется прокси сам.
+ */
+export const getAxiosInstance = async (
+  supplierKey: SupplierName
 ): Promise<AxiosInstance> => {
-  // Убедимся, что флаг shouldUseProxy уже определён
-  // (значит вы ранее вызвали initProxyCheck)
-  if (shouldUseProxy === null) {
-    throw new Error(
-      'Нельзя создать AxiosInstance до инициализации прокси. Сначала вызовите initProxyCheck()!'
-    );
+  // Если инстанс уже создан, отдаем его мгновенно
+  if (axiosInstancesCache.has(supplierKey)) {
+    return axiosInstancesCache.get(supplierKey)!;
   }
+
+  // ЖДЕМ завершения инициализации прокси (решает проблему гонки!)
+  const shouldUseProxy = await initProxyCheck();
 
   const supplier = suppliers[supplierKey];
-
   if (!supplier) {
     throw new Error(`No supplier config found for key: ${supplierKey}`);
   }
 
   let axiosInstance: AxiosInstance;
 
-  // Если нужно использовать прокси
   if (shouldUseProxy) {
     const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
     const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
@@ -90,73 +103,60 @@ export const createAxiosInstance = async (
       httpAgent: agent,
       httpsAgent: agent,
       timeout: 10_000,
-      maxBodyLength: Infinity,
-      maxContentLength: Infinity,
     });
-    logger.info(`Axios instance with proxy for: ${supplierKey}`);
+    logger.info(`Created proxy Axios instance for: ${supplierKey}`);
   } else {
-    // Создаём без прокси
     axiosInstance = axios.create({
       baseURL: supplier.baseUrl,
       timeout: 10_000,
-      maxBodyLength: Infinity,
-      maxContentLength: Infinity,
     });
-    logger.info(chalk.blue(`Axios instance without proxy for: ${supplierKey}`));
+    logger.info(
+      chalk.blue(`Created direct Axios instance for: ${supplierKey}`)
+    );
   }
 
-  // Подключаем axios-retry
+  // Кешируем MD5 пароля один раз при создании инстанса, чтобы не считать на каждый запрос
+  const authParams = supplier.needAuth
+    ? {
+        userlogin: supplier.username,
+        userpsw: generateMD5(supplier.password),
+      }
+    : {};
+
   axiosRetry(axiosInstance, {
-    retries: 1,
+    retries: 2, // Чуть увеличил для надежности
     shouldResetTimeout: true,
     retryDelay: (retryCount) => 1000 * Math.pow(2, retryCount),
     retryCondition: (error: AxiosError) => {
-      // 1) Таймаут
-      if (error.code === 'ECONNABORTED') {
-        logger.warn('[axios-retry] Retrying because of timeout...');
-        return true;
-      }
-      // 2) 5xx или сетевые ошибки
-      if (isNetworkOrIdempotentRequestError(error)) {
-        logger.warn('[axios-retry] Retrying network or 5xx error...');
-        return true;
-      }
+      if (error.code === 'ECONNABORTED') return true;
+      if (isNetworkOrIdempotentRequestError(error)) return true;
       return false;
     },
   });
 
-  // Интерсептор на запрос
   axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
+      if (!config.headers) config.headers = new AxiosHeaders();
       config.headers.set('Accept-Encoding', 'gzip, deflate');
 
-
       if (supplier.needAuth) {
-        config.params = {
-          ...config.params,
-          userlogin: supplier.username,
-          userpsw: generateMD5(supplier.password),
-        };
+        config.params = { ...config.params, ...authParams };
       }
       return config;
-    },
-    (error) => Promise.reject(error)
+    }
   );
 
-  // Интерсептор на ответ
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
       if (error.code === 'ECONNREFUSED') {
-        logger.error('Connection refused (proxy error)');
-        return Promise.reject(new Error('Connection refused (proxy error)'));
+        logger.error(`Connection refused for ${supplierKey} (proxy error)`);
       }
       return Promise.reject(error);
     }
   );
 
+  // Сохраняем в кэш
+  axiosInstancesCache.set(supplierKey, axiosInstance);
   return axiosInstance;
 };

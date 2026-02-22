@@ -195,8 +195,7 @@ function createAbcpApiHandler(
       );
 
       const orders = await fetchAbcpOrders('npn', { format: 'p', limit: 2 });
-      console.log(JSON.stringify(orders));
-
+     
       return mapAbcpResponse(
         responseData,
         item.brand,

@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { ABCP_SERVICE_PATHS } from '../../../config/api/config.js';
-import { createAxiosInstance } from '../../apiClient/apiClient.js';
+import { getAxiosInstance } from '../../apiClient/apiClient.js';
 import {
   AbcpArticleSearchResult,
   AbcpSupplierAlias,
@@ -13,7 +13,7 @@ export const fetchAbcpData = async (
   useOnlineStocks?: number
 ) => {
   try {
-    const axiosInstance = await createAxiosInstance(
+    const axiosInstance = await getAxiosInstance(
       supplier === 'ug_f' ? 'ug' : supplier
     );
 
