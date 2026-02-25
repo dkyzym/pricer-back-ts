@@ -4,12 +4,13 @@ import { getEnvVar } from './getEnvVar.js';
 dotenv.config();
 
 /**
- * Интерфейс для конфигурации поставщика
+ * Интерфейс для конфигурации  поставщика
  */
 interface SupplierConfig {
   username: string;
   password: string;
   baseUrl: string;
+
   needAuth: boolean;
 }
 
