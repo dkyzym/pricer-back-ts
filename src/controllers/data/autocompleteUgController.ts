@@ -22,9 +22,11 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
 
   const dataWithId: ItemAutocompleteRow = filteredData.map(
     (element: ItemAutocompleteRow) => {
+      const isClarify = element.brand?.includes('Найти');
       return {
         id: uuidv4(),
         ...element,
+        ...(isClarify ? { type: 'CLARIFY' } : {}),
       };
     }
   );

@@ -113,6 +113,7 @@ export interface ItemAutocompleteRow {
   descr: string;
   url: string;
   id?: string;
+  type?: 'CLARIFY';
 }
 
 /**
