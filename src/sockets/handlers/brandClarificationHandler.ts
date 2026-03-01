@@ -14,8 +14,8 @@ export const createBrandClarificationHandler = (
 
     if (!query || query.trim() === '') {
       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-        query: '',
-        results: [],
+        brands: [],
+        message: 'Пустой запрос',
       });
       return;
     }
