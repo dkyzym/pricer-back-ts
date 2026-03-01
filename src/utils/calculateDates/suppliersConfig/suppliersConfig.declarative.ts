@@ -27,7 +27,6 @@ const ugAndAvtodinamikaBaseConfig: SupplierDatesConfig['calculation'] = {
   },
 };
 
-
 export const suppliersConfig: SupplierDatesConfig[] = [
   // ... other suppliers ...
   { supplierName: 'profit', calculation: directFromApiBase },
@@ -62,16 +61,25 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       avoidDeliveryWeekdays: [7],
       rules: [
         {
-          ifPlaced: { from: { weekday: 1, time: '00:00' }, to: { weekday: 1, time: '13:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
+          ifPlaced: {
+            from: { weekday: 2, time: '00:00' },
+            to: { weekday: 2, time: '13:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
         },
         {
-          ifPlaced: { from: { weekday: 1, time: '14:00' }, to: { weekday: 4, time: '13:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 5 },
+          ifPlaced: {
+            from: { weekday: 2, time: '14:00' },
+            to: { weekday: 5, time: '13:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
-          ifPlaced: { from: { weekday: 4, time: '14:00' }, to: { weekday: 7, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
+          ifPlaced: {
+            from: { weekday: 5, time: '14:00' },
+            to: { weekday: 1, time: '23:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
         },
       ],
     },
@@ -83,29 +91,47 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       avoidDeliveryWeekdays: [7],
       rules: [
         {
-          ifPlaced: { from: { weekday: 2, time: '00:00' }, to: { weekday: 2, time: '15:00' } },
+          ifPlaced: {
+            from: { weekday: 2, time: '00:00' },
+            to: { weekday: 2, time: '15:00' },
+          },
           thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
-          ifPlaced: { from: { weekday: 2, time: '15:01' }, to: { weekday: 2, time: '23:59' } },
+          ifPlaced: {
+            from: { weekday: 2, time: '15:01' },
+            to: { weekday: 2, time: '23:59' },
+          },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
-          ifPlaced: { from: { weekday: 5, time: '00:00' }, to: { weekday: 5, time: '15:00' } },
+          ifPlaced: {
+            from: { weekday: 5, time: '00:00' },
+            to: { weekday: 5, time: '15:00' },
+          },
           thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
-          ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
+          ifPlaced: {
+            from: { weekday: 5, time: '15:01' },
+            to: { weekday: 5, time: '23:59' },
+          },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
         },
         {
-          ifPlaced: { from: { weekday: 3, time: '00:00' }, to: { weekday: 4, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }
+          ifPlaced: {
+            from: { weekday: 3, time: '00:00' },
+            to: { weekday: 4, time: '23:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
-          ifPlaced: { from: { weekday: 6, time: '00:00' }, to: { weekday: 1, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 }
-        }
+          ifPlaced: {
+            from: { weekday: 6, time: '00:00' },
+            to: { weekday: 1, time: '23:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 3 },
+        },
       ],
     },
   },
@@ -116,29 +142,47 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       avoidDeliveryWeekdays: [7],
       rules: [
         {
-          ifPlaced: { from: { weekday: 1, time: '00:00' }, to: { weekday: 1, time: '15:00' } },
+          ifPlaced: {
+            from: { weekday: 1, time: '00:00' },
+            to: { weekday: 1, time: '15:00' },
+          },
           thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
-          ifPlaced: { from: { weekday: 1, time: '15:01' }, to: { weekday: 1, time: '23:59' } },
+          ifPlaced: {
+            from: { weekday: 1, time: '15:01' },
+            to: { weekday: 1, time: '23:59' },
+          },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
-          ifPlaced: { from: { weekday: 5, time: '00:00' }, to: { weekday: 5, time: '15:00' } },
+          ifPlaced: {
+            from: { weekday: 5, time: '00:00' },
+            to: { weekday: 5, time: '15:00' },
+          },
           thenDeliver: { type: 'AFTER_DAYS', days: 1 },
         },
         {
-          ifPlaced: { from: { weekday: 5, time: '15:01' }, to: { weekday: 5, time: '23:59' } },
+          ifPlaced: {
+            from: { weekday: 5, time: '15:01' },
+            to: { weekday: 5, time: '23:59' },
+          },
           thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
         },
         {
-          ifPlaced: { from: { weekday: 2, time: '00:00' }, to: { weekday: 4, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 }
+          ifPlaced: {
+            from: { weekday: 2, time: '00:00' },
+            to: { weekday: 4, time: '23:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 6 },
         },
         {
-          ifPlaced: { from: { weekday: 6, time: '00:00' }, to: { weekday: 7, time: '23:59' } },
-          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 }
-        }
+          ifPlaced: {
+            from: { weekday: 6, time: '00:00' },
+            to: { weekday: 7, time: '23:59' },
+          },
+          thenDeliver: { type: 'ON_NEXT_SPECIFIC_WEEKDAY', weekday: 2 },
+        },
       ],
     },
   },
@@ -155,13 +199,12 @@ export const suppliersConfig: SupplierDatesConfig[] = [
       },
       // The rest of the logic remains the same. The engine will:
       // 1. Get readiness date by adding `deadline` hours to the current time.
-      // 2. Find the next shipment day (Tue/Fri) after that date, respecting the cutoff time.
-      // 3. Add the delivery delay.
-      shipmentWeekdays: [2, 5], // Tuesday, Friday
+      // 2. Find the next shipment day (Mon/Thu) after that date, respecting the cutoff time.
+      // 3. Add the delivery delay → delivery Tue/Fri.
+      shipmentWeekdays: [1, 4], // Monday, Thursday (delivery Tue/Fri)
       shipmentCutoffTime: '15:00',
       deliveryDelay: { days: 1 },
       avoidDeliveryWeekdays: [7],
     },
   },
 ];
-
