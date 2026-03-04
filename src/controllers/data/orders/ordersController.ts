@@ -1,8 +1,29 @@
 import { Request, Response } from 'express';
 import { Order, IOrderDocument } from '../../../models/Order.js';
 
+const supplierNameMap: Record<string, string> = {
+  profit: 'Профит',
+  autosputnik: 'Автоспутник',
+  autosputnik_bn: 'Автоспутн.-б/н',
+  autoImpulse: 'Автоимпульс',
+  ug: 'ЮГ',
+  ug_f: 'ЮГ-быстр.',
+  patriot: 'Патриот',
+  armtek: 'Армтек',
+  npn: 'НПН',
+  ug_bn: 'ЮГ-б/н',
+  mikano: 'АВТОМОДУЛЬ',
+  avtodinamika: 'Автодинамика',
+  avtoPartner: 'АвтоПартнер',
+};
+
+const normalizeStr = (str: string): string =>
+  str.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '');
+
 export const getOrders = async (req: Request, res: Response) => {
   const suppliers = req.query.suppliers as string | undefined;
+  const status = req.query.status as string | undefined;
+  const search = req.query.search as string | undefined;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 100;
   const fromDate = req.query.fromDate as string | undefined;
@@ -12,6 +33,10 @@ export const getOrders = async (req: Request, res: Response) => {
 
   if (suppliers) {
     query.supplier = { $in: suppliers.split(',') };
+  }
+
+  if (status) {
+    query.status = { $in: status.split(',') };
   }
 
   if (fromDate || toDate) {
@@ -34,6 +59,32 @@ export const getOrders = async (req: Request, res: Response) => {
     if (Object.keys(dateFilter).length > 0) {
       query.providerCreatedAt = dateFilter;
     }
+  }
+
+  if (search) {
+    const tokens = search.trim().split(/\s+/).filter(Boolean);
+
+    const searchConditions = tokens.map((token) => {
+      const normalizedToken = normalizeStr(token);
+
+      const orConditions: Record<string, unknown>[] = [
+        { orderId: { $regex: token, $options: 'i' } },
+        { brand: { $regex: token, $options: 'i' } },
+        { article: { $regex: token, $options: 'i' } },
+        { name: { $regex: token, $options: 'i' } },
+        { comment: { $regex: token, $options: 'i' } },
+      ];
+
+      for (const [key, ruName] of Object.entries(supplierNameMap)) {
+        if (normalizeStr(ruName).includes(normalizedToken)) {
+          orConditions.push({ supplier: key });
+        }
+      }
+
+      return { $or: orConditions };
+    });
+
+    query.$and = searchConditions;
   }
 
   const [totalOrders, orders] = await Promise.all([
