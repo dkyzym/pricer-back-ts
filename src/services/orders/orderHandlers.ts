@@ -20,8 +20,8 @@ import { autoImpulseClient, mikanoClient } from '../abcp/parser/index.js';
 
 // --- Types ---
 
-type OrderHandler = (logger: Logger) => Promise<UnifiedOrderItem[]>;
-type FetcherStrategy<T> = (logger: Logger) => Promise<T>;
+type OrderHandler = (logger: Logger, targetSyncDate: Date) => Promise<UnifiedOrderItem[]>;
+type FetcherStrategy<T> = (logger: Logger, targetSyncDate: Date) => Promise<T>;
 type MapperStrategy<T> = (data: T) => UnifiedOrderItem[];
 
 // --- 1. Functional Middleware (Monitoring & Error Handling) ---
@@ -32,12 +32,12 @@ type MapperStrategy<T> = (data: T) => UnifiedOrderItem[];
  */
 const withMonitoring = (
   alias: string,
-  fn: (logger: Logger) => Promise<UnifiedOrderItem[]>
+  fn: (logger: Logger, targetSyncDate: Date) => Promise<UnifiedOrderItem[]>
 ): OrderHandler => {
-  return async (logger: Logger) => {
-    logger.debug(`[${alias}] Starting fetch...`, { supplier: alias });
+  return async (logger: Logger, targetSyncDate: Date) => {
+    logger.debug(`[${alias}] Starting fetch...`, { supplier: alias, targetSyncDate: targetSyncDate.toISOString() });
     try {
-      const result = await fn(logger);
+      const result = await fn(logger, targetSyncDate);
       logger.info(`[${alias}] Fetched ${result.length} orders`, {
         supplier: alias,
         count: result.length,
@@ -59,8 +59,8 @@ const createApiHandler = <T>(
   fetcher: FetcherStrategy<T>,
   mapper: MapperStrategy<T>
 ): OrderHandler => {
-  const handler = async (logger: Logger) => {
-    const rawData = await fetcher(logger);
+  const handler = async (logger: Logger, targetSyncDate: Date) => {
+    const rawData = await fetcher(logger, targetSyncDate);
     return mapper(rawData);
   };
   return withMonitoring(alias, handler);
@@ -110,17 +110,14 @@ const createConfiguredClient = (
 };
 
 const createParserHandler = (config: ParserConfig): OrderHandler => {
-  // Dependency Injection:
   const smartClient = createConfiguredClient(
     config.client,
     config.paginationStrategy
   );
 
-  // ВАЖНО: Мы больше не делаем new AbcpOrderParser().
-  // Мы передаем функцию parseAbcpHtml прямо в фабрику.
   const service = createAbcpOrderService(smartClient, parseAbcpHtml);
 
-  const handler = async (logger: Logger) => {
+  const handler = async (logger: Logger, _targetSyncDate: Date) => {
     return service.syncSupplier(config.serviceConfig, logger);
   };
 
@@ -133,21 +130,21 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 const createAbcp = (alias: AbcpSupplierAlias) =>
   createApiHandler(
     alias,
-    () => fetchAbcpOrders(alias, { format: 'p' }),
+    (_logger, _targetSyncDate) => fetchAbcpOrders(alias, { format: 'p' }),
     (data) => mapAbcpOrdersToUnified(data, alias)
   );
 
 const createAutosputnik = (alias: 'autosputnik' | 'autosputnik_bn') =>
   createApiHandler(
     alias,
-    (logger) => fetchAutosputnikOrders(alias, logger),
+    (logger, _targetSyncDate) => fetchAutosputnikOrders(alias, logger),
     (data) => mapAutosputnikOrdersToUnified(data, alias)
   );
 
 const createProfit = () =>
   createApiHandler(
     'profit',
-    (logger) => fetchProfitOrders(logger),
+    (logger, _targetSyncDate) => fetchProfitOrders(logger),
     (data) => mapProfitOrdersToUnified(data, 'profit')
   );
 

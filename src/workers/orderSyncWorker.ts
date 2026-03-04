@@ -4,7 +4,56 @@ import axios from 'axios';
 import { logger } from '../config/logger/index.js';
 import { syncOrdersBatch } from '../services/db/orderSyncRepository.js';
 import { orderHandlers } from '../services/orders/orderHandlers.js';
+import { Order } from '../models/Order.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
+
+const ACTIVE_STATUSES = ['pending', 'work', 'shipping'] as const;
+const BUFFER_DAYS = 2;
+const DEFAULT_LOOKBACK_DAYS = 3;
+const MAX_LOOKBACK_DAYS = 45;
+const EMPTY_DB_LOOKBACK_DAYS = 90;
+
+function subtractDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
+  return result;
+}
+
+async function computeTargetSyncDate(supplier: string): Promise<Date> {
+  const now = new Date();
+
+  const anyOrder = await Order.findOne({ supplier }).select('_id').lean();
+
+  if (!anyOrder) {
+    return subtractDays(now, EMPTY_DB_LOOKBACK_DAYS);
+  }
+
+  const oldestActiveOrder = await Order.findOne({
+    supplier,
+    status: { $in: ACTIVE_STATUSES },
+  })
+    .sort({ providerCreatedAt: 1 })
+    .select('providerCreatedAt')
+    .lean();
+
+  let targetSyncDate: Date;
+
+  if (oldestActiveOrder?.providerCreatedAt) {
+    targetSyncDate = subtractDays(
+      new Date(oldestActiveOrder.providerCreatedAt),
+      BUFFER_DAYS
+    );
+  } else {
+    targetSyncDate = subtractDays(now, DEFAULT_LOOKBACK_DAYS);
+  }
+
+  const hardLimit = subtractDays(now, MAX_LOOKBACK_DAYS);
+  if (targetSyncDate < hardLimit) {
+    targetSyncDate = hardLimit;
+  }
+
+  return targetSyncDate;
+}
 
 export function startOrderSyncWorker(): void {
   let isRunning = false;
@@ -43,7 +92,14 @@ export function startOrderSyncWorker(): void {
         logger.info('[orderSyncWorker] Supplier sync started', { supplier });
 
         try {
-          const orders: UnifiedOrderItem[] = await handler(logger);
+          const targetSyncDate = await computeTargetSyncDate(supplier);
+
+          logger.info('[orderSyncWorker] Computed targetSyncDate', {
+            supplier,
+            targetSyncDate: targetSyncDate.toISOString(),
+          });
+
+          const orders: UnifiedOrderItem[] = await handler(logger, targetSyncDate);
 
           logger.info('[orderSyncWorker] Supplier fetch success', {
             supplier,
