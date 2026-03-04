@@ -81,7 +81,7 @@ export const getAutocomplete = async (term: string): Promise<any> => {
         });
         return retryResponse.data;
       } else {
-        console.error('Ошибка при выполнении запроса:', axiosError.message);
+        console.error('Ошибка при выполнении  запроса:', axiosError.message);
         throw axiosError;
       }
     } else {
