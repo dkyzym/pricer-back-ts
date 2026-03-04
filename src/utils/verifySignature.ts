@@ -8,13 +8,17 @@ interface RequestWithRawBody extends Request {
 }
 
 /**
+ *
  * Проверяет подпись вебхука GitHub для подтверждения подлинности запроса.
  * Эта функция "чистая" - она не зависит от process.env и получает все необходимое через аргументы.
  * @param req Объект запроса Express с полем rawBody.
  * @param secret Секретный ключ для проверки подписи.
  * @returns True, если подпись верна, иначе false.
  */
-export function verifyGithubSignature(req: RequestWithRawBody, secret: string): boolean {
+export function verifyGithubSignature(
+  req: RequestWithRawBody,
+  secret: string
+): boolean {
   const signature = req.headers['x-hub-signature-256'] as string;
   if (!signature) {
     logger.warn('Заголовок с подписью "x-hub-signature-256" не найден.');
@@ -28,7 +32,10 @@ export function verifyGithubSignature(req: RequestWithRawBody, secret: string): 
     // Безопасное сравнение, защищенное от атак по времени.
     return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
   } catch (error) {
-    logger.warn('Ошибка при сравнении подписей. Возможно, форматы подписей различаются.', error);
+    logger.warn(
+      'Ошибка при сравнении подписей. Возможно, форматы подписей различаются.',
+      error
+    );
     return false;
   }
 }
