@@ -101,7 +101,7 @@ const orderSchema = new Schema<IOrderDocument>(
 );
 
 orderSchema.index({ supplier: 1, id: 1 }, { unique: true });
-orderSchema.index({ providerCreatedAt: 1 });
+orderSchema.index({ providerCreatedAt: 1 }, { expireAfterSeconds: 31536000 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderId: 1 });
 
