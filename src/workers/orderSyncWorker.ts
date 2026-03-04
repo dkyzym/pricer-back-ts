@@ -1,4 +1,6 @@
 import cron from 'node-cron';
+import mongoose from 'mongoose';
+import axios from 'axios';
 import { logger } from '../config/logger/index.js';
 import { syncOrdersBatch } from '../services/db/orderSyncRepository.js';
 import { orderHandlers } from '../services/orders/orderHandlers.js';
@@ -15,6 +17,13 @@ export function startOrderSyncWorker(): void {
       logger.warn(
         '[orderSyncWorker] Skip cycle: previous run is still in progress'
       );
+      return;
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      logger.warn('[orderSyncWorker] Skip cycle: MongoDB is not connected', {
+        readyState: mongoose.connection.readyState,
+      });
       return;
     }
 
@@ -49,10 +58,19 @@ export function startOrderSyncWorker(): void {
             durationMs: Date.now() - supplierStartedAt,
           });
         } catch (error) {
+          let safeError: any = { message: error instanceof Error ? error.message : String(error) };
+          if (axios.isAxiosError(error)) {
+            safeError = {
+              message: error.message,
+              code: error.code,
+              status: error.response?.status,
+            };
+          } else if (error instanceof Error) {
+            safeError.stack = error.stack;
+          }
           logger.error('[orderSyncWorker] Supplier sync error', {
             supplier,
-            error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
+            error: safeError,
           });
         }
       }

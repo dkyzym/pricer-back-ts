@@ -12,7 +12,6 @@ export const fetchAbcpOrders = async (
   queryParams: FetchOrdersParams = {}
 ): Promise<AbcpOrdersResponse> => {
   try {
-    // Используем новую функцию, которая сама разрулит кэш и прокси
     const axiosInstance = await getAxiosInstance(supplier);
 
     const params = {
@@ -23,7 +22,10 @@ export const fetchAbcpOrders = async (
 
     const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
       ABCP_SERVICE_PATHS.Orders,
-      { params }
+      {
+        params,
+        timeout: 60_000,
+      }
     );
 
     return response.data;
@@ -39,7 +41,10 @@ export const fetchAbcpStatuses = async (
     const axiosInstance = await getAxiosInstance(supplier);
 
     const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
-      ABCP_SERVICE_PATHS.Statuses
+      ABCP_SERVICE_PATHS.Statuses,
+      {
+        timeout: 60_000,
+      }
     );
 
     return response.data;

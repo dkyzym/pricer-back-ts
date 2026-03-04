@@ -12,7 +12,7 @@ const CONFIG = {
   siteUrl: 'https://pr-lg.ru',
   delayBetweenRequests: 2000,
   contextSwitchDelay: 1000,
-  timeout: 15000,
+  timeout: 60_000,
   maxRetries: 3,
   userAgent:
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
