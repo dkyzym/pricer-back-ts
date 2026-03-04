@@ -144,7 +144,7 @@ const createAutosputnik = (alias: 'autosputnik' | 'autosputnik_bn') =>
 const createProfit = () =>
   createApiHandler(
     'profit',
-    (logger, _targetSyncDate) => fetchProfitOrders(logger),
+    (logger, targetSyncDate) => fetchProfitOrders(logger, targetSyncDate),
     (data) => mapProfitOrdersToUnified(data, 'profit')
   );
 

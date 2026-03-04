@@ -2,9 +2,10 @@ import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
+import { DateTime } from 'luxon';
 import { CookieJar } from 'tough-cookie';
 import { Logger } from 'winston';
-import { ProfitGetOrdersResponse } from '../profit.types.js'; // Убедись, что путь верен
+import { ProfitGetOrdersResponse } from '../profit.types.js';
 
 // --- Configuration & Constants ---
 const CONFIG = {
@@ -172,7 +173,8 @@ const fetchOrders = async (
 // --- Main Workflow ---
 
 export const fetchProfitOrders = async (
-  logger: Logger
+  logger: Logger,
+  targetSyncDate: Date
 ): Promise<ProfitGetOrdersResponse> => {
   const secret = process.env.PROFIT_API_KEY;
   if (!secret) throw new Error('PROFIT_API_KEY is missing');
@@ -250,10 +252,19 @@ export const fetchProfitOrders = async (
     new Map(result.data.map((order) => [order.order_id, order])).values()
   );
 
-  result.data = uniqueOrders;
+  // High-Water Mark: отсекаем заказы старше targetSyncDate
+  const targetMs = targetSyncDate.getTime();
+  const filteredOrders = uniqueOrders.filter((order) => {
+    const parsed = DateTime.fromSQL(order.datetime);
+    return parsed.isValid && parsed.toMillis() >= targetMs;
+  });
+
+  result.data = filteredOrders;
 
   logger.info(chalk.bold.green('[profit] Fetch cycle completed'), {
-    totalUniqueOrders: uniqueOrders.length,
+    totalOrders: uniqueOrders.length,
+    afterHighWaterMark: filteredOrders.length,
+    cutoff: targetSyncDate.toISOString(),
     successfulSources: successCount,
   });
 
