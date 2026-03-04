@@ -9,7 +9,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
-import { corsOptions } from './config/index.js';
+import { CLIENT_BUILD_PATH, corsOptions } from './config/index.js';
 import { morganMiddleware } from './config/logger/morganMiddleware.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
@@ -17,7 +17,7 @@ import { initProxyCheck } from './services/apiClient/apiClient.js';
 
 dotenv.config();
 
-const distPath = path.resolve('D:/projects/pricer-front/dist');
+const distPath = path.resolve(process.cwd(), CLIENT_BUILD_PATH);
 
 const app = express();
 
