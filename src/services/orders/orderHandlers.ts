@@ -181,7 +181,6 @@ const autoImpulseHandler = createParserHandler({
 export const orderHandlers: Record<string, OrderHandler> = {
   // ABCP API
   ug: createAbcp('ug'),
-  ug_f: createAbcp('ug_f'),
   ug_bn: createAbcp('ug_bn'),
   patriot: createAbcp('patriot'),
   npn: createAbcp('npn'),
