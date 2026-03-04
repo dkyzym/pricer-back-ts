@@ -14,6 +14,7 @@ import { morganMiddleware } from './config/logger/morganMiddleware.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
 import { initProxyCheck } from './services/apiClient/apiClient.js';
+import { startOrderSyncWorker } from './workers/orderSyncWorker.js';
 
 dotenv.config();
 
@@ -56,3 +57,4 @@ app.use(error);
 
 await initProxyCheck();
 await startServer(app);
+startOrderSyncWorker();

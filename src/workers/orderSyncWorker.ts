@@ -10,7 +10,7 @@ export function startOrderSyncWorker(): void {
 
   logger.info('[orderSyncWorker] Worker started', { schedule });
 
-  cron.schedule(schedule, async () => {
+  const runSyncCycle = async () => {
     if (isRunning) {
       logger.warn(
         '[orderSyncWorker] Skip cycle: previous run is still in progress'
@@ -68,5 +68,11 @@ export function startOrderSyncWorker(): void {
     } finally {
       isRunning = false;
     }
-  });
+  };
+
+  runSyncCycle().catch((err) =>
+    logger.error('[orderSyncWorker] Initial run error', { error: err })
+  );
+
+  cron.schedule(schedule, runSyncCycle);
 }
