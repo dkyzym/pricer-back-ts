@@ -80,4 +80,6 @@ export interface FetchOrdersParams {
   limit?: number; // по умолчанию 150
   skip?: number; // по умолчанию 0
   format?: 'p'; // 'p' для вывода позиций
+  dateStart?: string; // 'DD.MM.YYYY'
+  dateEnd?: string; // 'DD.MM.YYYY'
 }

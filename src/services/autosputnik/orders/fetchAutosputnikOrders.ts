@@ -5,15 +5,14 @@ import { AutosputnikGetOrdersResponse } from '../autosputnik.types.js';
 import { BASE_URL, getToken, tokenCache } from '../autosputnikApi.js';
 
 /**
- * Запрашивает заказы за последние 90 дней.
+ * Запрашивает заказы в период от целевой даты синка до текущего дня.
  * Использует внедренный logger для отслеживания хода выполнения.
  */
 
-const ordersPeriod = 90;
-
 export const fetchAutosputnikOrders = async (
   supplier: 'autosputnik' | 'autosputnik_bn',
-  logger: Logger
+  logger: Logger,
+  targetSyncDate: Date
 ): Promise<AutosputnikGetOrdersResponse> => {
   // 1. Получаем токен (кеш или новый запрос)
   let token: string;
@@ -24,11 +23,8 @@ export const fetchAutosputnikOrders = async (
     throw e;
   }
 
-  // Настройка временного окна (бизнес-логика зашита здесь)
-  const dateStart = DateTime.now()
-    .minus({ days: ordersPeriod })
-    .startOf('day')
-    .toISO();
+  // Настройка временного окна
+  const dateStart = DateTime.fromJSDate(targetSyncDate).startOf('day').toISO();
   const dateEnd = DateTime.now().endOf('day').toISO();
 
   const payload = {

@@ -117,8 +117,8 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 
   const service = createAbcpOrderService(smartClient, parseAbcpHtml);
 
-  const handler = async (logger: Logger, _targetSyncDate: Date) => {
-    return service.syncSupplier(config.serviceConfig, logger);
+  const handler = async (logger: Logger, targetSyncDate: Date) => {
+    return service.syncSupplier(config.serviceConfig, logger, targetSyncDate);
   };
 
   return withMonitoring(config.alias, handler);
@@ -130,14 +130,14 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 const createAbcp = (alias: AbcpSupplierAlias) =>
   createApiHandler(
     alias,
-    (_logger, _targetSyncDate) => fetchAbcpOrders(alias, { format: 'p' }),
+    (_logger, targetSyncDate) => fetchAbcpOrders(alias, { format: 'p' }, targetSyncDate),
     (data) => mapAbcpOrdersToUnified(data, alias)
   );
 
 const createAutosputnik = (alias: 'autosputnik' | 'autosputnik_bn') =>
   createApiHandler(
     alias,
-    (logger, _targetSyncDate) => fetchAutosputnikOrders(alias, logger),
+    (logger, targetSyncDate) => fetchAutosputnikOrders(alias, logger, targetSyncDate),
     (data) => mapAutosputnikOrdersToUnified(data, alias)
   );
 

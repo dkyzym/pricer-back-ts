@@ -172,9 +172,12 @@ export const createAbcpOrderService = (
 ) => {
   const syncSupplier = async (
     config: SupplierConfigABCP,
-    logger: Logger
+    logger: Logger,
+    targetSyncDate: Date
   ): Promise<UnifiedOrderItem[]> => {
-    const daysBack = config.historyDays ?? 60;
+    const diffMs = Date.now() - targetSyncDate.getTime();
+    const calculatedDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+    const daysBack = Math.min(calculatedDays, config.historyDays ?? 90);
     const dateRange = getDateRangeString(daysBack);
 
     logger.debug(`[AbcpOrderService] Syncing ${config.key}`, {

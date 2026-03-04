@@ -7,9 +7,17 @@ import {
   FetchOrdersParams,
 } from '../abcpPlatform.types.js';
 
+const formatDateForAbcp = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+};
+
 export const fetchAbcpOrders = async (
   supplier: AbcpSupplierAlias,
-  queryParams: FetchOrdersParams = {}
+  queryParams: FetchOrdersParams = {},
+  targetSyncDate?: Date
 ): Promise<AbcpOrdersResponse> => {
   try {
     const axiosInstance = await getAxiosInstance(supplier);
@@ -18,6 +26,8 @@ export const fetchAbcpOrders = async (
       limit: queryParams.limit ?? 200,
       skip: queryParams.skip ?? 0,
       ...(queryParams.format ? { format: queryParams.format } : {}),
+      ...(targetSyncDate ? { dateStart: formatDateForAbcp(targetSyncDate) } : {}),
+      ...(queryParams.dateEnd ? { dateEnd: queryParams.dateEnd } : {}),
     };
 
     const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
