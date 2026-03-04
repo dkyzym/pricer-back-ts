@@ -101,7 +101,7 @@ const fetchSinglePage = async (
       `[AbcpOrderService] Request failed at start=${start} for ${config.key}`,
       { error }
     );
-    return { items: [], html: '' };
+    throw error;
   }
 };
 
