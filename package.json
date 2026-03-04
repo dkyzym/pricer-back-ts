@@ -38,6 +38,7 @@
     "mongoose": "^9.2.4",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "node-cron": "^4.2.1",
     "socket.io": "^4.7.5",
     "string-similarity": "^4.0.4",
     "tough-cookie": "^5.1.0",
