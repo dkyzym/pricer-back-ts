@@ -4,14 +4,35 @@ dotenv.config();
 
 export const PORT = process.env.PORT || 3000;
 export const CLIENT_BUILD_PATH = process.env.CLIENT_BUILD_PATH || '../pricer-front/dist';
-export const CLIENT_URL = [
-  `${process.env.CLIENT_URL}`,
-  `${process.env.HTTP_SITE}`,
-  `${process.env.HTTPS_SITE}`,
+const rawClientUrls = [
+  process.env.CLIENT_URL,
+  process.env.HTTP_SITE,
+  process.env.HTTPS_SITE,
+  'http://localhost:5173',
   'http://localhost:3000',
+  'https://automir.win',
+  'http://automir.win',
 ];
 
+const isNonEmptyString = (value: string | undefined): value is string => {
+  return typeof value === 'string' && value.trim().length > 0;
+};
+
+export const CLIENT_URL = [...new Set(rawClientUrls.filter(isNonEmptyString))];
+
 export const corsOptions = {
-  origin: '*',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow non-browser requests without Origin (curl, server-to-server, health checks).
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (CLIENT_URL.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('CORS origin is not allowed'));
+  },
   credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
 };

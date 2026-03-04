@@ -12,7 +12,11 @@ let transportAttached = false;
 
 export const initializeSocket = (server: HTTPServer) => {
   const io = new SocketIOServer(server, {
-    cors: { origin: CLIENT_URL, methods: ['GET', 'POST'] },
+    cors: {
+      origin: CLIENT_URL,
+      credentials: true,
+      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    },
   });
 
   if (!transportAttached) {
