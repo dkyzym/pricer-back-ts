@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Order, IOrderDocument } from '../../../models/Order.js';
+import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
 
 const supplierNameMap: Record<string, string> = {
   profit: 'Профит',
@@ -67,10 +68,23 @@ export const getOrders = async (req: Request, res: Response) => {
     const searchConditions = tokens.map((token) => {
       const normalizedToken = normalizeStr(token);
 
+      const cleanedArticleToken = cleanArticleString(token);
+      const articleCondition =
+        cleanedArticleToken.length > 0
+          ? {
+              article: {
+                $regex: cleanedArticleToken
+                  .split('')
+                  .join('[^A-Z0-9А-ЯЁ]*'),
+                $options: 'i',
+              },
+            }
+          : { article: { $regex: token, $options: 'i' } };
+
       const orConditions: Record<string, unknown>[] = [
         { orderId: { $regex: token, $options: 'i' } },
         { brand: { $regex: token, $options: 'i' } },
-        { article: { $regex: token, $options: 'i' } },
+        articleCondition,
         { name: { $regex: token, $options: 'i' } },
         { comment: { $regex: token, $options: 'i' } },
       ];
