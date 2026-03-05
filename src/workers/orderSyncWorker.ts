@@ -13,6 +13,11 @@ const DEFAULT_LOOKBACK_DAYS = 3;
 const MAX_LOOKBACK_DAYS = 45;
 const EMPTY_DB_LOOKBACK_DAYS = 90;
 
+/** Cron: at :00 only in hours 0-7 and 19-23 (no runs 8:00-18:59 server time) */
+const SCHEDULE = '0 0-7,19-23 * * *';
+/** Max random delay before cycle start (ms), to spread load and avoid thundering herd */
+const MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
+
 function subtractDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() - days);
@@ -57,9 +62,11 @@ async function computeTargetSyncDate(supplier: string): Promise<Date> {
 
 export function startOrderSyncWorker(): void {
   let isRunning = false;
-  const schedule = '0 * * * *'; // every 60 minutes
 
-  logger.info('[orderSyncWorker] Worker started', { schedule });
+  logger.info('[orderSyncWorker] Worker started', {
+    schedule: SCHEDULE,
+    maxRandomDelayMs: MAX_RANDOM_DELAY_MS,
+  });
 
   const runSyncCycle = async () => {
     if (isRunning) {
@@ -69,23 +76,37 @@ export function startOrderSyncWorker(): void {
       return;
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      logger.warn('[orderSyncWorker] Skip cycle: MongoDB is not connected', {
-        readyState: mongoose.connection.readyState,
-      });
-      return;
-    }
-
     isRunning = true;
-    const cycleStartedAt = Date.now();
-    const suppliers = Object.keys(orderHandlers);
-
-    logger.info('[orderSyncWorker] Cycle started', {
-      suppliersCount: suppliers.length,
-      suppliers,
-    });
 
     try {
+      if (mongoose.connection.readyState !== 1) {
+        logger.warn('[orderSyncWorker] Skip cycle: MongoDB is not connected', {
+          readyState: mongoose.connection.readyState,
+        });
+        return;
+      }
+
+      const delayMs = Math.floor(Math.random() * MAX_RANDOM_DELAY_MS);
+      if (delayMs > 0) {
+        logger.debug('[orderSyncWorker] Random delay before cycle', { delayMs });
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+
+      if (mongoose.connection.readyState !== 1) {
+        logger.warn('[orderSyncWorker] Skip cycle: MongoDB disconnected during delay', {
+          readyState: mongoose.connection.readyState,
+        });
+        return;
+      }
+
+      const cycleStartedAt = Date.now();
+      const suppliers = Object.keys(orderHandlers);
+
+      logger.info('[orderSyncWorker] Cycle started', {
+        suppliersCount: suppliers.length,
+        suppliers,
+      });
+
       for (const [supplier, handler] of Object.entries(orderHandlers)) {
         const supplierStartedAt = Date.now();
 
@@ -148,5 +169,5 @@ export function startOrderSyncWorker(): void {
     logger.error('[orderSyncWorker] Initial run error', { error: err })
   );
 
-  cron.schedule(schedule, runSyncCycle);
+  cron.schedule(SCHEDULE, runSyncCycle);
 }

@@ -10,4 +10,5 @@ deleteTempFiles*
 send/
 .continue
 BACKEND_OVERVIEW.md
+*.prompt.md
 
