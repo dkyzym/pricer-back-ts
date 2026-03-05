@@ -1,5 +1,4 @@
-import { SupplierName } from "../../types/common.types";
-
+import { SupplierName } from '../../types/common.types';
 
 /**
  * Конфигурация для отдельных поставщиков.
@@ -24,10 +23,10 @@ export const SUPPLIER_CONFIG: Record<
     maxItems: 3,
   },
   autosputnik: {
-    maxItems: 3,
+    maxItems: 4,
   },
   autosputnik_bn: {
-    maxItems: 3,
+    maxItems: 4,
   },
   armtek: {
     maxItems: 3,
@@ -39,7 +38,8 @@ export const SUPPLIER_CONFIG: Record<
   npn: {},
   mikano: {},
   avtodinamika: { maxItems: 2 },
-  avtoPartner: {}
+  avtoPartner: {},
+  turboCars: {},
 };
 
 /**
@@ -58,5 +58,5 @@ export const FILTERED_SUPPLIERS: SupplierName[] = [
   'ug_bn',
   'ug_f',
   'avtodinamika',
-  'avtoPartner'
+  'avtoPartner',
 ];

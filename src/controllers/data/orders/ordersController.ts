@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { Order, IOrderDocument } from '../../../models/Order.js';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
+import { SupplierName } from '../../../types/common.types.js';
 
-const supplierNameMap: Record<string, string> = {
+const supplierNameMap: Record<SupplierName, string> = {
   profit: 'Профит',
   autosputnik: 'Автоспутник',
   autosputnik_bn: 'Автоспутн.-б/н',
@@ -16,6 +17,7 @@ const supplierNameMap: Record<string, string> = {
   mikano: 'АВТОМОДУЛЬ',
   avtodinamika: 'Автодинамика',
   avtoPartner: 'АвтоПартнер',
+  turboCars: 'Турбокарс',
 };
 
 const normalizeStr = (str: string): string =>
@@ -73,9 +75,7 @@ export const getOrders = async (req: Request, res: Response) => {
         cleanedArticleToken.length > 0
           ? {
               article: {
-                $regex: cleanedArticleToken
-                  .split('')
-                  .join('[^A-Z0-9А-ЯЁ]*'),
+                $regex: cleanedArticleToken.split('').join('[^A-Z0-9А-ЯЁ]*'),
                 $options: 'i',
               },
             }

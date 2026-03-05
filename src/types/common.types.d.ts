@@ -11,7 +11,8 @@ export type SupplierName =
   | 'mikano'
   | 'avtodinamika'
   | 'avtoPartner'
-  | 'npn';
+  | 'npn'
+  | 'turboCars';
 
 export type AccountAlias = 'nal' | 'bezNal';
 

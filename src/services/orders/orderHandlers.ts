@@ -6,6 +6,8 @@ import { mapAutosputnikOrdersToUnified } from '../autosputnik/orders/autosputnik
 import { fetchAutosputnikOrders } from '../autosputnik/orders/fetchAutosputnikOrders.js';
 import { fetchProfitOrders } from '../profit/orders/fetchProfitOrders.js';
 import { mapProfitOrdersToUnified } from '../profit/orders/profitMapper.js';
+import { fetchTurboCarsOrders } from '../turboCars/fetchTurboCarsOrders.js';
+import { mapTurboCarsOrdersToUnified } from '../turboCars/turboCarsMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
 
 import { parseAbcpHtml } from '../abcp/parser/AbcpOrderParser.js';
@@ -148,6 +150,13 @@ const createProfit = () =>
     (data) => mapProfitOrdersToUnified(data, 'profit')
   );
 
+const createTurboCars = () =>
+  createApiHandler(
+    'turboCars',
+    fetchTurboCarsOrders,
+    (data) => mapTurboCarsOrdersToUnified(data, 'turboCars')
+  );
+
 // Parsing Handlers
 const mikanoHandler = createParserHandler({
   alias: 'mikano',
@@ -187,6 +196,7 @@ export const orderHandlers: Record<string, OrderHandler> = {
   autosputnik: createAutosputnik('autosputnik'),
   autosputnik_bn: createAutosputnik('autosputnik_bn'),
   profit: createProfit(),
+  turboCars: createTurboCars(),
 
   // HTML Parsers
   mikano: mikanoHandler,
