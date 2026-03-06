@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Order, IOrderDocument } from '../../../models/Order.js';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
+import { expandBrandToken } from '../../../utils/data/brand/expandBrandToken.js';
 import { SupplierName } from '../../../types/common.types.js';
 
 const supplierNameMap: Record<SupplierName, string> = {
@@ -81,9 +82,14 @@ export const getOrders = async (req: Request, res: Response) => {
             }
           : { article: { $regex: token, $options: 'i' } };
 
+      const brandVariants = expandBrandToken(token);
+      const brandConditions = brandVariants.map((variant) => ({
+        brand: { $regex: variant, $options: 'i' },
+      }));
+
       const orConditions: Record<string, unknown>[] = [
         { orderId: { $regex: token, $options: 'i' } },
-        { brand: { $regex: token, $options: 'i' } },
+        ...brandConditions,
         articleCondition,
         { name: { $regex: token, $options: 'i' } },
         { comment: { $regex: token, $options: 'i' } },
