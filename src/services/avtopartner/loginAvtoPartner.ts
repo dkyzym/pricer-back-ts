@@ -2,12 +2,11 @@ import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import 'dotenv/config';
 import { logger } from '../../config/logger/index.js';
+import { avtoPartnerUserAgent } from '../../constants/headers.js';
 import { clientAvtoPartner, cookieJarAvtoPartner } from './client.js';
 
 const baseURL = 'https://avtopartner-yug.ru';
 const supplier = 'avtoPartner';
-const userAgent =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0';
 
 /**
  * Проверяет, активна ли текущая сессия avtopartner-yug.ru.
@@ -70,7 +69,7 @@ export const loginAvtoPartner = async (): Promise<boolean> => {
     await clientAvtoPartner.post(`${baseURL}/user/login`, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': userAgent,
+        'User-Agent': avtoPartnerUserAgent,
         Referer: `${baseURL}/user/login`,
       },
       maxRedirects: 5,
@@ -105,17 +104,20 @@ export const ensureAvtoPartnerLoggedIn = async () => {
   if (!isLoggedIn) {
     if (isLoggingIn) {
       logger.info(chalk.yellow(`[${supplier}] Логин уже выполняется — ожидаем...`));
-      await new Promise<boolean>((resolve) => loginQueue.push(resolve));
+      const success = await new Promise<boolean>((resolve) => loginQueue.push(resolve));
+      if (!success) throw new Error(`[${supplier}] Авторизация не выполнена`);
     } else {
       isLoggingIn = true;
+      let success = false;
       try {
         logger.warn(chalk.yellow(`[${supplier}] Сессия неактивна — выполняем вход...`));
-        const success = await loginAvtoPartner();
+        success = await loginAvtoPartner();
         loginQueue.forEach((resolve) => resolve(success));
       } finally {
         isLoggingIn = false;
         loginQueue.length = 0;
       }
+      if (!success) throw new Error(`[${supplier}] Авторизация не выполнена`);
     }
   } else {
     logger.info(chalk.blue(`[${supplier}] Сессия активна.`));

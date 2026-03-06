@@ -19,6 +19,7 @@ import {
 
 import { ugHeaders } from '../../constants/headers.js';
 import { autoImpulseClient, mikanoClient } from '../abcp/parser/index.js';
+import { fetchAvtoPartnerOrders } from '../avtopartner/ordersAvtoPartnerService.js';
 
 // --- Types ---
 
@@ -182,6 +183,11 @@ const autoImpulseHandler = createParserHandler({
   },
 });
 
+const avtoPartnerHandler = withMonitoring(
+  'avtoPartner',
+  (logger, targetSyncDate) => fetchAvtoPartnerOrders(logger, targetSyncDate)
+);
+
 // --- Exports ---
 
 export const orderHandlers: Record<string, OrderHandler> = {
@@ -201,4 +207,5 @@ export const orderHandlers: Record<string, OrderHandler> = {
   // HTML Parsers
   mikano: mikanoHandler,
   autoImpulse: autoImpulseHandler,
+  avtoPartner: avtoPartnerHandler,
 };
