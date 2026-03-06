@@ -32,6 +32,7 @@ export const suppliersConfig: SupplierDatesConfig[] = [
   { supplierName: 'profit', calculation: directFromApiBase },
   { supplierName: 'autosputnik', calculation: directFromApiBase },
   { supplierName: 'autosputnik_bn', calculation: directFromApiBase },
+  { supplierName: 'turboCars', calculation: directFromApiBase },
   {
     supplierName: 'patriot',
     calculation: {

@@ -95,6 +95,14 @@ export interface SearchResultsParsed extends Product {
     itemKey: string;
     supplierCode: string;
   };
+  turboCars?: {
+    provider_id: number;
+    our_stock: boolean;
+    cross: boolean;
+    available_more: boolean;
+    is_returnable: boolean;
+    days_for_return: number;
+  };
 }
 
 // --- Тип для функции-хендлера (ваш существующий контракт) ---

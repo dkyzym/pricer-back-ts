@@ -38,6 +38,9 @@ import { parseAutosputnikData } from '../../services/autosputnik/parseAutosputni
 // AvtoPartner
 import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataAvtoPartnerService.js';
 
+// TurboCars
+import { parseTurboCarsData } from '../../services/turboCars/parseTurboCarsData.js';
+
 // Общие утилиты
 import { fetchAbcpOrders } from '../../services/abcp/api/fetchAbcpOrders.js';
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
@@ -119,6 +122,12 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
   // --- AvtoPartner ---
   avtoPartner: (data, userLogger) => {
     return itemDataAvtoPartnerService({ ...data, userLogger });
+  },
+
+  // --- TurboCars ---
+  turboCars: async (data, userLogger) => {
+    const { item } = data;
+    return parseTurboCarsData(item, userLogger);
   },
 };
 
