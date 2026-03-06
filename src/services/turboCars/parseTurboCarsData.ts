@@ -41,6 +41,7 @@ const mapOfferToResult = (
   expectedBrand: string
 ): SearchResultsParsed => {
   const price = parseTurboCarsNumber(offer.price);
+  const probability = offer.our_stock ? 95 : 90;
 
   const base: SearchResultsParsed = {
     id: uuidv4(),
@@ -55,7 +56,7 @@ const mapOfferToResult = (
     deadLineMax: 0,
     supplier: 'turboCars',
     imageUrl: '',
-    probability: '',
+    probability,
     needToCheckBrand: needToCheckBrand(expectedBrand, offer.brand),
     returnable: offer.is_returnable ? offer.days_for_return : 0,
     multi: offer.multiplicity,
