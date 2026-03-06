@@ -114,17 +114,41 @@ export const parseTurboCarsData = async (
         },
         userLogger
       )
+        .then((value) => ({ brandName, value }))
+        .catch((error) => {
+          throw { brandName, error };
+        })
     )
   );
 
   const allOffers: TurboCarsOfferRaw[] = [];
+  let rejectedCount = 0;
 
   offersResults.forEach((result) => {
     if (result.status !== 'fulfilled') {
+      rejectedCount += 1;
+      const reason = result.reason as
+        | { brandName?: string; error?: unknown }
+        | unknown;
+      const brandName =
+        typeof reason === 'object' &&
+        reason !== null &&
+        'brandName' in reason
+          ? String((reason as { brandName?: string }).brandName || '')
+          : '';
+      const error =
+        typeof reason === 'object' && reason !== null && 'error' in reason
+          ? (reason as { error?: unknown }).error
+          : reason;
+
+      userLogger.warn('[turboCars] Ошибка при запросе /offers:search для бренда', {
+        brand: brandName || 'unknown',
+        error,
+      });
       return;
     }
 
-    const value = result.value as TurboCarsOffersSearchSuccess | null;
+    const value = result.value.value as TurboCarsOffersSearchSuccess | null;
 
     if (!value || !Array.isArray(value.offers)) {
       return;
@@ -134,6 +158,17 @@ export const parseTurboCarsData = async (
   });
 
   if (!allOffers.length) {
+    if (rejectedCount === relevantBrands.length) {
+      const error = new Error(
+        '[turboCars] Все запросы /offers:search завершились сетевой ошибкой.'
+      );
+      userLogger.error(error.message, {
+        code: articleToSearch,
+        brands: relevantBrands,
+      });
+      throw error;
+    }
+
     return [];
   }
 

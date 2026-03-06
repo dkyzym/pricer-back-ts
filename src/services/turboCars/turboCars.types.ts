@@ -69,8 +69,8 @@ export interface TurboCarsOfferRaw {
   currency: string;
   count: number;
   available_more: boolean;
-  delivery_date_time_start: string;
-  delivery_date_time_end: string;
+  delivery_date_time_start: string | null;
+  delivery_date_time_end: string | null;
   is_returnable: boolean;
   days_for_return: number;
   [key: string]: unknown;
