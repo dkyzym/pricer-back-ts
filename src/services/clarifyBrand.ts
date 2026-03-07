@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Logger } from 'winston';
 import { ItemAutocompleteRow } from '../types/search.types.js';
-import { assortmentSearchArmtek } from './armtek/assortmentSearchArmtek.js';
 import { getAxiosInstance } from './apiClient/apiClient.js';
+import { assortmentSearchArmtek } from './armtek/assortmentSearchArmtek.js';
 import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
 
 interface UgBrandData {
