@@ -4,6 +4,7 @@ import axios from 'axios';
 import { logger } from '../config/logger/index.js';
 import { syncOrdersBatch } from '../services/db/orderSyncRepository.js';
 import { orderHandlers } from '../services/orders/orderHandlers.js';
+import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
 import { Order } from '../models/Order.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
 
@@ -151,6 +152,12 @@ export function startOrderSyncWorker(): void {
           });
         }
       }
+
+      await sendRefusedOrdersNotification().catch((err) => {
+        logger.warn('[orderSyncWorker] Telegram уведомление об отказах не отправлено', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
       logger.info('[orderSyncWorker] Cycle completed', {
         durationMs: Date.now() - cycleStartedAt,

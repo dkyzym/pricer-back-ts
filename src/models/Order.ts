@@ -34,6 +34,8 @@ export interface IOrderDocument extends Document {
   deliveryDate?: Date;
   comment?: string;
   rawProviderData?: Record<string, unknown>;
+  /** Проставлено после успешной отправки уведомления об отказе в Telegram */
+  refusalNotifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +58,7 @@ const orderSchema = new Schema<IOrderDocument>(
     deliveryDate: { type: Date, required: false },
     comment: { type: String, required: false },
     rawProviderData: { type: Schema.Types.Mixed, required: false },
+    refusalNotifiedAt: { type: Date, required: false },
   },
   {
     id: false,
@@ -102,6 +105,7 @@ const orderSchema = new Schema<IOrderDocument>(
 
 orderSchema.index({ supplier: 1, id: 1 }, { unique: true });
 orderSchema.index({ supplier: 1, status: 1, providerCreatedAt: 1 });
+orderSchema.index({ status: 1, refusalNotifiedAt: 1 });
 orderSchema.index({ providerCreatedAt: 1 }, { expireAfterSeconds: 31536000 });
 orderSchema.index({ orderId: 1 });
 
