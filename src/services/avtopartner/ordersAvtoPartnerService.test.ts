@@ -45,12 +45,14 @@ test('parseOrderDetailsHtml: парсит позиции заказа из ст�
   const first = items[0];
   assert.strictEqual(first.orderId, '131132');
   assert.strictEqual(first.supplier, 'avtoPartner');
+  assert.strictEqual(first.brand, 'ЛУКОЙЛ');
   assert.strictEqual(first.article, '2255948');
   assert.ok(first.name.includes('ЛУКОЙЛ'));
   assert.strictEqual(first.quantity, 2);
   assert.ok(first.price > 0);
   assert.strictEqual(first.status, 'work');
   assert.ok(first.createdAt.includes('2026'));
+  assert.ok(items.every((item) => item.brand.length > 0));
 
   const second = items[1];
   assert.strictEqual(second.article, '2389901318');

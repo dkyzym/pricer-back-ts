@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { Logger } from 'winston';
+import { brandGroupsMap } from '@constants/brandGroupsMap.js';
 import { Order } from '../../models/Order.js';
 import type { UnifiedOrderItem } from '../orders/orders.types.js';
 import { clientAvtoPartner } from './client.js';
@@ -9,11 +10,33 @@ const SUPPLIER_KEY = 'avtoPartner';
 const MAX_HISTORY_PAGES = 10;
 const BASE_DELAY_MS = 300;
 const MAX_JITTER_MS = 400;
+const BRAND_PREFIX_VARIANTS = brandGroupsMap.flat().sort(
+  (left, right) => right.length - left.length
+);
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function cleanText(text: string | undefined): string {
   return (text ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractBrandFromName(name: string): string {
+  const cleanedName = cleanText(name);
+  if (!cleanedName) return '';
+
+  const matchedVariant = BRAND_PREFIX_VARIANTS.find((variant) =>
+    new RegExp(`^${escapeRegex(variant)}(?:$|\\s|[(/-])`, 'i').test(cleanedName)
+  );
+
+  if (matchedVariant) {
+    return cleanedName.match(new RegExp(`^${escapeRegex(matchedVariant)}`, 'i'))?.[0] ?? matchedVariant;
+  }
+
+  return cleanedName.split(/\s+/, 1)[0] ?? '';
 }
 
 function parsePrice(raw: string | undefined): number {
@@ -137,7 +160,7 @@ export function parseOrderDetailsHtml(
       id,
       orderId: summary.orderId,
       supplier: SUPPLIER_KEY,
-      brand: '',
+      brand: extractBrandFromName(name),
       article,
       name,
       quantity,
