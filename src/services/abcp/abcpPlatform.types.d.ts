@@ -46,6 +46,14 @@ export interface AbcpArticleSearchResult {
   deliveryProbability: 0;
 }
 
+/** Элемент справочника статусов (GET /orders/statuses) */
+export interface AbcpOrderStatusItem {
+  id: number;
+  name: string;
+  color: string;
+  isFinalStatus: boolean;
+}
+
 export interface AbcpOrderPosition {
   positionId: string; // "711114201"
   brand: string; // "Luxe"
@@ -55,22 +63,29 @@ export interface AbcpOrderPosition {
   quantity: string; // "2" (Приходит строкой!)
   price: string; // "578.87" (Приходит строкой с точкой)
 
-  // Статусы
-  status: string; // "Готовится к отгрузке" (Текст!)
-  statusId: string; // "82534"
+  /** Текстовое название статуса от API */
+  status: string; // "Готовится к отгрузке"
+  /** id из справочника orders/statuses; API может отдавать number или string */
+  statusId?: string | number;
+  statusCode?: string;
   statusColor?: string; // "3ED208"
+  statusDate?: string;
 
-  // Даты и сроки
   deadline?: string; // "0"
   deadlineMax?: string; // "0"
+  noReturn?: boolean;
+  commentAnswer?: string;
 }
 
-// Описание заказа (Родительский объект)
+/** Элемент списка заказов (GET /orders/); items — словарь по number */
 export interface AbcpOrderRaw {
   number: string; // ID заказа "248143957"
   date: string; // "2026-02-02 12:17:10"
-  status: string; // Общий статус заказа
+  status: string;
+  statusId?: string | number;
   sum: string; // "2 040,74" (С пробелами и запятой!)
+  positionsQuantity?: number;
+  deliveryAddress?: string;
   positions?: AbcpOrderPosition[];
 }
 

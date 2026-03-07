@@ -19,46 +19,23 @@ export const fetchAbcpOrders = async (
   queryParams: FetchOrdersParams = {},
   targetSyncDate?: Date
 ): Promise<AbcpOrdersResponse> => {
-  try {
-    const axiosInstance = await getAxiosInstance(supplier);
+  const axiosInstance = await getAxiosInstance(supplier);
 
-    const params = {
-      limit: queryParams.limit ?? 200,
-      skip: queryParams.skip ?? 0,
-      ...(queryParams.format ? { format: queryParams.format } : {}),
-      ...(targetSyncDate ? { dateStart: formatDateForAbcp(targetSyncDate) } : {}),
-      ...(queryParams.dateEnd ? { dateEnd: queryParams.dateEnd } : {}),
-    };
+  const params = {
+    limit: queryParams.limit ?? 200,
+    skip: queryParams.skip ?? 0,
+    ...(queryParams.format ? { format: queryParams.format } : {}),
+    ...(targetSyncDate ? { dateStart: formatDateForAbcp(targetSyncDate) } : {}),
+    ...(queryParams.dateEnd ? { dateEnd: queryParams.dateEnd } : {}),
+  };
 
-    const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
-      ABCP_SERVICE_PATHS.Orders,
-      {
-        params,
-        timeout: 60_000,
-      }
-    );
+  const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
+    ABCP_SERVICE_PATHS.Orders,
+    {
+      params,
+      timeout: 60_000,
+    }
+  );
 
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const fetchAbcpStatuses = async (
-  supplier: AbcpSupplierAlias
-): Promise<AbcpOrdersResponse> => {
-  try {
-    const axiosInstance = await getAxiosInstance(supplier);
-
-    const response: AxiosResponse<AbcpOrdersResponse> = await axiosInstance.get(
-      ABCP_SERVICE_PATHS.Statuses,
-      {
-        timeout: 60_000,
-      }
-    );
-
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  return response.data;
 };
