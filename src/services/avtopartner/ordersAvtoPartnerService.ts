@@ -3,6 +3,7 @@ import { Logger } from 'winston';
 import { brandGroupsMap } from '@constants/brandGroupsMap.js';
 import { Order } from '../../models/Order.js';
 import type { UnifiedOrderItem } from '../orders/orders.types.js';
+import { getAllBrandsListSync } from '../brands/allBrandsCache.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
 
@@ -10,9 +11,7 @@ const SUPPLIER_KEY = 'avtoPartner';
 const MAX_HISTORY_PAGES = 10;
 const BASE_DELAY_MS = 300;
 const MAX_JITTER_MS = 400;
-const BRAND_PREFIX_VARIANTS = brandGroupsMap.flat().sort(
-  (left, right) => right.length - left.length
-);
+const MIN_NON_PREFIX_BRAND_LEN = 3;
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -20,23 +19,69 @@ function cleanText(text: string | undefined): string {
   return (text ?? '').replace(/\s+/g, ' ').trim();
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+interface BrandIndex {
+  lookup: Map<string, string>;
+  maxWords: number;
+}
+
+let cachedBrandIndex: BrandIndex | null = null;
+
+function isViableBrand(value: string): boolean {
+  if (value.length < 2) return false;
+  if (/^\d+$/.test(value)) return false;
+  return /[a-zA-Zа-яА-ЯёЁ]/.test(value);
+}
+
+function buildBrandIndex(): BrandIndex {
+  const lookup = new Map<string, string>();
+  let maxWords = 1;
+
+  const add = (brand: string): void => {
+    const trimmed = brand.trim();
+    if (!isViableBrand(trimmed)) return;
+    const key = trimmed.toLowerCase();
+    if (lookup.has(key)) return;
+    lookup.set(key, trimmed);
+    const wc = trimmed.split(/\s+/).length;
+    if (wc > maxWords) maxWords = wc;
+  };
+
+  for (const brand of getAllBrandsListSync()) add(brand);
+  for (const group of brandGroupsMap) {
+    for (const alias of group) add(alias);
+  }
+
+  return { lookup, maxWords: Math.min(maxWords, 6) };
+}
+
+function getBrandIndex(): BrandIndex {
+  cachedBrandIndex ??= buildBrandIndex();
+  return cachedBrandIndex;
 }
 
 function extractBrandFromName(name: string): string {
-  const cleanedName = cleanText(name);
-  if (!cleanedName) return '';
+  const cleaned = cleanText(name);
+  if (!cleaned) return '';
 
-  const matchedVariant = BRAND_PREFIX_VARIANTS.find((variant) =>
-    new RegExp(`^${escapeRegex(variant)}(?:$|\\s|[(/-])`, 'i').test(cleanedName)
-  );
+  const { lookup, maxWords } = getBrandIndex();
+  const words = cleaned.split(/\s+/);
+  const wc = words.length;
 
-  if (matchedVariant) {
-    return cleanedName.match(new RegExp(`^${escapeRegex(matchedVariant)}`, 'i'))?.[0] ?? matchedVariant;
+  for (let len = Math.min(wc, maxWords); len > 0; len--) {
+    const found = lookup.get(words.slice(0, len).join(' ').toLowerCase());
+    if (found) return found;
   }
 
-  return cleanedName.split(/\s+/, 1)[0] ?? '';
+  for (let start = 1; start < wc; start++) {
+    for (let len = Math.min(wc - start, maxWords); len > 0; len--) {
+      const candidate = words.slice(start, start + len).join(' ');
+      if (candidate.length < MIN_NON_PREFIX_BRAND_LEN) continue;
+      const found = lookup.get(candidate.toLowerCase());
+      if (found) return found;
+    }
+  }
+
+  return words[0] ?? '';
 }
 
 function parsePrice(raw: string | undefined): number {

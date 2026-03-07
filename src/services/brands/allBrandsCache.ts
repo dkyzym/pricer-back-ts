@@ -14,6 +14,21 @@ export const ALL_BRANDS_CACHE_PATH = path.resolve(
   '../../../data/all-brands.json'
 );
 
+let allBrandsListCache: string[] | null = null;
+
+export function getAllBrandsListSync(): string[] {
+  if (allBrandsListCache) return allBrandsListCache;
+  if (!fs.existsSync(ALL_BRANDS_CACHE_PATH)) return [];
+  const raw = fs.readFileSync(ALL_BRANDS_CACHE_PATH, 'utf-8');
+  const list = JSON.parse(raw) as string[];
+  allBrandsListCache = list.filter((s) => typeof s === 'string' && s.trim().length > 0);
+  return allBrandsListCache;
+}
+
+export function clearAllBrandsListCache(): void {
+  allBrandsListCache = null;
+}
+
 type AllBrandsSyncReason = 'missing' | 'stale' | 'force' | 'fresh';
 
 interface AllBrandsCacheState {
@@ -129,6 +144,7 @@ export async function syncAllBrandsCache(
     JSON.stringify(brands, null, 2),
     'utf-8'
   );
+  clearAllBrandsListCache();
 
   const updatedAt = new Date();
   const refreshAfter = addMonths(updatedAt, ALL_BRANDS_CACHE_TTL_MONTHS);
