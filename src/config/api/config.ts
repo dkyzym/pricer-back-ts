@@ -80,6 +80,7 @@ if (isNaN(PROXY_PORT)) {
 export const ABCP_SERVICE_PATHS = {
   Brand_search: '/search/brands/',
   Article_search: '/search/articles/',
+  Articles_brands: '/articles/brands',
   Orders: '/orders/',
   Statuses: '/orders/statuses/',
 };

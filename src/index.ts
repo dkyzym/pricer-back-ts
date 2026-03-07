@@ -15,6 +15,7 @@ import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
 import { initProxyCheck } from './services/apiClient/apiClient.js';
 import { connectMongo } from './services/db/connectMongo.js';
+import { startAllBrandsSyncWorker } from './workers/allBrandsSyncWorker.js';
 import { startOrderSyncWorker } from './workers/orderSyncWorker.js';
 
 dotenv.config();
@@ -59,4 +60,5 @@ app.use(error);
 await connectMongo();
 await initProxyCheck();
 await startServer(app);
+startAllBrandsSyncWorker();
 startOrderSyncWorker();

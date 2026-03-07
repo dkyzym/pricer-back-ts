@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 import {
   AutosputnikAuthResponse,
+  AutosputnikGetBrandsAllResponse,
   AutosputnikGetBrandsResponse,
   AutosputnikGetProductsResponse,
 } from './autosputnik.types.js';
@@ -54,6 +55,17 @@ export async function getToken(
     );
   }
 }
+
+export const getAutosputnikAllBrands = async (
+  supplier: 'autosputnik' | 'autosputnik_bn'
+): Promise<AutosputnikGetBrandsAllResponse> => {
+  const token = await getToken(supplier);
+  const response = await axios.get<AutosputnikGetBrandsAllResponse>(
+    `${BASE_URL}/products/getbrandsAll`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
 
 export const getAutosputnikBrands = async (
   article: string,

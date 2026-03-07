@@ -216,6 +216,16 @@ export interface AutosputnikGetBrandsResponse {
   data: AutosputnikBrandItem[];
 }
 
+export interface AutosputnikBrandAllItem {
+  id: number;
+  name: string;
+}
+
+export interface AutosputnikGetBrandsAllResponse {
+  error: string | null;
+  data: AutosputnikBrandAllItem[];
+}
+
 // Элемент массива из getproducts (конечный товар)
 export interface AutosputnikProductItem {
   articul: string; // Артикул
