@@ -38,21 +38,30 @@ interface AbcpAuth {
   userpsw: string; // MD5 пароля
 }
 
-async function abcpGet<T>(path: string, auth: AbcpAuth, query: Record<string, string> = {}): Promise<T> {
+async function abcpGet<T>(
+  path: string,
+  auth: AbcpAuth,
+  query: Record<string, string> = {}
+): Promise<T> {
   const search = new URLSearchParams({ ...auth, ...query });
   const res = await fetch(`${BASE_URL}${path}?${search}`);
   if (!res.ok) throw new Error(`ABCP ${res.status}: ${await res.text()}`);
   return res.json() as Promise<T>;
 }
 
-async function abcpPost<T>(path: string, auth: AbcpAuth, body: Record<string, string | Record<string, string>[]>) {
+async function abcpPost<T>(
+  path: string,
+  auth: AbcpAuth,
+  body: Record<string, string | Record<string, string>[]>
+) {
   const form = new URLSearchParams();
   form.set('userlogin', auth.userlogin);
   form.set('userpsw', auth.userpsw);
   for (const [k, v] of Object.entries(body)) {
     if (Array.isArray(v)) {
       v.forEach((obj, i) => {
-        for (const [kk, vv] of Object.entries(obj)) form.set(`${k}[${i}][${kk}]`, String(vv));
+        for (const [kk, vv] of Object.entries(obj))
+          form.set(`${k}[${i}][${kk}]`, String(vv));
       });
     } else {
       form.set(k, String(v));
@@ -81,14 +90,14 @@ async function abcpPost<T>(path: string, auth: AbcpAuth, body: Record<string, st
 
 **Параметры:**
 
-| Параметр       | Тип    | Описание |
-|----------------|--------|----------|
-| userlogin      | string | Логин |
-| userpsw        | string | MD5 пароля |
-| number         | string | Номер детали |
-| useOnlineStocks| 0 \| 1 | Использовать online-склады (0 — быстрее) |
-| officeId       | number | Id офиса (только для API-администратора) |
-| locale         | string | Локаль, например `ru_RU` |
+| Параметр        | Тип    | Описание                                 |
+| --------------- | ------ | ---------------------------------------- |
+| userlogin       | string | Логин                                    |
+| userpsw         | string | MD5 пароля                               |
+| number          | string | Номер детали                             |
+| useOnlineStocks | 0 \| 1 | Использовать online-склады (0 — быстрее) |
+| officeId        | number | Id офиса (только для API-администратора) |
+| locale          | string | Локаль, например `ru_RU`                 |
 
 **Ответ:** массив `{ brand, number, numberFix, description, availability }`
 
@@ -101,7 +110,9 @@ interface AbcpBrandHit {
   availability: boolean;
 }
 
-const brands = await abcpGet<AbcpBrandHit[]>('/search/brands/', auth, { number: '01089' });
+const brands = await abcpGet<AbcpBrandHit[]>('/search/brands/', auth, {
+  number: '01089',
+});
 ```
 
 ---
@@ -173,7 +184,11 @@ search.forEach((item, i) => {
   form.set(`search[${i}][number]`, item.number);
   form.set(`search[${i}][brand]`, item.brand);
 });
-const res = await fetch(`${BASE_URL}/search/batch`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form });
+const res = await fetch(`${BASE_URL}/search/batch`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: form,
+});
 const data = await res.json();
 ```
 
