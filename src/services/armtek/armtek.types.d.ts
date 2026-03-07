@@ -96,3 +96,28 @@ export interface StoreResponseItem {
   SKLNAME?: string;
   // Можно добавить дополнительные свойства, если они будут предоставлены в ответе.
 }
+
+/** Запрос поиска по ассортименту (assortment_search) */
+export interface AssortmentSearchRequest {
+  VKORG: string;
+  PIN: string;
+  PROGRAM?: 'LP' | 'GP';
+}
+
+export interface AssortmentSearchItem {
+  PIN?: string;
+  BRAND?: string;
+  NAME?: string;
+}
+
+/** Тело ответа assortment_search (поле RESP) */
+export interface AssortmentSearchResponseBody {
+  ARRAY?: AssortmentSearchItem[];
+}
+
+/** Полный ответ API (STATUS, MESSAGES, RESP) для assortment_search */
+export interface ArmtekAssortmentApiResponse {
+  STATUS: number;
+  MESSAGES?: { TYPE: 'A' | 'E' | 'S' | 'W' | 'I'; TEXT: string; DATE?: string }[];
+  RESP?: AssortmentSearchResponseBody;
+}

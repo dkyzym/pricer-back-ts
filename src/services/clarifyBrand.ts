@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Logger } from 'winston';
 import { ItemAutocompleteRow } from '../types/search.types.js';
+import { assortmentSearchArmtek } from './armtek/assortmentSearchArmtek.js';
 import { getAxiosInstance } from './apiClient/apiClient.js';
 import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
 
@@ -50,18 +51,13 @@ export const clarifyBrand = async (
         }
       );
 
-      const data = response.data;
-      const ugItems: ItemAutocompleteRow[] = Object.values(data).map(
-        (item) => ({
-          brand: item.brand,
-          number: item.number,
-          descr: item.description || '',
-          url: ``,
-          id: uuidv4(),
-        })
-      );
-
-      return ugItems;
+      return Object.values(response.data).map((item) => ({
+        brand: item.brand,
+        number: item.number,
+        descr: item.description || '',
+        url: '',
+        id: uuidv4(),
+      }));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<{
@@ -88,58 +84,70 @@ export const clarifyBrand = async (
   // Функция для обработки данных от поставщика 'profit'
   const fetchProfitItems = async (): Promise<ItemAutocompleteRow[]> => {
     const profitData: ProfitItem[] = await getItemsListByArticleService(query);
-    const profitItems: ItemAutocompleteRow[] = profitData.map((item) => ({
+    return profitData.map((item) => ({
       brand: item.brand,
       number: item.article,
       descr: item.description || '',
-      url: ``,
+      url: '',
       id: uuidv4(),
     }));
-
-    return profitItems;
   };
 
-  // Запускаем оба запроса параллельно и ждем их завершения
-  const [ugResult, profitResult] = await Promise.allSettled([
+  const fetchArmtekBrands = async (): Promise<ItemAutocompleteRow[]> => {
+    const items = await assortmentSearchArmtek(
+      { VKORG: '4000', PIN: query, PROGRAM: 'LP' },
+      userLogger
+    );
+    return items.map((item) => ({
+      brand: item.BRAND ?? '',
+      number: item.PIN ?? '',
+      descr: item.NAME ?? '',
+      url: '',
+      id: uuidv4(),
+    }));
+  };
+
+  const [ugResult, profitResult, armtekResult] = await Promise.allSettled([
     fetchUgBrands(),
     fetchProfitItems(),
+    fetchArmtekBrands(),
   ]);
 
   const finalBrands: ItemAutocompleteRow[] = [];
   let success = true;
   const messages: string[] = [];
 
-  // Обрабатываем результат поставщика 'ug'
-  if (ugResult.status === 'fulfilled') {
-    finalBrands.push(...ugResult.value);
-    if (ugResult.value.length === 0) {
-      messages.push('Нет данных от поставщика ug.');
+  const suppliers = [
+    { name: 'ug', result: ugResult },
+    { name: 'profit', result: profitResult },
+    { name: 'armtek', result: armtekResult },
+  ];
+
+  for (const { name, result } of suppliers) {
+    if (result.status === 'fulfilled') {
+      finalBrands.push(...result.value);
+    } else {
+      success = false;
+      userLogger.error(
+        `Ошибка при получении данных от поставщика ${name}:`,
+        result.reason
+      );
+      messages.push(`Ошибка при получении данных от поставщика ${name}.`);
     }
-  } else {
-    success = false;
-    userLogger.error(
-      'Ошибка при получении данных от поставщика ug:',
-      ugResult.reason
-    );
-    messages.push('Ошибка при получении данных от поставщика ug.');
   }
 
-  // Обрабатываем результат поставщика 'profit'
-  if (profitResult.status === 'fulfilled') {
-    finalBrands.push(...profitResult.value);
-  } else {
-    success = false;
-    userLogger.error(
-      'Ошибка при получении данных от поставщика profit:',
-      profitResult.reason
-    );
-    messages.push('Ошибка при получении данных от поставщика profit.');
+  const seen = new Set<string>();
+  const brandsDeduplicated: ItemAutocompleteRow[] = [];
+  for (const row of finalBrands) {
+    const key = `${(row.brand ?? '').trim().toLowerCase()}\t${(row.number ?? '').trim().toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    brandsDeduplicated.push(row);
   }
 
-  // Если оба запроса успешны
   if (success) {
-    if (finalBrands.length > 0) {
-      messages.push('Данные успешно получены от обоих поставщиков.');
+    if (brandsDeduplicated.length > 0) {
+      messages.push('Данные успешно получены от поставщиков.');
     } else {
       messages.push(
         'Данные успешно получены, но нет результатов от поставщиков.'
@@ -149,7 +157,7 @@ export const clarifyBrand = async (
 
   return {
     success,
-    brands: finalBrands,
+    brands: brandsDeduplicated,
     message: messages.join(' '),
   };
 };
