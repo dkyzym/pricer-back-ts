@@ -2,7 +2,7 @@
 
 Описание API интеграции с auto-sputnik.ru.  
 Базовый URL: `https://newapi.auto-sputnik.ru`  
-Swagger: https://newapi.auto-sputnik.ru/swagger/v1/swagger.json (OAS3, Apiautosputnik2 v1).
+Swagger: <https://newapi.auto-sputnik.ru/swagger/v1/swagger.json> (OAS3, Apiautosputnik2 v1).
 
 ---
 
@@ -30,7 +30,10 @@ interface AutosputnikAuthResponse {
   userid: number;
 }
 
-async function getAutosputnikToken(login: string, password: string): Promise<string> {
+async function getAutosputnikToken(
+  login: string,
+  password: string
+): Promise<string> {
   const res = await fetch(`${BASE_URL}/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -48,9 +51,9 @@ async function getAutosputnikToken(login: string, password: string): Promise<str
 
 В проекте используются два набора учётных данных для одного и того же API:
 
-| Алиас          | Переменные окружения        |
-|----------------|-----------------------------|
-| autosputnik    | AUTOSPUTNIK_LOGIN, AUTOSPUTNIK_PASS   |
+| Алиас          | Переменные окружения                      |
+| -------------- | ----------------------------------------- |
+| autosputnik    | AUTOSPUTNIK_LOGIN, AUTOSPUTNIK_PASS       |
 | autosputnik_bn | AUTOSPUTNIK_LOGIN_BN, AUTOSPUTNIK_PASS_BN |
 
 Токен кешируется отдельно по алиасу (`tokenCache` в autosputnikApi.ts). При 401 токен для этого алиаса сбрасывается и запрос повторяется с новым токеном.
@@ -90,10 +93,10 @@ interface AutosputnikLoginRequest {
 
 **Query-параметры:**
 
-| Параметр             | Тип     | Обязательный | По умолчанию | Описание |
-|----------------------|--------|--------------|--------------|----------|
-| articul              | string | Да           | —            | Артикул  |
-| displaycountproduct  | boolean| Нет          | false        | Показывать количество предложений по каждому бренду |
+| Параметр            | Тип     | Обязательный | По умолчанию | Описание                                            |
+| ------------------- | ------- | ------------ | ------------ | --------------------------------------------------- |
+| articul             | string  | Да           | —            | Артикул                                             |
+| displaycountproduct | boolean | Нет          | false        | Показывать количество предложений по каждому бренду |
 
 **Ответ 200:**
 
@@ -107,7 +110,7 @@ interface AutosputnikBrandItem {
   articul: string;
   brand: AutosputnikBrandObj;
   name: string;
-  countproduct?: number;  // при displaycountproduct=true
+  countproduct?: number; // при displaycountproduct=true
 }
 
 interface AutosputnikGetBrandsResponse {
@@ -144,8 +147,8 @@ const brands = data.error ? [] : (data.data ?? []);
 
 ```ts
 interface AutosputnikGetProductsRequest {
-  articul: string;   // обяз., minLength: 1
-  brand: string;     // наименование бренда, обяз.
+  articul: string; // обяз., minLength: 1
+  brand: string; // наименование бренда, обяз.
   analogi?: boolean; // аналоги, по умолчанию false
   tranzit?: boolean; // транзит, в проекте true
 }
@@ -163,7 +166,7 @@ interface AutosputnikProductItem {
   price: number;
   delivery_day: number;
   price_name: string | null;
-  delivery_date: string;   // ISO date-time
+  delivery_date: string; // ISO date-time
   our: boolean;
   analog: boolean;
   id_shop_prices: number;
@@ -214,11 +217,11 @@ const products = data.error ? [] : (data.data ?? []);
 
 ```ts
 interface AutosputnikOrderGetRequest {
-  date_start?: string;  // ISO date-time, начало периода
-  date_end?: string;    // ISO date-time, конец периода
-  orderid?: number;     // 0 — не по номеру, иначе фильтр по заказу
-  page?: number;       // страница, в проекте 1
-  pageSize?: number;    // размер страницы, в проекте 500
+  date_start?: string; // ISO date-time, начало периода
+  date_end?: string; // ISO date-time, конец периода
+  orderid?: number; // 0 — не по номеру, иначе фильтр по заказу
+  page?: number; // страница, в проекте 1
+  pageSize?: number; // размер страницы, в проекте 500
 }
 ```
 
@@ -364,7 +367,7 @@ interface AutosputnikBasketAddRequest {
 ## 7. Переменные окружения (проект)
 
 | Переменная           | Описание                          |
-|----------------------|-----------------------------------|
+| -------------------- | --------------------------------- |
 | AUTOSPUTNIK_LOGIN    | Логин для контура autosputnik     |
 | AUTOSPUTNIK_PASS     | Пароль для контура autosputnik    |
 | AUTOSPUTNIK_LOGIN_BN | Логин для контура autosputnik_bn  |
@@ -380,4 +383,4 @@ interface AutosputnikBasketAddRequest {
 
 ---
 
-*Документация собрана по Swagger UI (newapi.auto-sputnik.ru) и коду сервиса autosputnik в репозитории.*
+_Документация собрана по Swagger UI (newapi.auto-sputnik.ru) и коду сервиса autosputnik в репозитории._
