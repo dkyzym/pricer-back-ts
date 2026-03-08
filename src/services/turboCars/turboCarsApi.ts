@@ -2,6 +2,11 @@ import axios, { AxiosError } from 'axios';
 import { Logger } from 'winston';
 
 import {
+  TurboCarsOrderCreatePosition,
+  TurboCarsOrderCreateRequest,
+  TurboCarsOrderCreateResponse,
+} from '../../controllers/data/cart/cart.types.js';
+import {
   TurboCarsBrandSearchResponse,
   TurboCarsBrandSearchSuccess,
   TurboCarsErrorResponse,
@@ -152,6 +157,69 @@ export const getTurboCarsOffers = async (
     }
 
     logger.error('[turboCars] Ошибка сети при запросе /offers:search', error);
+    throw error;
+  }
+};
+
+/**
+ * Извлекает читаемое сообщение из структурированной ошибки TurboCars.
+ * error_message может быть строкой (по Swagger) или объектом { description }.
+ */
+const extractErrorMessage = (resp: TurboCarsErrorResponse): string => {
+  const em = resp.error_message as unknown;
+  if (typeof em === 'string') return em;
+  if (em && typeof em === 'object' && 'description' in em) {
+    return (em as { description: string }).description;
+  }
+  return JSON.stringify(em);
+};
+
+export const createTurboCarsOrder = async (
+  positions: TurboCarsOrderCreatePosition[],
+  logger: Logger
+): Promise<TurboCarsOrderCreateResponse> => {
+  const { urlBase, headers } = createTurboCarsClientConfig();
+  const url = `${urlBase}/order:create`;
+
+  const body: TurboCarsOrderCreateRequest = {
+    is_test: 0,
+    positions,
+  };
+
+  try {
+    const response = await axios.post<
+      TurboCarsOrderCreateResponse | TurboCarsErrorResponse
+    >(url, body, {
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      timeout: MAX_TIMEOUT_MS,
+    });
+
+    const data = response.data;
+
+    if (isErrorResponse(data)) {
+      const msg = extractErrorMessage(data as TurboCarsErrorResponse);
+      throw new Error(`TurboCars: ${(data as TurboCarsErrorResponse).error_code} — ${msg}`);
+    }
+
+    return data as TurboCarsOrderCreateResponse;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axErr = error as AxiosError<unknown>;
+      const status = axErr.response?.status;
+      const respBody = axErr.response?.data;
+
+      if (status && status >= 400 && isErrorResponse(respBody)) {
+        const msg = extractErrorMessage(respBody as TurboCarsErrorResponse);
+        logger.warn('[turboCars] HTTP ошибка при запросе /order:create', {
+          status,
+          error_code: (respBody as TurboCarsErrorResponse).error_code,
+          error_message: msg,
+        });
+        throw new Error(`TurboCars ${status}: ${(respBody as TurboCarsErrorResponse).error_code} — ${msg}`);
+      }
+    }
+
+    logger.error('[turboCars] Ошибка сети при запросе /order:create', error);
     throw error;
   }
 };

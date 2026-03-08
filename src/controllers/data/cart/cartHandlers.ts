@@ -1,21 +1,26 @@
+import { logger } from '../../../config/logger/index.js';
 import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
+import { AbcpSupplierAlias } from '../../../services/abcp/abcpPlatform.types.js';
 import { addToCartProfitService } from '../../../services/profit/addToCartProfitService.js';
+import { createTurboCarsOrder } from '../../../services/turboCars/turboCarsApi.js';
 import {
   BasketPositionUG,
   CartHandler,
   CartHandlerResponse,
+  TurboCarsOrderCreatePosition,
+  UnifiedCartRequest,
 } from './cart.types.js';
 
 const profitCartHandler: CartHandler = async (
-  data: any
+  data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
-  const { id, warehouse, quantity, code } = data;
+  const { quantity, item } = data;
 
   const result = await addToCartProfitService({
-    id,
-    warehouse,
+    id: item.innerId,
+    warehouse: item.warehouse_id,
     quantity,
-    code,
+    code: item.inner_product_code,
   });
 
   const status = result.status === 'success' ? true : false;
@@ -35,23 +40,75 @@ const profitCartHandler: CartHandler = async (
 };
 
 const abcpCartHandler: CartHandler = async (
-  data: any
+  data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
-  const { brand, supplierCode, quantity, itemKey, number, supplier } = data;
+  const { supplier, quantity, item } = data;
 
   const position: BasketPositionUG = {
-    brand,
-    supplierCode,
+    brand: item.brand,
+    supplierCode: item.supplierCode,
     quantity,
-    itemKey,
-    number,
+    itemKey: item.itemKey,
+    number: item.article,
   };
-  const result = await updateAbcpCart([position], supplier);
+  const result = await updateAbcpCart([position], supplier as AbcpSupplierAlias);
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';
 
   return { message: message, success: Boolean(result.status) };
+};
+
+/**
+ * TurboCars использует endpoint order:create для добавления товара.
+ * Поле `turboCars` в item хранит оригинальные данные оффера (provider_id и др.),
+ * сохранённые при парсинге результатов поиска в parseTurboCarsData.
+ */
+const turboCarsCartHandler: CartHandler = async (
+  data: UnifiedCartRequest
+): Promise<CartHandlerResponse> => {
+  const { quantity, item } = data;
+
+  const providerId: number | undefined =
+    item.turboCars?.provider_id ?? (Number(item.warehouse_id) || undefined);
+
+  if (!providerId || !item.brand || !item.article) {
+    return {
+      success: false,
+      message: 'Недостаточно данных для оформления заказа в TurboCars',
+    };
+  }
+
+  const position: TurboCarsOrderCreatePosition = {
+    provider_id: providerId,
+    price: Number(item.price),
+    code: item.article,
+    brand: item.brand,
+    count: quantity,
+  };
+
+  try {
+    const result = await createTurboCarsOrder([position], logger);
+
+    if (result.bad_offers?.length) {
+      const reason = result.bad_offers[0].reason;
+      return {
+        success: false,
+        message: `Позиция отклонена: ${reason}`,
+        data: { order_number: result.order_number },
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Заказ успешно создан в TurboCars',
+      data: { order_number: result.order_number },
+    };
+  } catch (error) {
+    const msg =
+      error instanceof Error ? error.message : 'Неизвестная ошибка TurboCars';
+    return { success: false, message: msg };
+  }
 };
 
 export const cartSupplierHandlers: Record<string, CartHandler> = {
@@ -63,4 +120,6 @@ export const cartSupplierHandlers: Record<string, CartHandler> = {
   patriot: abcpCartHandler,
   npn: abcpCartHandler,
   avtodinamika: abcpCartHandler,
+
+  turboCars: turboCarsCartHandler,
 };
