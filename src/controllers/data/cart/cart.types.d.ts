@@ -61,33 +61,3 @@ export type CartHandler = (data: UnifiedCartRequest) => Promise<CartHandlerRespo
 
 export type ProfitAPIresponse = { status: "success" | 'no - quantity' | 'less' | 'error', total: number, count: number }
 
-/** Позиция для создания заказа в API TurboCars (POST /order:create) */
-export interface TurboCarsOrderCreatePosition {
-  provider_id: number;
-  price: number;
-  code: string;
-  brand: string;
-  count: number;
-  comment?: string;
-}
-
-/** Тело запроса POST /order:create */
-export interface TurboCarsOrderCreateRequest {
-  is_test: 0 | 1;
-  positions: TurboCarsOrderCreatePosition[];
-}
-
-/** Отклонённая позиция в ответе order:create */
-export interface TurboCarsOrderCreateBadOffer {
-  code: string;
-  brand: string;
-  reason: string;
-}
-
-/** Ответ API TurboCars на POST /order:create */
-export interface TurboCarsOrderCreateResponse {
-  order_number: string;
-  is_test: 0 | 1;
-  bad_offers?: TurboCarsOrderCreateBadOffer[];
-}
-

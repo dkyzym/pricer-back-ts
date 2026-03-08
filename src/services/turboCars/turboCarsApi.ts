@@ -2,16 +2,14 @@ import axios, { AxiosError } from 'axios';
 import { Logger } from 'winston';
 
 import {
-  TurboCarsOrderCreatePosition,
-  TurboCarsOrderCreateRequest,
-  TurboCarsOrderCreateResponse,
-} from '../../controllers/data/cart/cart.types.js';
-import {
   TurboCarsBrandSearchResponse,
   TurboCarsBrandSearchSuccess,
   TurboCarsErrorResponse,
   TurboCarsOffersSearchResponse,
   TurboCarsOffersSearchSuccess,
+  TurboCarsOrderCreatePosition,
+  TurboCarsOrderCreateRequest,
+  TurboCarsOrderCreateResponse,
 } from './turboCars.types.js';
 
 const MAX_TIMEOUT_MS = 60_000;

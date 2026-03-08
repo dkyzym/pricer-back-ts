@@ -1,13 +1,10 @@
-import { logger } from '../../../config/logger/index.js';
 import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
 import { AbcpSupplierAlias } from '../../../services/abcp/abcpPlatform.types.js';
 import { addToCartProfitService } from '../../../services/profit/addToCartProfitService.js';
-import { createTurboCarsOrder } from '../../../services/turboCars/turboCarsApi.js';
 import {
   BasketPositionUG,
   CartHandler,
   CartHandlerResponse,
-  TurboCarsOrderCreatePosition,
   UnifiedCartRequest,
 } from './cart.types.js';
 
@@ -65,66 +62,6 @@ const abcpCartHandler: CartHandler = async (
   return { message: message, success: Boolean(result.status) };
 };
 
-/**
- * TurboCars использует endpoint order:create для добавления товара.
- * Поле `turboCars` в item хранит оригинальные данные оффера (provider_id и др.),
- * сохранённые при парсинге результатов поиска в parseTurboCarsData.
- */
-const turboCarsCartHandler: CartHandler = async (
-  data: UnifiedCartRequest
-): Promise<CartHandlerResponse> => {
-  const { quantity, item } = data;
-
-  const providerId: number | undefined =
-    item.turboCars?.provider_id ?? (Number(item.warehouse_id) || undefined);
-  const price = Number(item.price);
-
-  if (!providerId || !item.brand || !item.article) {
-    return {
-      success: false,
-      message: 'Недостаточно данных для оформления заказа в TurboCars',
-    };
-  }
-
-  if (isNaN(price) || price <= 0) {
-    return {
-      success: false,
-      message: 'Некорректная цена товара для TurboCars',
-    };
-  }
-
-  const position: TurboCarsOrderCreatePosition = {
-    provider_id: providerId,
-    price,
-    code: item.article,
-    brand: item.brand,
-    count: quantity,
-  };
-
-  try {
-    const result = await createTurboCarsOrder([position], logger);
-
-    if (result.bad_offers?.length) {
-      const reason = result.bad_offers[0].reason;
-      return {
-        success: false,
-        message: `Позиция отклонена: ${reason}`,
-        data: { order_number: result.order_number },
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Заказ успешно создан в TurboCars',
-      data: { order_number: result.order_number },
-    };
-  } catch (error) {
-    const msg =
-      error instanceof Error ? error.message : 'Неизвестная ошибка TurboCars';
-    return { success: false, message: msg };
-  }
-};
-
 export const cartSupplierHandlers: Record<string, CartHandler> = {
   profit: profitCartHandler,
 
@@ -134,6 +71,4 @@ export const cartSupplierHandlers: Record<string, CartHandler> = {
   patriot: abcpCartHandler,
   npn: abcpCartHandler,
   avtodinamika: abcpCartHandler,
-
-  turboCars: turboCarsCartHandler,
 };
