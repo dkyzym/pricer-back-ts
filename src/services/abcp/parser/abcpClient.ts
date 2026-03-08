@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { wrapper } from 'axios-cookiejar-support';
+import axiosRetry from 'axios-retry';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
+import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { CookieJar } from 'tough-cookie';
 
 import { logger } from '../../../config/logger/index.js';
@@ -38,9 +39,37 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
 
   // --- Приватное состояние, инкапсулированное замыканием ---
   const cookieJar = new CookieJar();
-  const client: AxiosInstance = wrapper(
-    axios.create({ jar: cookieJar, withCredentials: true })
-  );
+
+  // HttpsCookieAgent объединяет https.Agent (пул соединений) и cookie jar в одном агенте
+  const httpsAgent = new HttpsCookieAgent({
+    cookies: { jar: cookieJar },
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 10,
+    maxFreeSockets: 5,
+    timeout: 10_000,
+  });
+
+  const client: AxiosInstance = axios.create({
+    httpsAgent,
+    timeout: 15_000,
+  });
+
+  axiosRetry(client, {
+    retries: 3,
+    retryDelay: axiosRetry.exponentialDelay,
+    retryCondition: (error) =>
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      error.code === 'ECONNRESET' ||
+      error.code === 'ETIMEDOUT' ||
+      error.message?.includes('socket disconnected'),
+    onRetry: (retryCount, error) => {
+      logger.warn(
+        `[${config.supplierName}] Retry ${retryCount}/3: ${error.message}`
+      );
+    },
+  });
+
   let isLoggingIn = false;
   const loginQueue: (() => void)[] = [];
   // ---
@@ -61,20 +90,23 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     return true;
   };
 
-  const ensureLoggedIn = async (): Promise<void> => {
+  const ensureLoggedIn = async (forceLogin = false): Promise<void> => {
     const { supplierName, baseUrl } = config;
     const cookies = await cookieJar.getCookies(baseUrl);
     const abcUserCookie = cookies.find((cookie) => cookie.key === 'ABCPUser');
 
-    if (!abcUserCookie) {
+    if (!abcUserCookie || forceLogin) {
       if (isLoggingIn) {
         await new Promise<void>((resolve) => loginQueue.push(resolve));
       } else {
         isLoggingIn = true;
         try {
           logger.info(
-            `Session cookie missing for ${supplierName}, logging in...`
+            `Session ${forceLogin ? 'expired' : 'missing'} for ${supplierName}, logging in...`
           );
+          if (forceLogin) {
+            await cookieJar.removeAllCookies();
+          }
           await login();
         } finally {
           isLoggingIn = false;
@@ -90,21 +122,33 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     options: any = {}
   ): Promise<AxiosResponse> => {
     await ensureLoggedIn();
-    let response = await client.get(url, options);
 
-    if (
-      !response.data.includes(config.loggedInIndicator) ||
-      response.status === 401
-    ) {
+    let response: AxiosResponse;
+    try {
+      response = await client.get(url, options);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        logger.info(
+          `401 received for ${config.supplierName}, entering login queue...`
+        );
+        await ensureLoggedIn(true);
+        return client.get(url, options);
+      }
+      throw error;
+    }
+
+    const isHtmlResponse = typeof response.data === 'string';
+    if (isHtmlResponse && !response.data.includes(config.loggedInIndicator)) {
       logger.info(
-        `Session expired for ${config.supplierName}, re-logging in...`
+        `Session expired for ${config.supplierName}, entering login queue...`
       );
-      await login();
+      await ensureLoggedIn(true);
       response = await client.get(url, options);
     }
+
     return response;
   };
-  
+
   const searchItem = async ({
     item,
     supplier,
@@ -165,7 +209,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     });
   };
 
-   // Возвращаем объект с публичными методами
+  // Возвращаем объект с публичными методами
   return {
     searchItem,
     makeRequest,

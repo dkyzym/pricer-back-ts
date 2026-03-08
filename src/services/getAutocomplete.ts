@@ -1,29 +1,29 @@
 import axios, { AxiosError } from 'axios';
-import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
+import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { CookieJar } from 'tough-cookie';
 import { ugHeaders } from '../constants/headers.js';
 
 // Переменные модуля
 const cookieJar = new CookieJar();
-const client = wrapper(axios.create({ jar: cookieJar, withCredentials: true }));
+
+// Включаем keepAlive для максимальной скорости автокомплита
+const httpsAgent = new HttpsCookieAgent({
+  cookies: { jar: cookieJar },
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+  maxSockets: 50, // Для автокомплита разрешаем больше одновременных сокетов
+});
+
+const client = axios.create({
+  httpsAgent,
+  withCredentials: true,
+});
+
 let initializationPromise: Promise<void> | null = null;
 
 /**
  * Singleton Promise для инициализации куки.
- *
- * Идея паттерна:
- * - при первом обращении к API, когда куки ещё не получены, создаётся ОДИН общий промис `initializationPromise`;
- * - все конкурентные вызовы функции `initializeCookies` не создают новые запросы, а просто «подписываются» на этот промис;
- * - это защищает поставщика от лавинообразных параллельных запросов при пустом кэше (одна инициализация — много ожидающих).
- *
- * Почему не обнуляем промис на успех:
- * - успешно выполненный промис отражает текущее «валидное» состояние куки; кэшируем его, чтобы повторно не ходить за тем же самым.
- *
- * Когда обнуляем:
- * - при ошибке (catch ниже) — чтобы следующая попытка могла заново инициализировать куки;
- * - при ответе 400 в `getAutocomplete` — это явный сигнал, что куки протухли, поэтому принудительно сбрасываем промис,
- *   чтобы последующая инициализация запросила свежие куки.
  */
 const initializeCookies = (): Promise<void> => {
   if (initializationPromise) {
@@ -46,10 +46,6 @@ const initializeCookies = (): Promise<void> => {
 
 /**
  * Получает подсказки автокомплита от поставщика UG.
- *
- * Перед каждым запросом гарантирует валидное состояние куки через initializeCookies().
- * В случае статуса 400 (протухшие куки) принудительно сбрасывает Singleton Promise
- * и переинициализирует куки, после чего повторяет запрос.
  */
 export const getAutocomplete = async (term: string): Promise<any> => {
   const url = `https://ugautopart.ru/ajax/modules2/search.tips/get`;
@@ -81,7 +77,7 @@ export const getAutocomplete = async (term: string): Promise<any> => {
         });
         return retryResponse.data;
       } else {
-        console.error('Ошибка при выполнении  запроса:', axiosError.message);
+        console.error('Ошибка при выполнении запроса:', axiosError.message);
         throw axiosError;
       }
     } else {

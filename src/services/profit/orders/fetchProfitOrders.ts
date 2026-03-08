@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
-import { wrapper } from 'axios-cookiejar-support';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
+import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { DateTime } from 'luxon';
 import { CookieJar } from 'tough-cookie';
 import { Logger } from 'winston';
@@ -32,18 +32,25 @@ type Organization = (typeof ORGANIZATIONS)[number];
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Создает настроенный экземпляр Axios с поддержкой CookieJar
+ * Создает настроенный экземпляр Axios с поддержкой CookieJar и Connection Pooling
  */
 const createClient = (): ProfitClient => {
   const jar = new CookieJar();
-  return wrapper(
-    axios.create({
-      jar,
-      withCredentials: true,
-      headers: { 'User-Agent': CONFIG.userAgent },
-      timeout: CONFIG.timeout,
-    })
-  );
+
+  const httpsAgent = new HttpsCookieAgent({
+    cookies: { jar },
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 5,
+    timeout: CONFIG.timeout,
+  });
+
+  return axios.create({
+    httpsAgent,
+    withCredentials: true,
+    headers: { 'User-Agent': CONFIG.userAgent },
+    timeout: CONFIG.timeout,
+  });
 };
 
 /**
@@ -63,8 +70,11 @@ const withRetry = async <T>(
     // Проверяем статус 429 или сетевые ошибки
     const isRateLimit =
       axios.isAxiosError(error) && error.response?.status === 429;
+    const isNetworkError =
+      axios.isAxiosError(error) &&
+      ['ECONNRESET', 'ETIMEDOUT'].includes(error.code || '');
 
-    if (isRateLimit || retries > 0) {
+    if (isRateLimit || isNetworkError || retries > 0) {
       const waitTime = delayMs * (CONFIG.maxRetries - retries + 1); // Exponential-ish backoff
 
       if (logger) {
@@ -195,8 +205,7 @@ export const fetchProfitOrders = async (
   let successCount = 0;
   const errors: string[] = [];
 
-  // Последовательная обработка организаций (reduce для последовательности промисов был бы сложнее для чтения здесь,
-  // for..of с await - идиоматичный способ для последовательных асинхронных операций в JS)
+  // Последовательная обработка организаций
   for (const [index, org] of ORGANIZATIONS.entries()) {
     logger.info(
       `[profit] Processing: ${chalk.magenta(org.name)} ${chalk.gray(`(${index + 1}/${ORGANIZATIONS.length})`)}`
@@ -247,7 +256,7 @@ export const fetchProfitOrders = async (
     throw new Error(`All Profit orgs failed. Errors: ${errors.join('; ')}`);
   }
 
-  // Дедупликация (Функциональный подход через Map)
+  // Дедупликация
   const uniqueOrders = Array.from(
     new Map(result.data.map((order) => [order.order_id, order])).values()
   );
