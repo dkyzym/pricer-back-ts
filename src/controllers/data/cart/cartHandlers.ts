@@ -23,7 +23,7 @@ const profitCartHandler: CartHandler = async (
     code: item.inner_product_code,
   });
 
-  const status = result.status === 'success' ? true : false;
+  const status = result.status === 'success';
 
   const profitMessageMap = {
     success: 'Товар успешно добавлен',
@@ -43,13 +43,19 @@ const abcpCartHandler: CartHandler = async (
   data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
   const { supplier, quantity, item } = data;
+  const supplierData = item[supplier];
+  const itemKey =
+    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
+  const supplierCode =
+    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
+  const article = item.article ?? item.number;
 
   const position: BasketPositionUG = {
     brand: item.brand,
-    supplierCode: item.supplierCode,
+    supplierCode,
     quantity,
-    itemKey: item.itemKey,
-    number: item.article,
+    itemKey,
+    number: article,
   };
   const result = await updateAbcpCart([position], supplier as AbcpSupplierAlias);
 
@@ -71,6 +77,7 @@ const turboCarsCartHandler: CartHandler = async (
 
   const providerId: number | undefined =
     item.turboCars?.provider_id ?? (Number(item.warehouse_id) || undefined);
+  const price = Number(item.price);
 
   if (!providerId || !item.brand || !item.article) {
     return {
@@ -79,9 +86,16 @@ const turboCarsCartHandler: CartHandler = async (
     };
   }
 
+  if (isNaN(price) || price <= 0) {
+    return {
+      success: false,
+      message: 'Некорректная цена товара для TurboCars',
+    };
+  }
+
   const position: TurboCarsOrderCreatePosition = {
     provider_id: providerId,
-    price: Number(item.price),
+    price,
     code: item.article,
     brand: item.brand,
     count: quantity,

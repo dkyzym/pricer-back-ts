@@ -10,10 +10,7 @@ import {
   TurboCarsOfferRaw,
   TurboCarsOffersSearchSuccess,
 } from './turboCars.types.js';
-import {
-  getTurboCarsBrands,
-  getTurboCarsOffers,
-} from './turboCarsApi.js';
+import { getTurboCarsBrands, getTurboCarsOffers } from './turboCarsApi.js';
 
 const parseTurboCarsNumber = (value: number | string): number => {
   if (typeof value === 'number') {
@@ -27,9 +24,7 @@ const parseTurboCarsNumber = (value: number | string): number => {
 };
 
 const pickDeliveryDateString = (offer: TurboCarsOfferRaw): string => {
-  const source =
-    offer.delivery_date_time_end ||
-    offer.delivery_date_time_start;
+  const source = offer.delivery_date_time_end || offer.delivery_date_time_start;
 
   if (!source) return '';
 
@@ -59,7 +54,7 @@ const mapOfferToResult = (
     probability,
     needToCheckBrand: needToCheckBrand(expectedBrand, offer.brand),
     returnable: offer.is_returnable ? offer.days_for_return : 0,
-    multi: offer.multiplicity,
+    multi: offer.multiplicity > 0 ? offer.multiplicity : 1,
     allow_return: offer.is_returnable,
     warehouse_id: String(offer.provider_id),
     inner_product_code: '',
@@ -91,7 +86,11 @@ export const parseTurboCarsData = async (
 
   const brandsResponse = await getTurboCarsBrands(articleToSearch, userLogger);
 
-  if (!brandsResponse || !Array.isArray(brandsResponse.brands) || !brandsResponse.brands.length) {
+  if (
+    !brandsResponse ||
+    !Array.isArray(brandsResponse.brands) ||
+    !brandsResponse.brands.length
+  ) {
     return [];
   }
 
@@ -131,9 +130,7 @@ export const parseTurboCarsData = async (
         | { brandName?: string; error?: unknown }
         | unknown;
       const brandName =
-        typeof reason === 'object' &&
-        reason !== null &&
-        'brandName' in reason
+        typeof reason === 'object' && reason !== null && 'brandName' in reason
           ? String((reason as { brandName?: string }).brandName || '')
           : '';
       const error =
@@ -141,10 +138,13 @@ export const parseTurboCarsData = async (
           ? (reason as { error?: unknown }).error
           : reason;
 
-      userLogger.warn('[turboCars] Ошибка при запросе /offers:search для бренда', {
-        brand: brandName || 'unknown',
-        error,
-      });
+      userLogger.warn(
+        '[turboCars] Ошибка при запросе /offers:search для бренда',
+        {
+          brand: brandName || 'unknown',
+          error,
+        }
+      );
       return;
     }
 
@@ -179,4 +179,3 @@ export const parseTurboCarsData = async (
     deliveryDate: calculateDeliveryDate(result, userLogger),
   }));
 };
-
