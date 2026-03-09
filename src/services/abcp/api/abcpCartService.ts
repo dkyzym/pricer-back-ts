@@ -1,7 +1,7 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import {
+  ABCP_API_CartResponse,
   BasketPositionUG,
-  UgCartResponse,
 } from '../../../controllers/data/cart/cart.types.js';
 import { getAxiosInstance } from '../../apiClient/apiClient.js';
 import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
@@ -11,7 +11,7 @@ import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 const sendCartRequest = async (
   positions: BasketPositionUG[],
   supplier: AbcpSupplierAlias
-): Promise<AxiosResponse<UgCartResponse>> => {
+): Promise<AxiosResponse<ABCP_API_CartResponse>> => {
   const axiosInstance = await getAxiosInstance(supplier);
   const params = new URLSearchParams();
 
@@ -40,7 +40,7 @@ const sendCartRequest = async (
 export const updateAbcpCart = async (
   positions: BasketPositionUG[],
   supplier: AbcpSupplierAlias
-): Promise<UgCartResponse> => {
+): Promise<ABCP_API_CartResponse> => {
   try {
     const response = await sendCartRequest(positions, supplier);
 
@@ -84,7 +84,7 @@ export const updateAbcpCart = async (
 export const removeAbcpCart = async (
   positions: BasketPositionUG[],
   supplier: AbcpSupplierAlias
-): Promise<UgCartResponse> => {
+): Promise<ABCP_API_CartResponse> => {
   const positionsToRemove = positions.map((p) => ({ ...p, quantity: 0 }));
   const response = await sendCartRequest(positionsToRemove, supplier);
   return response.data;

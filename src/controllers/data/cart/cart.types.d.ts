@@ -25,7 +25,7 @@ export interface BasketPositionUG {
   quantity: number;
 }
 
-export interface UgCartResponse {
+export interface ABCP_API_CartResponse {
   status: 1 | 0;
   errorMessage?: string;
   positions: Array<{
@@ -57,7 +57,12 @@ export type CartHandlerResponse = {
   data?: Record<string, unknown>;
 };
 
-export type CartHandler = (data: UnifiedCartRequest) => Promise<CartHandlerResponse>;
+export type CartHandler = (
+  data: UnifiedCartRequest
+) => Promise<CartHandlerResponse>;
 
-export type ProfitAPIresponse = { status: "success" | 'no - quantity' | 'less' | 'error', total: number, count: number }
-
+export type ProfitAPIresponse = {
+  status: 'success' | 'no - quantity' | 'less' | 'error';
+  total: number;
+  count: number;
+};
