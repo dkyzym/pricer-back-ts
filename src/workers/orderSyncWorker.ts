@@ -18,12 +18,32 @@ const EMPTY_DB_LOOKBACK_DAYS = 90;
 const SCHEDULE = '0 0-7,19-23 * * *';
 /** Max random delay before cycle start (ms), to spread load and avoid thundering herd */
 const MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
+/** Таймаут на один handler поставщика — защита от зависших HTTP/DB операций */
+const SUPPLIER_HANDLER_TIMEOUT_MS = 3 * 60 * 1000;
+/** Порог устаревания цикла: если runStartedAt старше этого — считаем цикл зависшим */
+const STALE_RUN_THRESHOLD_MS = 30 * 60 * 1000;
 
 function subtractDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() - days);
   return result;
 }
+
+/**
+ * Гонка promise vs таймер: если promise не резолвится за ms — reject с ошибкой.
+ * Не отменяет саму операцию (нет AbortController), но разблокирует ожидающий цикл.
+ */
+const withTimeout = <T>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`[timeout] ${label}: не завершился за ${ms}ms`)),
+      ms
+    );
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
 
 async function computeTargetSyncDate(supplier: string): Promise<Date> {
   const now = new Date();
@@ -62,7 +82,8 @@ async function computeTargetSyncDate(supplier: string): Promise<Date> {
 }
 
 export function startOrderSyncWorker(): void {
-  let isRunning = false;
+  /** null — свободен; number — Date.now() старта текущего цикла */
+  let runStartedAt: number | null = null;
 
   logger.info('[orderSyncWorker] Worker started', {
     schedule: SCHEDULE,
@@ -70,14 +91,24 @@ export function startOrderSyncWorker(): void {
   });
 
   const runSyncCycle = async () => {
-    if (isRunning) {
+    if (runStartedAt !== null) {
+      const elapsedMs = Date.now() - runStartedAt;
+
+      if (elapsedMs < STALE_RUN_THRESHOLD_MS) {
+        logger.warn(
+          '[orderSyncWorker] Skip cycle: previous run is still in progress',
+          { elapsedMs }
+        );
+        return;
+      }
+
       logger.warn(
-        '[orderSyncWorker] Skip cycle: previous run is still in progress'
+        '[orderSyncWorker] Previous run stale — force-resetting mutex',
+        { elapsedMs, staleThresholdMs: STALE_RUN_THRESHOLD_MS }
       );
-      return;
     }
 
-    isRunning = true;
+    runStartedAt = Date.now();
 
     try {
       if (mongoose.connection.readyState !== 1) {
@@ -121,7 +152,11 @@ export function startOrderSyncWorker(): void {
             targetSyncDate: targetSyncDate.toISOString(),
           });
 
-          const orders: UnifiedOrderItem[] = await handler(logger, targetSyncDate);
+          const orders: UnifiedOrderItem[] = await withTimeout(
+            handler(logger, targetSyncDate),
+            SUPPLIER_HANDLER_TIMEOUT_MS,
+            supplier
+          );
 
           logger.info('[orderSyncWorker] Supplier fetch success', {
             supplier,
@@ -168,7 +203,7 @@ export function startOrderSyncWorker(): void {
         stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
-      isRunning = false;
+      runStartedAt = null;
     }
   };
 
