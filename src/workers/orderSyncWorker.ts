@@ -1,12 +1,16 @@
-import cron from 'node-cron';
-import mongoose from 'mongoose';
 import axios from 'axios';
+import mongoose from 'mongoose';
+import cron from 'node-cron';
 import { logger } from '../config/logger/index.js';
+import { Order } from '../models/Order.js';
 import { syncOrdersBatch } from '../services/db/orderSyncRepository.js';
 import { orderHandlers } from '../services/orders/orderHandlers.js';
-import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
-import { Order } from '../models/Order.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
+import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
+
+setInterval(() => {
+  logger.debug('[PULSE] Event loop is alive, memory:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+}, 60000); // Раз в минуту
 
 const ACTIVE_STATUSES = ['pending', 'work', 'shipping'] as const;
 const BUFFER_DAYS = 2;
@@ -16,7 +20,8 @@ const EMPTY_DB_LOOKBACK_DAYS = 90;
 
 
 /** Cron: at :00 only in hours 0-7 and 19-23 (no runs 8:00-18:59 server time) */
-const SCHEDULE = '0 0-7,19-23 * * *';
+// const SCHEDULE = '0 0-7,19-23 * * *';
+const SCHEDULE = '*/15 * * * *';
 /** Max random delay before cycle start (ms), to spread load and avoid thundering herd */
 const MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
 /** Таймаут на один handler поставщика — при превышении AbortController.abort() прерывает HTTP-сокеты */

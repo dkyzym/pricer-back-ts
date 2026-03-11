@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
+import { logger } from '../../../config/logger/index.js';
 
 // --- Constants & Types ---
 
@@ -229,8 +230,9 @@ export const parseAbcpHtml = (
   supplier: string
 ): UnifiedOrderItem[] => {
   if (!html) return [];
-
+  logger.debug(`[Cheerio] Loading HTML size: ${html.length} bytes for ${supplier}`);
   const $ = cheerio.load(html);
+  logger.debug(`[Cheerio] HTML parsed for ${supplier}`);
 
   // Список стратегий. Порядок важен, если есть риск ложных срабатываний,
   // но здесь мы проверяем конкретные селекторы внутри стратегий.

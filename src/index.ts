@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import { CLIENT_BUILD_PATH, corsOptions } from './config/index.js';
+import { logger } from './config/logger/index.js';
 import { morganMiddleware } from './config/logger/morganMiddleware.js';
 import { helloController } from './controllers/helloController.js';
 import { startServer } from './server/startServer.js';
@@ -19,6 +20,19 @@ import { startAllBrandsSyncWorker } from './workers/allBrandsSyncWorker.js';
 import { startOrderSyncWorker } from './workers/orderSyncWorker.js';
 
 dotenv.config();
+
+// === ГЛОБАЛЬНЫЕ ПЕРЕХВАТЧИКИ ОШИБОК ===
+// Ставим их до создания инстанса express и до любых async вызовов
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('[CRITICAL] Unhandled Rejection at promise:', { promise, reason });
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('[CRITICAL] Uncaught Exception:', error);
+  // В нормальном проде тут должен быть process.exit(1) для перезапуска контейнера/PM2.
+  // Но пока мы охотимся на плавающий баг — просто логируем, чтобы успеть прочитать.
+});
+// ======================================
 
 const distPath = path.resolve(process.cwd(), CLIENT_BUILD_PATH);
 
