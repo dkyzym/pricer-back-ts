@@ -242,7 +242,8 @@ function getNextPagePath(html: string, currentPath: string): string | null {
 
 export async function fetchAvtoPartnerOrders(
   logger: Logger,
-  targetSyncDate: Date
+  targetSyncDate: Date,
+  signal?: AbortSignal
 ): Promise<UnifiedOrderItem[]> {
   const ordersPath = process.env.AVTOPARTNER_ORDERS_PATH;
   if (!ordersPath)
@@ -264,7 +265,7 @@ export async function fetchAvtoPartnerOrders(
     let stopReason: 'last_seen' | 'date_limit' | null = null;
     pageCount++;
     const url = currentPath;
-    const response = await clientAvtoPartner.get(url);
+    const response = await clientAvtoPartner.get(url, { signal });
     const html = response.data as string;
     const rows = parseHistoryPageHtml(html);
 
@@ -305,7 +306,7 @@ export async function fetchAvtoPartnerOrders(
       ? new URL(summary.userOrderUrl).pathname
       : summary.userOrderUrl;
     try {
-      const res = await clientAvtoPartner.get(orderPath);
+      const res = await clientAvtoPartner.get(orderPath, { signal });
       const items = parseOrderDetailsHtml(res.data as string, summary);
       allItems.push(...items);
     } catch (err) {

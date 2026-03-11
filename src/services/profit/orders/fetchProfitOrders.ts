@@ -99,7 +99,8 @@ const withRetry = async <T>(
  */
 const performLogin = async (
   client: ProfitClient,
-  logger: Logger
+  logger: Logger,
+  signal?: AbortSignal
 ): Promise<void> => {
   const { PROFIT_LOGIN: email, PROFIT_PASSWORD: password } = process.env;
 
@@ -111,7 +112,7 @@ const performLogin = async (
 
   try {
     // 1. Получаем CSRF токен
-    const { data: html } = await client.get(`${CONFIG.siteUrl}/login`);
+    const { data: html } = await client.get(`${CONFIG.siteUrl}/login`, { signal });
     const $ = cheerio.load(html);
     const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
 
@@ -129,6 +130,7 @@ const performLogin = async (
         Referer: `${CONFIG.siteUrl}/login`,
       },
       maxRedirects: 5,
+      signal,
     });
 
     if (!data.includes('Оптовый клиент')) {
@@ -148,13 +150,15 @@ const performLogin = async (
 const switchContext = async (
   client: ProfitClient,
   org: Organization,
-  logger: Logger
+  logger: Logger,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
     await client.get(
       `${CONFIG.siteUrl}/account/legals/select/id/${org.switchId}`,
       {
         maxRedirects: 5,
+        signal,
       }
     );
     logger.debug(`[profit] Switched context to ${chalk.cyan(org.name)}`);
@@ -170,12 +174,13 @@ const switchContext = async (
  */
 const fetchOrders = async (
   client: ProfitClient,
-  secret: string
+  secret: string,
+  signal?: AbortSignal
 ): Promise<ProfitGetOrdersResponse> => {
   const params = { secret, action: 'list', page: 1 };
   const { data } = await client.get<ProfitGetOrdersResponse>(
     `${CONFIG.baseUrl}/orders/list`,
-    { params }
+    { params, signal }
   );
   return data;
 };
@@ -184,7 +189,8 @@ const fetchOrders = async (
 
 export const fetchProfitOrders = async (
   logger: Logger,
-  targetSyncDate: Date
+  targetSyncDate: Date,
+  signal?: AbortSignal
 ): Promise<ProfitGetOrdersResponse> => {
   const secret = process.env.PROFIT_API_KEY;
   if (!secret) throw new Error('PROFIT_API_KEY is missing');
@@ -192,7 +198,7 @@ export const fetchProfitOrders = async (
   const client = createClient();
 
   // Инициализация сессии
-  await performLogin(client, logger);
+  await performLogin(client, logger, signal);
 
   // Аккумулятор результатов
   const result: ProfitGetOrdersResponse = {
@@ -214,7 +220,7 @@ export const fetchProfitOrders = async (
     try {
       // 1. Переключаем
       await withRetry(
-        () => switchContext(client, org, logger),
+        () => switchContext(client, org, logger, signal),
         2,
         1000,
         logger
@@ -225,7 +231,7 @@ export const fetchProfitOrders = async (
 
       // 3. Забираем данные с ретраями
       const response = await withRetry(
-        () => fetchOrders(client, secret),
+        () => fetchOrders(client, secret, signal),
         CONFIG.maxRetries,
         2000,
         logger

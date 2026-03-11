@@ -23,8 +23,13 @@ import { fetchAvtoPartnerOrders } from '../avtopartner/ordersAvtoPartnerService.
 
 // --- Types ---
 
-type OrderHandler = (logger: Logger, targetSyncDate: Date) => Promise<UnifiedOrderItem[]>;
-type FetcherStrategy<T> = (logger: Logger, targetSyncDate: Date) => Promise<T>;
+/**
+ * signal (AbortSignal) — позволяет воркеру каскадно прерывать HTTP-запросы
+ * при таймауте поставщика или abort stale-цикла.
+ * Каждый fetcher должен пробрасывать signal в axios config ({ signal }).
+ */
+type OrderHandler = (logger: Logger, targetSyncDate: Date, signal?: AbortSignal) => Promise<UnifiedOrderItem[]>;
+type FetcherStrategy<T> = (logger: Logger, targetSyncDate: Date, signal?: AbortSignal) => Promise<T>;
 type MapperStrategy<T> = (data: T) => UnifiedOrderItem[];
 
 // --- 1. Functional Middleware (Monitoring & Error Handling) ---
@@ -35,12 +40,12 @@ type MapperStrategy<T> = (data: T) => UnifiedOrderItem[];
  */
 const withMonitoring = (
   alias: string,
-  fn: (logger: Logger, targetSyncDate: Date) => Promise<UnifiedOrderItem[]>
+  fn: OrderHandler
 ): OrderHandler => {
-  return async (logger: Logger, targetSyncDate: Date) => {
+  return async (logger: Logger, targetSyncDate: Date, signal?: AbortSignal) => {
     logger.debug(`[${alias}] Starting fetch...`, { supplier: alias, targetSyncDate: targetSyncDate.toISOString() });
     try {
-      const result = await fn(logger, targetSyncDate);
+      const result = await fn(logger, targetSyncDate, signal);
       logger.info(`[${alias}] Fetched ${result.length} orders`, {
         supplier: alias,
         count: result.length,
@@ -62,8 +67,8 @@ const createApiHandler = <T>(
   fetcher: FetcherStrategy<T>,
   mapper: MapperStrategy<T>
 ): OrderHandler => {
-  const handler = async (logger: Logger, targetSyncDate: Date) => {
-    const rawData = await fetcher(logger, targetSyncDate);
+  const handler: OrderHandler = async (logger, targetSyncDate, signal) => {
+    const rawData = await fetcher(logger, targetSyncDate, signal);
     return mapper(rawData);
   };
   return withMonitoring(alias, handler);
@@ -120,7 +125,8 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 
   const service = createAbcpOrderService(smartClient, parseAbcpHtml);
 
-  const handler = async (logger: Logger, targetSyncDate: Date) => {
+  // TODO: пробросить signal внутрь service.syncSupplier для отмены парсинг-запросов
+  const handler: OrderHandler = async (logger, targetSyncDate, _signal) => {
     return service.syncSupplier(config.serviceConfig, logger, targetSyncDate);
   };
 
@@ -133,28 +139,28 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 const createAbcp = (alias: AbcpSupplierAlias) =>
   createApiHandler(
     alias,
-    (_logger, targetSyncDate) => fetchAbcpOrders(alias, { format: 'p' }, targetSyncDate),
+    (_logger, targetSyncDate, signal) => fetchAbcpOrders(alias, { format: 'p' }, targetSyncDate, signal),
     (data) => mapAbcpOrdersToUnified(data, alias)
   );
 
 const createAutosputnik = (alias: 'autosputnik' | 'autosputnik_bn') =>
   createApiHandler(
     alias,
-    (logger, targetSyncDate) => fetchAutosputnikOrders(alias, logger, targetSyncDate),
+    (logger, targetSyncDate, signal) => fetchAutosputnikOrders(alias, logger, targetSyncDate, signal),
     (data) => mapAutosputnikOrdersToUnified(data, alias)
   );
 
 const createProfit = () =>
   createApiHandler(
     'profit',
-    (logger, targetSyncDate) => fetchProfitOrders(logger, targetSyncDate),
+    (logger, targetSyncDate, signal) => fetchProfitOrders(logger, targetSyncDate, signal),
     (data) => mapProfitOrdersToUnified(data, 'profit')
   );
 
 const createTurboCars = () =>
   createApiHandler(
     'turboCars',
-    fetchTurboCarsOrders,
+    (logger, targetSyncDate, signal) => fetchTurboCarsOrders(logger, targetSyncDate, signal),
     (data) => mapTurboCarsOrdersToUnified(data, 'turboCars')
   );
 
@@ -185,7 +191,7 @@ const autoImpulseHandler = createParserHandler({
 
 const avtoPartnerHandler = withMonitoring(
   'avtoPartner',
-  (logger, targetSyncDate) => fetchAvtoPartnerOrders(logger, targetSyncDate)
+  (logger, targetSyncDate, signal) => fetchAvtoPartnerOrders(logger, targetSyncDate, signal)
 );
 
 // --- Exports ---

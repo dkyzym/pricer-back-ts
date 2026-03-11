@@ -17,7 +17,8 @@ const formatDateForAbcp = (date: Date): string => {
 export const fetchAbcpOrders = async (
   supplier: AbcpSupplierAlias,
   queryParams: FetchOrdersParams = {},
-  targetSyncDate?: Date
+  targetSyncDate?: Date,
+  signal?: AbortSignal
 ): Promise<AbcpOrdersResponse> => {
   const axiosInstance = await getAxiosInstance(supplier);
 
@@ -34,6 +35,7 @@ export const fetchAbcpOrders = async (
     {
       params,
       timeout: 60_000,
+      signal,
     }
   );
 

@@ -17,7 +17,8 @@ const formatDateForTurboCars = (date: Date): string => {
  */
 export const fetchTurboCarsOrders = async (
   logger: Logger,
-  targetSyncDate: Date
+  targetSyncDate: Date,
+  signal?: AbortSignal
 ): Promise<TurboCarsOrderRaw[]> => {
   const baseUrl = process.env.TURBOCARS_BASE_URL || 'https://turbo-cars.ru/api';
   const token = process.env.TURBOCARS_API_TOKEN;
@@ -53,6 +54,7 @@ export const fetchTurboCarsOrders = async (
         params,
         headers,
         timeout: 60_000,
+        signal,
       });
 
       const data = response.data;

@@ -12,7 +12,8 @@ import { BASE_URL, getToken, tokenCache } from '../autosputnikApi.js';
 export const fetchAutosputnikOrders = async (
   supplier: 'autosputnik' | 'autosputnik_bn',
   logger: Logger,
-  targetSyncDate: Date
+  targetSyncDate: Date,
+  signal?: AbortSignal
 ): Promise<AutosputnikGetOrdersResponse> => {
   // 1. Получаем токен (кеш или новый запрос)
   let token: string;
@@ -39,7 +40,7 @@ export const fetchAutosputnikOrders = async (
     return axios.post<AutosputnikGetOrdersResponse>(
       `${BASE_URL}/order/get`,
       payload,
-      { headers: { Authorization: `Bearer ${authToken}` } }
+      { headers: { Authorization: `Bearer ${authToken}` }, signal }
     );
   };
 
