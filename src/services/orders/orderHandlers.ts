@@ -12,6 +12,7 @@ import { UnifiedOrderItem } from './orders.types.js';
 
 import { parseAbcpHtml } from '../abcp/parser/AbcpOrderParser.js';
 import {
+  AbcpRequestOptions,
   createAbcpOrderService,
   IAbcpClientWrapper,
   SupplierConfigABCP,
@@ -86,20 +87,21 @@ interface ParserConfig {
 /**
  * Создает прокси-клиент для перехвата запросов.
  * Явно выделяем логику блокировки пагинации и инъекции заголовков.
+ * Signal прозрачно прокидывается из options в baseClient.
  */
 const createConfiguredClient = (
   baseClient: IAbcpClientWrapper,
   strategy: ParserConfig['paginationStrategy']
 ): IAbcpClientWrapper => {
   return {
-    makeRequest: async (url, options = {}) => {
+    makeRequest: async (url, options: AbcpRequestOptions = {}) => {
       // Logic Guard: Блокируем запросы глубже первой страницы для flat-листов
       if (
         strategy === 'block_subsequent_pages' &&
-        (options.params?.start ?? 0) > 0
+        Number(options.params?.start ?? 0) > 0
       ) {
         return {
-          data: '', // Empty HTML response
+          data: '',
           status: 200,
           statusText: 'OK',
           headers: {},
@@ -107,7 +109,6 @@ const createConfiguredClient = (
         };
       }
 
-      // Header Injection
       const mergedHeaders = { ...ugHeaders, ...(options.headers || {}) };
       return baseClient.makeRequest(url, {
         ...options,
@@ -125,9 +126,8 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
 
   const service = createAbcpOrderService(smartClient, parseAbcpHtml);
 
-  // TODO: пробросить signal внутрь service.syncSupplier для отмены парсинг-запросов
-  const handler: OrderHandler = async (logger, targetSyncDate, _signal) => {
-    return service.syncSupplier(config.serviceConfig, logger, targetSyncDate);
+  const handler: OrderHandler = async (logger, targetSyncDate, signal) => {
+    return service.syncSupplier(config.serviceConfig, logger, targetSyncDate, signal);
   };
 
   return withMonitoring(config.alias, handler);

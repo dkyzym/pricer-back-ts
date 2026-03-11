@@ -14,6 +14,7 @@ import {
 import { checkIsLoggedIn } from '../../../utils/auth/checkIsLoggedIn.js';
 import { transformArticleByBrand } from '../../../utils/data/brand/transformArticleByBrand.js';
 import { parsePickedABCPresults } from '../../../utils/parsePickedABCPresults.js';
+import type { AbcpRequestOptions } from './abcpOrderServiceParser.js';
 
 export interface AbcpClientConfig {
   supplierName: string;
@@ -58,11 +59,16 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
   axiosRetry(client, {
     retries: 3,
     retryDelay: axiosRetry.exponentialDelay,
-    retryCondition: (error) =>
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      error.code === 'ECONNRESET' ||
-      error.code === 'ETIMEDOUT' ||
-      error.message?.includes('socket disconnected'),
+    retryCondition: (error) => {
+      // CanceledError (ERR_CANCELED) — штатная отмена через AbortSignal, повторять нельзя
+      if (error.code === 'ERR_CANCELED') return false;
+      return (
+        axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        error.code === 'ECONNRESET' ||
+        error.code === 'ETIMEDOUT' ||
+        error.message?.includes('socket disconnected')
+      );
+    },
     onRetry: (retryCount, error) => {
       logger.warn(
         `[${config.supplierName}] Retry ${retryCount}/3: ${error.message}`
@@ -74,13 +80,13 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
   const loginQueue: (() => void)[] = [];
   // ---
 
-  const login = async (): Promise<boolean> => {
+  const login = async (signal?: AbortSignal): Promise<boolean> => {
     const { supplierName, baseUrl, credentials, loggedInIndicator } = config;
     const data = new URLSearchParams();
     data.append('login', credentials.username!);
     data.append('pass', credentials.password!);
 
-    const response = await client.post(baseUrl, data, { headers: ugHeaders });
+    const response = await client.post(baseUrl, data, { headers: ugHeaders, signal });
     const cookies = await cookieJar.getCookies(baseUrl);
     if (!cookies.some((cookie) => cookie.key === 'ABCPUser')) {
       throw new Error(`Missing ABCPUser cookie for ${supplierName}`);
@@ -90,7 +96,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     return true;
   };
 
-  const ensureLoggedIn = async (forceLogin = false): Promise<void> => {
+  const ensureLoggedIn = async (forceLogin = false, signal?: AbortSignal): Promise<void> => {
     const { supplierName, baseUrl } = config;
     const cookies = await cookieJar.getCookies(baseUrl);
     const abcUserCookie = cookies.find((cookie) => cookie.key === 'ABCPUser');
@@ -107,7 +113,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
           if (forceLogin) {
             await cookieJar.removeAllCookies();
           }
-          await login();
+          await login(signal);
         } finally {
           isLoggingIn = false;
           loginQueue.forEach((resolve) => resolve());
@@ -119,19 +125,23 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
 
   const makeRequest = async (
     url: string,
-    options: any = {}
+    options: AbcpRequestOptions = {}
   ): Promise<AxiosResponse> => {
-    await ensureLoggedIn();
+    const { signal } = options;
+    await ensureLoggedIn(false, signal);
 
     let response: AxiosResponse;
     try {
       response = await client.get(url, options);
     } catch (error: any) {
+      // CanceledError не должен вызывать ре-логин — пробрасываем сразу
+      if (axios.isCancel(error)) throw error;
+
       if (error.response?.status === 401) {
         logger.info(
           `401 received for ${config.supplierName}, entering login queue...`
         );
-        await ensureLoggedIn(true);
+        await ensureLoggedIn(true, signal);
         return client.get(url, options);
       }
       throw error;
@@ -142,7 +152,7 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
       logger.info(
         `Session expired for ${config.supplierName}, entering login queue...`
       );
-      await ensureLoggedIn(true);
+      await ensureLoggedIn(true, signal);
       response = await client.get(url, options);
     }
 

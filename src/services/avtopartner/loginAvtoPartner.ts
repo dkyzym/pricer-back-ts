@@ -12,7 +12,7 @@ const supplier = 'avtoPartner';
  * Проверяет, активна ли текущая сессия avtopartner-yug.ru.
  * Критерий: есть куки и на главной странице есть ссылка «Аккаунт».
  */
-const checkIsLoggedIn = async (): Promise<boolean> => {
+const checkIsLoggedIn = async (signal?: AbortSignal): Promise<boolean> => {
   const cookies = await cookieJarAvtoPartner.getCookies(baseURL);
   if (cookies.length === 0) {
     logger.debug(`[${supplier}] checkIsLoggedIn: куки пустые → не залогинен`);
@@ -20,7 +20,7 @@ const checkIsLoggedIn = async (): Promise<boolean> => {
   }
 
   try {
-    const response = await clientAvtoPartner.get(baseURL);
+    const response = await clientAvtoPartner.get(baseURL, { signal });
     const $ = cheerio.load(response.data);
     const hasAccountLink = $('a.header-middle__link--login:contains("Аккаунт")').length > 0;
     logger.debug(`[${supplier}] checkIsLoggedIn: найден Аккаунт = ${hasAccountLink}`);
@@ -34,7 +34,7 @@ const checkIsLoggedIn = async (): Promise<boolean> => {
  * Выполняет вход на сайт с использованием .env-переменных.
  * Возвращает true, если вход выполнен успешно.
  */
-export const loginAvtoPartner = async (): Promise<boolean> => {
+export const loginAvtoPartner = async (signal?: AbortSignal): Promise<boolean> => {
   const login = process.env.AVTOPARTNER_LOGIN;
   const password = process.env.AVTOPARTNER_PASSWORD;
 
@@ -49,7 +49,7 @@ export const loginAvtoPartner = async (): Promise<boolean> => {
 
   try {
     logger.info(`[${supplier}] 1/3: Получение страницы входа...`);
-    const loginPageResponse = await clientAvtoPartner.get('/user/login');
+    const loginPageResponse = await clientAvtoPartner.get('/user/login', { signal });
     const $ = cheerio.load(loginPageResponse.data);
     const formBuildId = $('input[name="form_build_id"]').val();
 
@@ -73,10 +73,11 @@ export const loginAvtoPartner = async (): Promise<boolean> => {
         Referer: `${baseURL}/user/login`,
       },
       maxRedirects: 5,
+      signal,
     });
 
     logger.info(`[${supplier}] 3/3: Проверка входа...`);
-    const isLoggedIn = await checkIsLoggedIn();
+    const isLoggedIn = await checkIsLoggedIn(signal);
     if (isLoggedIn) {
       logger.info(chalk.green(`✅ [${supplier}] Вход выполнен успешно!`));
     } else {
@@ -98,8 +99,8 @@ const loginQueue: ((success: boolean) => void)[] = [];
  * Гарантирует, что перед запросом клиент авторизован.
  * Если кто-то уже логинится — ждёт завершения.
  */
-export const ensureAvtoPartnerLoggedIn = async () => {
-  const isLoggedIn = await checkIsLoggedIn();
+export const ensureAvtoPartnerLoggedIn = async (signal?: AbortSignal) => {
+  const isLoggedIn = await checkIsLoggedIn(signal);
 
   if (!isLoggedIn) {
     if (isLoggingIn) {
@@ -111,7 +112,7 @@ export const ensureAvtoPartnerLoggedIn = async () => {
       let success = false;
       try {
         logger.warn(chalk.yellow(`[${supplier}] Сессия неактивна — выполняем вход...`));
-        success = await loginAvtoPartner();
+        success = await loginAvtoPartner(signal);
         loginQueue.forEach((resolve) => resolve(success));
       } finally {
         isLoggingIn = false;

@@ -6,8 +6,14 @@ import { AbcpParserFn } from './AbcpOrderParser.js';
 
 // --- Types ---
 
+export interface AbcpRequestOptions {
+  params?: Record<string, string | number>;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
 export interface IAbcpClientWrapper {
-  makeRequest: (url: string, options?: any) => Promise<AxiosResponse>;
+  makeRequest: (url: string, options?: AbcpRequestOptions) => Promise<AxiosResponse>;
 }
 
 export interface SupplierConfigABCP {
@@ -31,7 +37,24 @@ const DELAY_MAX_MS = 1000;
 
 // --- Helpers (Pure) ---
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Задержка с каскадной отменой через AbortSignal.
+ * При abort() очищает таймер, чтобы не блокировать Event Loop.
+ */
+const abortableDelay = (ms: number, signal?: AbortSignal): Promise<void> => {
+  if (!signal) return delay(ms);
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) { reject(signal.reason); return; }
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => { clearTimeout(timer); reject(signal.reason); };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+};
 
 const getRandomDelay = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1) + min);
@@ -87,11 +110,12 @@ const fetchSinglePage = async (
   config: SupplierConfigABCP,
   start: number,
   dateRange: string,
-  logger: Logger
+  logger: Logger,
+  signal?: AbortSignal
 ) => {
   try {
     const params = buildParams(config, dateRange, start);
-    const response = await deps.client.makeRequest(config.baseUrl, { params });
+    const response = await deps.client.makeRequest(config.baseUrl, { params, signal });
     const html = response.data;
 
     const items = deps.parser(html, config.key);
@@ -110,6 +134,7 @@ const fetchPagesRecursive = async (
   config: SupplierConfigABCP,
   dateRange: string,
   logger: Logger,
+  signal?: AbortSignal,
   start: number = 0,
   accumulator: UnifiedOrderItem[] = []
 ): Promise<UnifiedOrderItem[]> => {
@@ -126,7 +151,7 @@ const fetchPagesRecursive = async (
   // Это снижает нагрузку на сервер поставщика и риск бана.
   if (start > 0) {
     const waitTime = getRandomDelay(DELAY_MIN_MS, DELAY_MAX_MS);
-    await delay(waitTime);
+    await abortableDelay(waitTime, signal);
   }
 
   // 3. Fetch & Parse
@@ -135,7 +160,8 @@ const fetchPagesRecursive = async (
     config,
     start,
     dateRange,
-    logger
+    logger,
+    signal
   );
 
   // 4. Stop Conditions
@@ -144,7 +170,6 @@ const fetchPagesRecursive = async (
     return accumulator;
   }
 
-  // Оптимизация: если элементов меньше страницы, значит это конец
   if (items.length < PAGE_SIZE) {
     return [...accumulator, ...items];
   }
@@ -155,6 +180,7 @@ const fetchPagesRecursive = async (
     config,
     dateRange,
     logger,
+    signal,
     start + PAGE_SIZE,
     [...accumulator, ...items]
   );
@@ -173,7 +199,8 @@ export const createAbcpOrderService = (
   const syncSupplier = async (
     config: SupplierConfigABCP,
     logger: Logger,
-    targetSyncDate: Date
+    targetSyncDate: Date,
+    signal?: AbortSignal
   ): Promise<UnifiedOrderItem[]> => {
     const diffMs = Date.now() - targetSyncDate.getTime();
     const calculatedDays = Math.ceil(diffMs / (1000 * 3600 * 24));
@@ -191,7 +218,8 @@ export const createAbcpOrderService = (
         { client, parser },
         config,
         dateRange,
-        logger
+        logger,
+        signal
       );
 
       logger.info(

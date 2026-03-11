@@ -249,7 +249,7 @@ export async function fetchAvtoPartnerOrders(
   if (!ordersPath)
     throw new Error('[avtoPartner] AVTOPARTNER_ORDERS_PATH не задан в .env');
 
-  await ensureAvtoPartnerLoggedIn();
+  await ensureAvtoPartnerLoggedIn(signal);
 
   const lastOrder = await Order.findOne({ supplier: SUPPLIER_KEY })
     .sort({ providerCreatedAt: -1 })
