@@ -60,13 +60,22 @@ export const suppliers: Record<string, SupplierConfig> = {
 };
 
 // --- Настройки прокси ---
-export const PROXY_HOST = getEnvVar('PROXY_HOST');
-const proxyPortStr = getEnvVar('PROXY_PORT');
-export const PROXY_PORT = parseInt(proxyPortStr, 10);
-export const PROXY_AUTH = process.env.PROXY_AUTH || ''; // Для PROXY_AUTH пустая строка может быть валидным значением
+// 'off'  — прокси не используется (машина, на которой прокси и так локальный)
+// 'on'   — прокси используется безусловно
+// 'auto' — решение по os.networkInterfaces() без внешних HTTP-запросов
+export const PROXY_MODE = (process.env.PROXY_MODE || 'auto') as
+  | 'off'
+  | 'on'
+  | 'auto';
 
-// Проверяем, что порт является корректным числом
-if (isNaN(PROXY_PORT)) {
+export const PROXY_HOST =
+  PROXY_MODE !== 'off' ? getEnvVar('PROXY_HOST') : (process.env.PROXY_HOST ?? '');
+const proxyPortStr =
+  PROXY_MODE !== 'off' ? getEnvVar('PROXY_PORT') : (process.env.PROXY_PORT ?? '0');
+export const PROXY_PORT = parseInt(proxyPortStr, 10);
+export const PROXY_AUTH = process.env.PROXY_AUTH || '';
+
+if (PROXY_MODE !== 'off' && isNaN(PROXY_PORT)) {
   throw new Error(
     `Переменная окружения "PROXY_PORT" должна быть числом. Получено: "${proxyPortStr}"`
   );

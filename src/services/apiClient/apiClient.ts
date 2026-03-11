@@ -7,65 +7,78 @@ import axios, {
 import axiosRetry, { isNetworkOrIdempotentRequestError } from 'axios-retry';
 import chalk from 'chalk';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import os from 'os';
 
 import {
   PROXY_AUTH,
   PROXY_HOST,
+  PROXY_MODE,
   PROXY_PORT,
   suppliers,
 } from '../../config/api/config.js';
 import { logger } from '../../config/logger/index.js';
 
 import { SupplierName } from '../../types/common.types.js';
-import { checkProxy } from '../../utils/api/checkProxy.js';
 import { generateMD5 } from '../../utils/generateMD5.js';
-import { getLocalIP } from '../../utils/getLocalIP.js';
 
-// 1. Храним ПРОМИС инициализации, а не просто boolean.
-// Это позволит любым параллельным запросам дождаться одной и той же проверки.
 let proxyInitPromise: Promise<boolean> | null = null;
 
-// 2. Кэш инстансов. Экономим память и переиспользуем TCP-соединения (keepAlive)
 const axiosInstancesCache = new Map<SupplierName, AxiosInstance>();
 
 /**
- * Инициализирует проверку прокси. Можно вызывать сколько угодно раз,
- * реальная проверка пройдет только один раз.
+ * Проверяет, принадлежит ли IP одному из локальных сетевых интерфейсов.
+ * Используется в auto-режиме вместо внешнего api.ipify.org —
+ * если PROXY_HOST совпадает с адресом нашей машины, прокси не нужен.
+ */
+const isLocalIP = (targetIP: string): boolean => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] ?? []) {
+      if (iface.address === targetIP) return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Определяет необходимость использования прокси.
+ *
+ * PROXY_MODE (env):
+ * - 'off'  — прокси не используется (для машины, где прокси локальный)
+ * - 'on'   — прокси используется безусловно
+ * - 'auto' — решение по os.networkInterfaces(), без внешних HTTP-запросов
  */
 export const initProxyCheck = (): Promise<boolean> => {
   if (!proxyInitPromise) {
     proxyInitPromise = (async () => {
-      try {
-        const localIP = await getLocalIP();
-
-        if (localIP === PROXY_HOST) {
-          logger.info(
-            `Текущий IP (${localIP}) = PROXY_HOST. Прокси использовать не будем.`
-          );
-          return false;
-        }
-
-        const proxyAuthPart = PROXY_AUTH ? `${PROXY_AUTH}@` : '';
-        const proxyUrl = `http://${proxyAuthPart}${PROXY_HOST}:${PROXY_PORT}`;
-        const agent = new HttpsProxyAgent(proxyUrl, { keepAlive: true });
-
-        const isProxyWorking = await checkProxy(agent);
-
-        if (!isProxyWorking) {
-          logger.error(
-            chalk.red(`Прокси ${proxyUrl} не работает, возможны отказы.`)
-          );
-        } else {
-          logger.info(
-            chalk.green(`Прокси ${proxyUrl} живой, будем использовать.`)
-          );
-        }
-
-        return isProxyWorking;
-      } catch (error) {
-        logger.error('Критическая ошибка при проверке прокси', { error });
-        return false; // Fallback: без прокси
+      if (PROXY_MODE === 'off') {
+        logger.info('PROXY_MODE=off — прокси не используется.');
+        return false;
       }
+
+      if (PROXY_MODE === 'on') {
+        logger.info(
+          chalk.green(
+            `PROXY_MODE=on — прокси ${PROXY_HOST}:${PROXY_PORT} используется принудительно.`
+          )
+        );
+        return true;
+      }
+
+      // auto: определяем локально, без обращения к внешним API
+      if (isLocalIP(PROXY_HOST)) {
+        logger.info(
+          `PROXY_HOST (${PROXY_HOST}) найден среди локальных интерфейсов — прокси не нужен.`
+        );
+        return false;
+      }
+
+      logger.info(
+        chalk.green(
+          `PROXY_HOST (${PROXY_HOST}) не найден локально — будем использовать прокси.`
+        )
+      );
+      return true;
     })();
   }
   return proxyInitPromise;
