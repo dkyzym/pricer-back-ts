@@ -6,6 +6,7 @@ import { logger } from '../../config/logger/index.js';
 import { ParallelSearchParams, SearchResultsParsed } from '../../types/search.types.js';
 import { calculateDeliveryDate } from '../../utils/calculateDates/calculateDeliveryDate.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
+import { yieldToEventLoop } from '../../utils/yieldToEventLoop.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
 
@@ -110,6 +111,8 @@ export const itemDataAvtoPartnerService = async ({
       maxRedirects: 5,
     });
 
+    await yieldToEventLoop();
+
     const $ = cheerio.load(response.data);
 
     // 3️⃣ Проверяем: это страница с одной карточкой?
@@ -130,12 +133,13 @@ export const itemDataAvtoPartnerService = async ({
     // 4️⃣ Парсим карточки и фильтруем по бренду/артикулу
     productCards.each((_, element) => {
       const parsed = parseProductCard($, element);
-      if (!parsed) return;
+      if (!parsed) return; // Причина отбраковки уже записана в лог внутри parseProductCard
 
       const brandMatch = isRelevantBrand(item.brand, parsed.brand);
       const articleMatch =
         normalizeForComparison(parsed.article) === normalizedSearchArticle;
       const needToCheckBrand = isRelevantBrand(item.brand, parsed.brand);
+
 
       if (brandMatch && articleMatch) {
         results.push({

@@ -30,4 +30,5 @@ export const brandGroupsMap = [
   ['ника', 'ника антас'],
   ['лукойл', 'lukoil'],
   ['вымпел', 'орион', 'нпп орион'],
+  ['волга-ойл', 'volga-oil','volga oil'],
 ];
