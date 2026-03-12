@@ -118,7 +118,7 @@ const fetchSinglePage = async (
     const response = await deps.client.makeRequest(config.baseUrl, { params, signal });
     const html = response.data;
 
-    const items = deps.parser(html, config.key);
+    const items = await deps.parser(html, config.key);
     return { items, html };
   } catch (error) {
     logger.error(

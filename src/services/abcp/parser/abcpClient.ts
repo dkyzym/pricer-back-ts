@@ -14,6 +14,7 @@ import {
 import { checkIsLoggedIn } from '../../../utils/auth/checkIsLoggedIn.js';
 import { transformArticleByBrand } from '../../../utils/data/brand/transformArticleByBrand.js';
 import { parsePickedABCPresults } from '../../../utils/parsePickedABCPresults.js';
+import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
 import type { AbcpRequestOptions } from './abcpOrderServiceParser.js';
 
 export interface AbcpClientConfig {
@@ -173,41 +174,47 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
 
     const searchUrl = `${baseUrl}/search?pcode=${encodeURIComponent(articleToSearch)}`;
     const response = await makeRequest(searchUrl, { headers: ugHeaders });
-    const $ = cheerio.load(response.data);
-    const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(
-      articleToSearch
-    )}`;
-
-    const elements = $('.startSearching').filter((i, el) => {
-      const dataLink = $(el).attr('data-link') || '';
-
-      return (
-        dataLink.toLowerCase() === `/search/${dataLinkContent.toLowerCase()}`
-      );
-    });
 
     let finalHtml: string;
-    if ($('.searchResultsTableWrapper').length > 0) {
+
+    // Быстрая строковая проверка вместо cheerio.load() для Branch A (самый частый путь).
+    // Экономим ~20-80ms синхронной блокировки Event Loop на каждый поиск.
+    if (response.data.includes('searchResultsTableWrapper')) {
       userLogger.info(
         `[${supplier}] DEBUG: Branch A (Direct Page). Passing to parser.`
       );
-      finalHtml = response.data; // Эта страница - уже то, что нам нужно
-    }
-    // Иначе, это страница со списком
-    else if (elements.length > 0) {
-      userLogger.info(
-        `[${supplier}] DEBUG: Branch B (List Page). Making 2nd request.`
-      );
-      const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
-      const detailResponse = await makeRequest(detailUrl, {
-        headers: ugHeaders,
-      });
-      finalHtml = detailResponse.data;
-    } else {
-      userLogger.info(
-        `[${supplier}] DEBUG: Branch C (No match). Passing current page to parser.`
-      );
       finalHtml = response.data;
+    } else {
+      // Branch B/C: нужен DOM-парсинг для проверки data-link атрибутов
+      await yieldToEventLoop();
+      const $ = cheerio.load(response.data);
+
+      const dataLinkContent = `${encodeURIComponent(item.brand)}/${encodeURIComponent(
+        articleToSearch
+      )}`;
+
+      const elements = $('.startSearching').filter((_i, el) => {
+        const dataLink = $(el).attr('data-link') || '';
+        return (
+          dataLink.toLowerCase() === `/search/${dataLinkContent.toLowerCase()}`
+        );
+      });
+
+      if (elements.length > 0) {
+        userLogger.info(
+          `[${supplier}] DEBUG: Branch B (List Page). Making 2nd request.`
+        );
+        const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
+        const detailResponse = await makeRequest(detailUrl, {
+          headers: ugHeaders,
+        });
+        finalHtml = detailResponse.data;
+      } else {
+        userLogger.info(
+          `[${supplier}] DEBUG: Branch C (No match). Passing current page to parser.`
+        );
+        finalHtml = response.data;
+      }
     }
 
     return parsePickedABCPresults({

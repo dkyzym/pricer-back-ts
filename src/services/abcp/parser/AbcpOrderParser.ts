@@ -1,13 +1,16 @@
 import * as cheerio from 'cheerio';
 import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
 import { logger } from '../../../config/logger/index.js';
+import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
 
 // --- Constants & Types ---
+
+const YIELD_EVERY_N_ROWS = 50;
 
 type LayoutStrategy = (
   $: cheerio.CheerioAPI,
   supplier: string
-) => UnifiedOrderItem[];
+) => Promise<UnifiedOrderItem[]>;
 
 const STATUS_MAP: Record<string, OrderStatus> = {
   // Positive / Active
@@ -84,22 +87,27 @@ const mapStatus = (raw: string): OrderStatus => {
  * Стратегия для табличной верстки (AutoImpulse и подобные).
  * Опирается на data-order-id как признак строки заказа.
  */
-const parseTableLayout: LayoutStrategy = ($, supplier) => {
+const parseTableLayout: LayoutStrategy = async ($, supplier) => {
   const rows = $('tr[data-order-id]');
   if (rows.length === 0) return [];
 
-  return rows.toArray().map((rowEl) => {
-    const $row = $(rowEl);
+  const result: UnifiedOrderItem[] = [];
+  const rowArray = rows.toArray();
+
+  for (let i = 0; i < rowArray.length; i++) {
+    if (i > 0 && i % YIELD_EVERY_N_ROWS === 0) {
+      await yieldToEventLoop();
+    }
+
+    const $row = $(rowArray[i]);
     const $tds = $row.find('td');
 
-    // Data Extraction
     const orderId = $row.attr('data-order-id') || cleanText($tds.eq(1).text());
     const dateText =
       cleanText($row.find('.wrapper-date').text()) ||
       cleanText($tds.eq(0).text());
     const brand = cleanText($tds.eq(2).text());
 
-    // Артикул: приоритет классу, фоллбэк на колонку
     const article =
       cleanText($row.find('.columnArticlePosition').text()) ||
       cleanText($tds.eq(3).text());
@@ -114,15 +122,13 @@ const parseTableLayout: LayoutStrategy = ($, supplier) => {
 
     const statusRaw = cleanText($row.find('.orderPosStatus').text());
 
-    // ID Generation
     const positionId = $row.attr('data-position-id');
-    // Используем индекс строки как соль, если нет positionId
     const rowIndex = $row.index();
     const id = positionId
       ? `${supplier}_${positionId}`
       : `${supplier}_${orderId}_${article}_${rowIndex}`;
 
-    return {
+    result.push({
       id,
       orderId,
       supplier,
@@ -136,23 +142,27 @@ const parseTableLayout: LayoutStrategy = ($, supplier) => {
       status: mapStatus(statusRaw),
       statusRaw,
       createdAt: parseDate(dateText),
-    };
-  });
+    });
+  }
+
+  return result;
 };
 
 /**
  * Стратегия для блочной верстки (Mikano).
  * Вложенная структура: Заказ -> Строки позиций.
  */
-const parseBlockLayout: LayoutStrategy = ($, supplier) => {
+const parseBlockLayout: LayoutStrategy = async ($, supplier) => {
   const orders = $('.allOrdersOrder');
   if (orders.length === 0) return [];
 
-  // flatMap позволяет развернуть структуру "Заказы -> Позиции" в плоский список "Позиции"
-  return orders.toArray().flatMap((orderEl) => {
+  const result: UnifiedOrderItem[] = [];
+  const orderArray = orders.toArray();
+  let totalRowIndex = 0;
+
+  for (const orderEl of orderArray) {
     const $order = $(orderEl);
 
-    // Header Info
     const headerInfo = cleanText(
       $order.find('.allOrdersOrder__header__info').text()
     );
@@ -161,62 +171,60 @@ const parseBlockLayout: LayoutStrategy = ($, supplier) => {
     );
     const createdAt = parseDate(headerInfo);
 
-    // Rows Processing
-    return $order
-      .find('.allOrdersOrder__row')
-      .toArray()
-      .reduce<UnifiedOrderItem[]>((acc, rowEl, index) => {
-        const $row = $(rowEl);
+    const rowArray = $order.find('.allOrdersOrder__row').toArray();
 
-        const article = cleanText(
-          $row.find('.allOrdersOrder__productNumber').text()
-        );
+    for (let index = 0; index < rowArray.length; index++) {
+      totalRowIndex++;
+      if (totalRowIndex > 0 && totalRowIndex % YIELD_EVERY_N_ROWS === 0) {
+        await yieldToEventLoop();
+      }
 
-        // VALIDATION GUARD:
-        // Вместо `if (!article) return` (костыль), мы используем reduce.
-        // Если данных недостаточно для формирования валидной сущности, мы просто не добавляем её в аккумулятор.
-        if (!article) {
-          return acc;
-        }
+      const $row = $(rowArray[index]);
 
-        const brand = cleanText(
-          $row.find('.allOrdersOrder__productBrand').text()
-        );
-        const name = cleanText($row.find('.allOrdersOrder__item_descr').text());
+      const article = cleanText(
+        $row.find('.allOrdersOrder__productNumber').text()
+      );
 
-        const quantityRaw = cleanText(
-          $row.find('.allOrdersOrder__item_quantity span').first().text()
-        );
-        const quantity = parseInt(quantityRaw.replace(/\D/g, ''), 10) || 1;
+      if (!article) continue;
 
-        const priceRaw = cleanText(
-          $row.find('.allOrdersOrder__item_price').last().text()
-        );
-        const price = parsePrice(priceRaw);
+      const brand = cleanText(
+        $row.find('.allOrdersOrder__productBrand').text()
+      );
+      const name = cleanText($row.find('.allOrdersOrder__item_descr').text());
 
-        const statusRaw = cleanText($row.find('.statusName').first().text());
+      const quantityRaw = cleanText(
+        $row.find('.allOrdersOrder__item_quantity span').first().text()
+      );
+      const quantity = parseInt(quantityRaw.replace(/\D/g, ''), 10) || 1;
 
-        const id = `${supplier}_${orderId}_${article}_${index}`;
+      const priceRaw = cleanText(
+        $row.find('.allOrdersOrder__item_price').last().text()
+      );
+      const price = parsePrice(priceRaw);
 
-        acc.push({
-          id,
-          orderId,
-          supplier,
-          brand,
-          article,
-          name,
-          quantity,
-          price,
-          totalPrice: Number((price * quantity).toFixed(2)),
-          currency: 'RUB',
-          status: mapStatus(statusRaw),
-          statusRaw,
-          createdAt,
-        });
+      const statusRaw = cleanText($row.find('.statusName').first().text());
 
-        return acc;
-      }, []);
-  });
+      const id = `${supplier}_${orderId}_${article}_${index}`;
+
+      result.push({
+        id,
+        orderId,
+        supplier,
+        brand,
+        article,
+        name,
+        quantity,
+        price,
+        totalPrice: Number((price * quantity).toFixed(2)),
+        currency: 'RUB',
+        status: mapStatus(statusRaw),
+        statusRaw,
+        createdAt,
+      });
+    }
+  }
+
+  return result;
 };
 
 // --- Main Parser Function ---
@@ -225,21 +233,21 @@ const parseBlockLayout: LayoutStrategy = ($, supplier) => {
  * Основная функция парсинга.
  * Применяет стратегии по очереди.
  */
-export const parseAbcpHtml = (
+export const parseAbcpHtml = async (
   html: string,
   supplier: string
-): UnifiedOrderItem[] => {
+): Promise<UnifiedOrderItem[]> => {
   if (!html) return [];
   logger.debug(`[Cheerio] Loading HTML size: ${html.length} bytes for ${supplier}`);
+  await yieldToEventLoop();
   const $ = cheerio.load(html);
+  await yieldToEventLoop();
   logger.debug(`[Cheerio] HTML parsed for ${supplier}`);
 
-  // Список стратегий. Порядок важен, если есть риск ложных срабатываний,
-  // но здесь мы проверяем конкретные селекторы внутри стратегий.
   const strategies = [parseBlockLayout, parseTableLayout];
 
   for (const strategy of strategies) {
-    const results = strategy($, supplier);
+    const results = await strategy($, supplier);
     if (results.length > 0) {
       return results;
     }
@@ -248,5 +256,4 @@ export const parseAbcpHtml = (
   return [];
 };
 
-// Для обратной совместимости, если где-то используется как тип
 export type AbcpParserFn = typeof parseAbcpHtml;
