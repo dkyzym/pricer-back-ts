@@ -8,9 +8,13 @@ import { orderHandlers } from '../services/orders/orderHandlers.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
 import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
 
+// setInterval(() => {
+//   logger.debug('[PULSE] Event loop is alive, memory:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+// }, 60000); // Раз в минуту
+
 setInterval(() => {
-  logger.debug('[PULSE] Event loop is alive, memory:', process.memoryUsage().rss / 1024 / 1024, 'MB');
-}, 60000); // Раз в минуту
+  logger.debug(`[PULSE] Event loop is alive, memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`);
+}, 60000);
 
 const ACTIVE_STATUSES = ['pending', 'work', 'shipping'] as const;
 const BUFFER_DAYS = 2;
