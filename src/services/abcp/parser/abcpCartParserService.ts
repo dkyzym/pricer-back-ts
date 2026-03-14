@@ -47,8 +47,6 @@ export const addAbcpCartParser = async (
 
   for (const position of positions) {
     try {
-      logger.info(`[${supplierName}] addToCart — позиция:`, position);
-
       const cleanUrlNumber = cleanArticleString(position.number);
       const searchUrl = `${baseUrl}/search/${encodeURIComponent(position.brand)}/${encodeURIComponent(cleanUrlNumber)}`;
 
@@ -62,8 +60,6 @@ export const addAbcpCartParser = async (
         position.brand,
         position.supplierCode
       );
-
-      logger.info(`[${supplierName}] addToCart — распарсенные данные с страницы:`, parsedData);
 
       const payload = new URLSearchParams({
         page: 'addToBasket',
@@ -83,17 +79,6 @@ export const addAbcpCartParser = async (
       const postUrl = `${baseUrl}/?page=addToBasket`;
       const payloadStr = payload.toString();
 
-      const cookies = await client.getCookiesForBaseUrl();
-      logger.info(`[${supplierName}] addToCart — куки перед POST:`, {
-        count: cookies.length,
-        cookies: cookies.map((c) => ({ key: c.key, valueLength: c.value?.length ?? 0, value: c.value })),
-      });
-
-      logger.info(`[${supplierName}] addToCart — запрос POST:`, {
-        url: postUrl,
-        payload: Object.fromEntries(payload.entries()),
-      });
-
       const postResponse = await client.makePostRequest(postUrl, payloadStr, {
         headers: {
           ...ugHeaders,
@@ -103,16 +88,7 @@ export const addAbcpCartParser = async (
         },
       });
 
-      logger.info(`[${supplierName}] addToCart — ответ POST:`, {
-        status: postResponse.status,
-        data: postResponse.data,
-      });
-
       if (postResponse.data?.status !== 'ok') {
-        logger.warn(
-          `[${supplierName}] addToCart — неожиданный ответ (status !== 'ok'):`,
-          postResponse.data
-        );
         throw new Error(
           `Неожиданный ответ от API: ${JSON.stringify(postResponse.data)}`
         );
@@ -130,11 +106,9 @@ export const addAbcpCartParser = async (
         status: 1,
       });
     } catch (error: any) {
-      const responseData = error.response?.data;
       logger.error(
         `[${supplierName}] Ошибка добавления в корзину: ` +
-          `${position.brand} / ${position.number} — ${error.message}`,
-        responseData !== undefined ? { responseData } : {}
+          `${position.brand} / ${position.number} — ${error.message}`
       );
 
       resultPositions.push({

@@ -131,19 +131,8 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
     const { signal } = options;
     await ensureLoggedIn(false, signal);
 
-    const logCookies = async () => {
-      const cookies = await cookieJar.getCookies(config.baseUrl);
-      return cookies.map((c) => ({ key: c.key, value: c.value }));
-    };
-
     let response: AxiosResponse;
     try {
-      const cookiesBefore = await logCookies();
-      logger.info(`[${config.supplierName}] makeRequest GET (один jar): куки до запроса`, {
-        count: cookiesBefore.length,
-        cookies: cookiesBefore,
-      });
-
       response = await client.get(url, options);
     } catch (error: any) {
       // CanceledError не должен вызывать ре-логин — пробрасываем сразу
@@ -165,29 +154,8 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
         `Session expired for ${config.supplierName}, entering login queue...`
       );
       await ensureLoggedIn(true, signal);
-      const cookiesAfterLogin = await logCookies();
-      logger.info(`[${config.supplierName}] makeRequest: после логина (тот же jar), повторный GET`, {
-        count: cookiesAfterLogin.length,
-        cookies: cookiesAfterLogin,
-      });
       response = await client.get(url, options);
     }
-
-    const cookiesAfterResponse = await logCookies();
-    const bodyLen = typeof response.data === 'string' ? response.data.length : 0;
-    const hasIndicator = typeof response.data === 'string' && response.data.includes(config.loggedInIndicator);
-    const bodySnippet =
-      typeof response.data === 'string'
-        ? response.data.slice(0, 400).replace(/\s+/g, ' ')
-        : '';
-    logger.info(`[${config.supplierName}] makeRequest возврат: куки и ответ`, {
-      count: cookiesAfterResponse.length,
-      cookies: cookiesAfterResponse,
-      bodyLen,
-      hasLoggedInIndicator: hasIndicator,
-      loggedInIndicator: config.loggedInIndicator,
-      bodySnippet: bodySnippet.slice(0, 300),
-    });
 
     return response;
   };
@@ -298,17 +266,10 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
     return response;
   };
 
-  /** Для отладки: возвращает текущие куки для baseUrl (key + value). */
-  const getCookiesForBaseUrl = async (): Promise<Array<{ key: string; value: string }>> => {
-    const cookies = await cookieJar.getCookies(config.baseUrl);
-    return cookies.map((c) => ({ key: c.key, value: c.value }));
-  };
-
   return {
     config,
     searchItem,
     makeRequest,
     makePostRequest,
-    getCookiesForBaseUrl,
   };
 };

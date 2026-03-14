@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
 import fs from 'fs';
-import { logger } from '../../../config/logger/index.js';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString';
 import { standardizeString } from '../../../utils/data/brand/standardizeString';
 
@@ -72,16 +71,6 @@ export const parseAddToCartData = (
   }
 
   if (allMatches.length > 0 && availableMatches.length === 0) {
-    const availabilityByEl = allMatches.toArray().map((el, i) => ({
-      i,
-      availability: $(el).attr('availability'),
-      number: $(el).attr('number'),
-      brand: $(el).attr('brand'),
-    }));
-    logger.warn(
-      'abcpCartParser — выброс: все предложения с availability=0 (логи POST/куков ниже не будут — ошибка до них)',
-      { targetNumber, targetBrand, targetRouteId, allMatchesCount: allMatches.length, availabilityByEl }
-    );
     fs.writeFileSync('debug_mikano_error.html', html);
     throw new Error('Все предложения для данного товара недоступны для заказа (availability=0)');
   }
@@ -97,7 +86,7 @@ export const parseAddToCartData = (
     throw new Error('Данные для добавления в корзину не найдены на странице');
   }
 
-  const result: AddToCartData = {
+  return {
     searchResultUniqueId: targetEl.attr('searchresultuniqueid') ?? '',
     distributorRouteId: targetEl.attr('distributorrouteid') ?? '',
     // ABCP отдаёт datasetkey уже URL-закодированным (%2F, %2B и т.д.),
@@ -108,16 +97,4 @@ export const parseAddToCartData = (
     parsedNumberFix: targetEl.attr('numberfix') ?? '',
     parsedBrand: targetEl.attr('brand') ?? '',
   };
-
-  logger.info('abcpCartParser — выход парсера (dataSetKey, distributorRouteId и др.):', {
-    dataSetKey: result.dataSetKey,
-    distributorRouteId: result.distributorRouteId,
-    searchResultUniqueId: result.searchResultUniqueId,
-    parsedNumber: result.parsedNumber,
-    parsedNumberFix: result.parsedNumberFix,
-    parsedBrand: result.parsedBrand,
-    weight: result.weight,
-  });
-
-  return result;
 };
