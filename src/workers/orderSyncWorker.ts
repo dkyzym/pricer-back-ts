@@ -24,8 +24,7 @@ const EMPTY_DB_LOOKBACK_DAYS = 90;
 
 
 /** Cron: at :00 only in hours 0-7 and 19-23 (no runs 8:00-18:59 server time) */
-const SCHEDULE = '0 0-7,19-23 * * *';
-// const SCHEDULE = '*/60 * * * *';
+const SCHEDULE = '0 6-20 * * *';
 /** Max random delay before cycle start (ms), to spread load and avoid thundering herd */
 const MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
 /** Таймаут на один handler поставщика — при превышении AbortController.abort() прерывает HTTP-сокеты */
