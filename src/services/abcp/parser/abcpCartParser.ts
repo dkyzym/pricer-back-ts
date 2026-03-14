@@ -1,5 +1,4 @@
 import * as cheerio from 'cheerio';
-import fs from 'fs';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString';
 import { standardizeString } from '../../../utils/data/brand/standardizeString';
 
@@ -71,18 +70,18 @@ export const parseAddToCartData = (
   }
 
   if (allMatches.length > 0 && availableMatches.length === 0) {
-    fs.writeFileSync('debug_mikano_error.html', html);
+  
     throw new Error('Все предложения для данного товара недоступны для заказа (availability=0)');
   }
   if (!targetEl.length) {
-    fs.writeFileSync('debug_mikano_error.html', html);
+   
     throw new Error('Данные для добавления в корзину не найдены на странице');
   }
 
   // datasetkey — критический атрибут: без него невозможно сформировать запрос корзины
   const rawDataSetKey = targetEl.attr('datasetkey');
   if (!rawDataSetKey) {
-    fs.writeFileSync('debug_mikano_error.html', html);
+   
     throw new Error('Данные для добавления в корзину не найдены на странице');
   }
 
