@@ -1,3 +1,4 @@
+import { logger } from '../../../config/logger/index.js';
 import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
 import { AbcpSupplierAlias } from '../../../services/abcp/abcpPlatform.types.js';
 import { addAbcpCartParser } from '../../../services/abcp/parser/abcpCartParserService.js';
@@ -63,7 +64,6 @@ const abcpCartHandler: CartHandler = async (
   return { message: message, success: Boolean(result.status) };
 };
 
-/** Strategy — добавление через парсер (mikano, autoImpulse и т.д.) */
 const abcpParserCartHandler: CartHandler = async (
   data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
@@ -82,7 +82,23 @@ const abcpParserCartHandler: CartHandler = async (
     itemKey,
     number: article,
   };
+
+  logger.info(
+    `[${supplier}] addToCart — входящие параметры:`,
+    { supplier, quantity, item, position }
+  );
+
   const result = await addAbcpCartParser([position], supplier);
+
+  logger.info(
+    `[${supplier}] addToCart — ответ:`,
+    {
+      success: Boolean(result.status),
+      status: result.status,
+      positions: result.positions,
+      message: result.positions[0]?.errorMessage,
+    }
+  );
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';
