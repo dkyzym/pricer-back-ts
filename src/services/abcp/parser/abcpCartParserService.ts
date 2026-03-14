@@ -1,5 +1,5 @@
-import { ugHeaders } from '../../../constants/headers.js';
 import { logger } from '../../../config/logger/index.js';
+import { ugHeaders } from '../../../constants/headers.js';
 import type {
   ABCP_API_CartResponse,
   BasketPositionUG,
@@ -14,7 +14,7 @@ type AbcpClient = ReturnType<typeof import('./abcpClientParser.js').createAbcpCl
 /** Маппинг имени поставщика → синглтон-клиент из index.ts */
 const clientMap: Record<string, AbcpClient> = {
   mikano: mikanoClient,
-  AutoImpulse: autoImpulseClient,
+  autoImpulse: autoImpulseClient, // ИСПРАВЛЕНО: регистр ключа совпадает с cartHandlers.ts
 };
 
 const resolveClient = (supplierName: string): AbcpClient => {
@@ -29,12 +29,12 @@ const resolveClient = (supplierName: string): AbcpClient => {
  * Последовательно добавляет список позиций в корзину ABCP-поставщика.
  *
  * Поток:
- *   positions[] → for-of (sequential, rate-limit safe)
- *     → GET /search/{brand}/{number}  (получаем HTML с параметрами корзины)
- *     → parseAddToCartData            (cheerio → hidden inputs)
- *     → POST /?page=addToBasket       (x-www-form-urlencoded)
- *     → проверка { status: "ok" }
- *   → ABCP_API_CartResponse
+ * positions[] → for-of (sequential, rate-limit safe)
+ * → GET /search/{brand}/{number}  (получаем HTML с параметрами корзины)
+ * → parseAddToCartData            (cheerio → hidden inputs)
+ * → POST /?page=addToBasket       (x-www-form-urlencoded)
+ * → проверка { status: "ok" }
+ * → ABCP_API_CartResponse
  */
 export const addAbcpCartParser = async (
   positions: BasketPositionUG[],
