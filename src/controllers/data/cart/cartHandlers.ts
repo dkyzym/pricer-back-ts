@@ -1,6 +1,7 @@
 import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
 import { AbcpSupplierAlias } from '../../../services/abcp/abcpPlatform.types.js';
 import { addAbcpCartParser } from '../../../services/abcp/parser/abcpCartParserService.js';
+import { addAvtopartnerCart } from '../../../services/avtopartner/cart/addAvtopartnerCartService.js';
 import { addToCartProfitService } from '../../../services/profit/addToCartProfitService.js';
 import {
   BasketPositionUG,
@@ -90,6 +91,33 @@ const abcpParserCartHandler: CartHandler = async (
   return { message: message, success: Boolean(result.status) };
 };
 
+const avtopartnerCartHandler: CartHandler = async (
+  data: UnifiedCartRequest
+): Promise<CartHandlerResponse> => {
+  const { supplier, quantity, item } = data;
+  const supplierData = item[supplier];
+  const itemKey =
+    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
+  const supplierCode =
+    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
+  const article = item.article ?? item.number;
+
+  const position: BasketPositionUG = {
+    brand: item.brand,
+    supplierCode,
+    quantity,
+    itemKey,
+    number: article,
+  };
+
+  const result = await addAvtopartnerCart([position], supplier);
+
+  const message =
+    result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';
+
+  return { message: message, success: Boolean(result.status) };
+};
+
 export const cartSupplierHandlers: Record<string, CartHandler> = {
   profit: profitCartHandler,
 
@@ -102,4 +130,6 @@ export const cartSupplierHandlers: Record<string, CartHandler> = {
 
   mikano: abcpParserCartHandler,
   autoImpulse: abcpParserCartHandler,
+
+  avtoPartner: avtopartnerCartHandler,
 };
