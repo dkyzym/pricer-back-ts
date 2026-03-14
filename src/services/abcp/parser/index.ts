@@ -1,7 +1,7 @@
-import { createAbcpClient } from './abcpClient.js';
+import { createAbcpClientParser } from './abcpClientParser.js';
 
 // --- Конфигурация для Mikano ---
-export const mikanoClient = createAbcpClient({
+export const mikanoClient = createAbcpClientParser({
   supplierName: 'mikano',
   baseUrl: process.env.MIKANO_LOGIN_URL!,
   credentials: {
@@ -12,7 +12,7 @@ export const mikanoClient = createAbcpClient({
 });
 
 // --- Конфигурация для AutoImpulse ---
-export const autoImpulseClient = createAbcpClient({
+export const autoImpulseClient = createAbcpClientParser({
   supplierName: 'AutoImpulse',
   baseUrl: process.env.AUTOIMPULSE_URL!,
   credentials: {

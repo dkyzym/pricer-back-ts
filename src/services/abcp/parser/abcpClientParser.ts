@@ -28,7 +28,7 @@ export interface AbcpClientConfig {
 }
 
 // Фабричная функция для создания клиента
-export const createAbcpClient = (config: AbcpClientConfig) => {
+export const createAbcpClientParser = (config: AbcpClientConfig) => {
   if (
     !config.credentials.username ||
     !config.credentials.password ||
@@ -226,9 +226,50 @@ export const createAbcpClient = (config: AbcpClientConfig) => {
     });
   };
 
-  // Возвращаем объект с публичными методами
+  /**
+   * POST-аналог makeRequest: авторизация, retry при 401 и проверка HTML-индикатора сессии.
+   * Запросы, упавшие из-за протухшей сессии, встают в ту же loginQueue, что и GET-запросы.
+   */
+  const makePostRequest = async (
+    url: string,
+    data: any,
+    options: AbcpRequestOptions = {}
+  ): Promise<AxiosResponse> => {
+    const { signal } = options;
+    await ensureLoggedIn(false, signal);
+
+    let response: AxiosResponse;
+    try {
+      response = await client.post(url, data, options);
+    } catch (error: any) {
+      if (axios.isCancel(error)) throw error;
+
+      if (error.response?.status === 401) {
+        logger.info(
+          `401 received for ${config.supplierName}, entering login queue...`
+        );
+        await ensureLoggedIn(true, signal);
+        return client.post(url, data, options);
+      }
+      throw error;
+    }
+
+    const isHtmlResponse = typeof response.data === 'string';
+    if (isHtmlResponse && !response.data.includes(config.loggedInIndicator)) {
+      logger.info(
+        `Session expired for ${config.supplierName}, entering login queue...`
+      );
+      await ensureLoggedIn(true, signal);
+      response = await client.post(url, data, options);
+    }
+
+    return response;
+  };
+
   return {
+    config,
     searchItem,
     makeRequest,
+    makePostRequest,
   };
 };
