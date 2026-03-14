@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
-import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString';
-import { standardizeString } from '../../../utils/data/brand/standardizeString';
+import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
+import { standardizeString } from '../../../utils/data/brand/standardizeString.js';
 
 /** Данные, извлечённые из скрытого input-элемента для добавления товара в корзину */
 export interface AddToCartData {
