@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { ABCP_SERVICE_PATHS } from '../../../config/api/config.js';
-import { getAxiosInstance } from '../../apiClient/apiClient.js';
+import { getAxiosInstance } from '../../../infrastructure/http/apiClient.js';
 import {
   AbcpArticleSearchResult,
   AbcpSupplierAlias,

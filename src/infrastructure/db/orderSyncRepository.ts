@@ -1,7 +1,7 @@
 import { logger } from '../../config/logger/index.js';
 import { Order } from '../../models/Order.js';
 import { yieldToEventLoop } from '../../utils/yieldToEventLoop.js';
-import type { UnifiedOrderItem } from '../orders/orders.types.js';
+import type { UnifiedOrderItem } from '../../services/orders/orders.types.js';
 
 /** Размер чанка для bulkWrite — баланс между throughput и нагрузкой на Event Loop */
 const BULK_WRITE_CHUNK_SIZE = 500;

@@ -2,8 +2,8 @@ import dotenv from 'dotenv';
 import app from './app.js';
 import { logger } from './config/logger/index.js';
 import { startServer } from './server/startServer.js';
-import { initProxyCheck } from './services/apiClient/apiClient.js';
-import { connectMongo } from './services/db/connectMongo.js';
+import { initProxyCheck } from './infrastructure/http/apiClient.js';
+import { connectMongo } from './infrastructure/db/connectMongo.js';
 import { startAllBrandsSyncWorker } from './workers/allBrandsSyncWorker.js';
 import { startOrderSyncWorker } from './workers/orderSyncWorker.js';
 

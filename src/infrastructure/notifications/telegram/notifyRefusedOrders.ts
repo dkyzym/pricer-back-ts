@@ -1,8 +1,8 @@
 import axios from 'axios';
 import mongoose from 'mongoose';
-import { logger } from '../../config/logger/index.js';
-import { Order } from '../../models/Order.js';
-import type { UnifiedOrderItem } from '../orders/orders.types.js';
+import { logger } from '../../../config/logger/index.js';
+import { Order } from '../../../models/Order.js';
+import type { UnifiedOrderItem } from '../../../services/orders/orders.types.js';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const MAX_MESSAGE_LENGTH = 4096;

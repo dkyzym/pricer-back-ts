@@ -2,11 +2,11 @@ import axios from 'axios';
 import mongoose from 'mongoose';
 import cron from 'node-cron';
 import { logger } from '../config/logger/index.js';
+import { syncOrdersBatch } from '../infrastructure/db/orderSyncRepository.js';
+import { sendRefusedOrdersNotification } from '../infrastructure/notifications/telegram/notifyRefusedOrders.js';
 import { Order } from '../models/Order.js';
-import { syncOrdersBatch } from '../services/db/orderSyncRepository.js';
 import { orderHandlers } from '../services/orders/orderHandlers.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
-import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
 
 
 

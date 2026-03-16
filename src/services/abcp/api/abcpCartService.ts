@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { getAxiosInstance } from '../../apiClient/apiClient.js';
+import { getAxiosInstance } from '../../../infrastructure/http/apiClient.js';
 import {
   ABCP_API_CartResponse,
   BasketPositionUG,
