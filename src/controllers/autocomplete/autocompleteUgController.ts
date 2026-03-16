@@ -11,7 +11,6 @@ const cache = new NodeCache({ stdTTL: 3600 });
 
 export const autocompleteUgController = async (req: Request, res: Response) => {
   const term = req.query.term as string;
-  console.log(`term in autocompleteController: ${term}`);
 
   if (!term) {
     res.status(400).json({ success: false, message: 'Term is required' });

@@ -1,11 +1,11 @@
 import { logger } from '../../../config/logger/index.js';
 import { abcpHeaders } from '../../../constants/headers.js';
-import type {
-    ABCP_API_CartResponse,
-    BasketPositionUG,
-} from '../../../controllers/data/cart/cart.types.js';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
 import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
+import type {
+  ABCP_API_CartResponse,
+  BasketPositionUG,
+} from '../../cart/cart.types.js';
 import { parseAddToCartData } from './abcpCartParser.js';
 import { autoImpulseClient, mikanoClient } from './index.js';
 

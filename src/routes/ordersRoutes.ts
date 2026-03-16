@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
-import { getOrders } from '../controllers/data/orders/ordersController.js';
+import { ordersController } from '../controllers/orders/ordersController.js';
 
 const router = Router();
 
-router.get('/orders', ctrlWrapper(getOrders));
+router.get('/orders', ctrlWrapper(ordersController));
 
 export default router;

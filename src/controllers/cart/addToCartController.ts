@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { CartHandler, UnifiedCartRequest } from './cart.types.js';
-import { cartSupplierHandlers } from './cartHandlers.js';
+import { CartHandler, UnifiedCartRequest } from '../../services/cart/cart.types.js';
+import { cartSupplierHandlers } from '../../services/cart/cartHandlers.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier } = req.body as UnifiedCartRequest;

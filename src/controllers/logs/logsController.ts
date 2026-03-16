@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
-import { logger } from '../config/logger/index.js';
-import { verifyToken } from '../services/auth/auth.js';
+import { logger } from '../../config/logger/index.js';
+import { verifyToken } from '../../services/auth/auth.js';
 
 export const logsController = async (req: Request, res: Response) => {
   // 1) Авторизация. Допустим, токен лежит в заголовке Authorization: Bearer ...

@@ -1,8 +1,8 @@
-import { updateAbcpCart } from '../../../services/abcp/api/abcpCartService.js';
-import { AbcpSupplierAlias } from '../../../services/abcp/abcpPlatform.types.js';
-import { addAbcpCartParser } from '../../../services/abcp/parser/abcpCartParserService.js';
-import { addAvtopartnerCart } from '../../../services/avtopartner/cart/addAvtopartnerCartService.js';
-import { addToCartProfitService } from '../../../services/profit/addToCartProfitService.js';
+import { AbcpSupplierAlias } from '../abcp/abcpPlatform.types.js';
+import { updateAbcpCart } from '../abcp/api/abcpCartService.js';
+import { addAbcpCartParser } from '../abcp/parser/abcpCartParserService.js';
+import { addAvtopartnerCart } from '../avtopartner/cart/addAvtopartnerCartService.js';
+import { addToCartProfitService } from '../profit/addToCartProfitService.js';
 import {
   BasketPositionUG,
   CartHandler,

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { Order, IOrderDocument } from '../../../models/Order.js';
-import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
-import { expandBrandToken } from '../../../utils/data/brand/expandBrandToken.js';
-import { SupplierName } from '../../../types/common.types.js';
+import { Order } from '../../models/Order.js';
+import { SupplierName } from '../../types/common.types.js';
+import { cleanArticleString } from '../../utils/data/brand/cleanArticleString.js';
+import { expandBrandToken } from '../../utils/data/brand/expandBrandToken.js';
 
 const supplierNameMap: Record<SupplierName, string> = {
   profit: 'Профит',
@@ -24,7 +24,7 @@ const supplierNameMap: Record<SupplierName, string> = {
 const normalizeStr = (str: string): string =>
   str.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '');
 
-export const getOrders = async (req: Request, res: Response) => {
+export const ordersController = async (req: Request, res: Response) => {
   const suppliers = req.query.suppliers as string | undefined;
   const status = req.query.status as string | undefined;
   const search = req.query.search as string | undefined;

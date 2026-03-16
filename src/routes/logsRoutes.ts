@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
-import { logsController } from '../controllers/logsController.js';
+import { logsController } from '../controllers/logs/logsController.js';
 
 const router = Router();
 

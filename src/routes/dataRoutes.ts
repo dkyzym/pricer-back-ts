@@ -1,9 +1,9 @@
-import { addToCartController } from '@controllers/data/cart/addToCartController.js';
+import { addToCartController } from '@controllers/cart/addToCartController.js';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { authMiddleware } from '../middleware/authMiddleware.js';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
-import { autocompleteUgController } from '../controllers/data/autocompleteUgController.js';
+import { autocompleteUgController } from '../controllers/autocomplete/autocompleteUgController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const autocompleteLimiter = rateLimit({
   windowMs: 60_000,
