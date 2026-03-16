@@ -1,7 +1,7 @@
 import { AxiosResponse } from 'axios';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
-import { UnifiedOrderItem } from '../../orders/orders.types.js';
+import { UnifiedOrderItem } from '../../orchestration/orders/orders.types.js';
 import { AbcpParserFn } from './AbcpOrderParser.js';
 
 // --- Types ---

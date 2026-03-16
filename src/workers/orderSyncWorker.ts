@@ -5,8 +5,8 @@ import { logger } from '../config/logger/index.js';
 import { syncOrdersBatch } from '../infrastructure/db/orderSyncRepository.js';
 import { sendRefusedOrdersNotification } from '../infrastructure/notifications/telegram/notifyRefusedOrders.js';
 import { Order } from '../models/Order.js';
-import { orderHandlers } from '../services/orders/orderHandlers.js';
-import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
+import { orderHandlers } from '../services/orchestration/orders/orderHandlers.js';
+import type { UnifiedOrderItem } from '../services/orchestration/orders/orders.types.js';
 
 
 

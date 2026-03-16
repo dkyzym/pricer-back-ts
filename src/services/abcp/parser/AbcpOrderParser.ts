@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
-import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
+import { OrderStatus, UnifiedOrderItem } from '../../orchestration/orders/orders.types.js';
 
 // --- Constants & Types ---
 

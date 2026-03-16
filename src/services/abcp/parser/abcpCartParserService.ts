@@ -5,7 +5,7 @@ import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
 import type {
   ABCP_API_CartResponse,
   BasketPositionUG,
-} from '../../cart/cart.types.js';
+} from '../../orchestration/cart/cart.types.js';
 import { parseAddToCartData } from './abcpCartParser.js';
 import { autoImpulseClient, mikanoClient } from './index.js';
 

@@ -1,4 +1,4 @@
-import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
+import { OrderStatus, UnifiedOrderItem } from '../../orchestration/orders/orders.types.js';
 import { AutosputnikGetOrdersResponse } from '../autosputnik.types.js';
 
 /**

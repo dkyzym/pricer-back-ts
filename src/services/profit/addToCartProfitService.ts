@@ -3,7 +3,7 @@ import { logger } from 'config/logger/index.js';
 import {
   AddToCartConfig,
   ProfitAPIresponse,
-} from '../cart/cart.types.js';
+} from '../orchestration/cart/cart.types.js';
 
 export const addToCartProfitService = async ({
   id,

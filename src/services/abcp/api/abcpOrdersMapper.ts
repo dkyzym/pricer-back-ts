@@ -1,4 +1,4 @@
-import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
+import { OrderStatus, UnifiedOrderItem } from '../../orchestration/orders/orders.types.js';
 import { AbcpOrderRaw, AbcpOrdersResponse } from '../abcpPlatform.types.js';
 
 /**

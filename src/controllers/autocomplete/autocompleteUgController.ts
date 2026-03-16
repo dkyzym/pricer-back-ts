@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { v4 as uuidv4 } from 'uuid';
-import { getAutocomplete } from '../../services/getAutocomplete.js';
+import { getAutocomplete } from '../../services/catalog/getAutocomplete.js';
 import { ItemAutocompleteRow } from '../../types/search.types.js';
 
 // In-memory кэш на уровне процесса: снижает нагрузку на внешнее API,

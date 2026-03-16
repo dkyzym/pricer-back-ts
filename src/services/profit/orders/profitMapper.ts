@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
+import { OrderStatus, UnifiedOrderItem } from '../../orchestration/orders/orders.types.js';
 import { ProfitGetOrdersResponse } from '../profit.types.js';
 
 /**

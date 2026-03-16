@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import type { OrderStatus, UnifiedOrderItem } from '../services/orders/orders.types.js';
+import type { OrderStatus, UnifiedOrderItem } from '../services/orchestration/orders/orders.types.js';
 
 const ORDER_STATUS_VALUES: OrderStatus[] = [
   'pending',

@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { SOCKET_EVENTS } from '../../constants/socketEvents.js';
-import { clarifyBrand } from '../../services/clarifyBrand.js';
+import { clarifyBrand } from '../../services/catalog/clarifyBrand.js';
 import { ClarifyBrandResult } from '../../types/brand.types.js';
 
 export const createBrandClarificationHandler = (

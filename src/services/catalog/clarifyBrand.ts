@@ -2,10 +2,10 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Logger } from 'winston';
-import { ItemAutocompleteRow } from '../types/search.types.js';
-import { getAxiosInstance } from '../infrastructure/http/apiClient.js';
-import { assortmentSearchArmtek } from './armtek/assortmentSearchArmtek.js';
-import { getItemsListByArticleService } from './profit/getItemsListByArticleService.js';
+import { ItemAutocompleteRow } from '../../types/search.types.js';
+import { getAxiosInstance } from '../../infrastructure/http/apiClient.js';
+import { assortmentSearchArmtek } from '../armtek/assortmentSearchArmtek.js';
+import { getItemsListByArticleService } from '../profit/getItemsListByArticleService.js';
 
 interface UgBrandData {
   availability: number;

@@ -2,7 +2,7 @@
 //                             УНИФИЦИРОВАННЫЕ ТИПЫ
 // =========================================================================
 
-import { SupplierName } from '../../types/common.types.js';
+import { SupplierName } from '../../../types/common.types.js';
 
 /**
  * Единый список статусов для всех поставщиков.

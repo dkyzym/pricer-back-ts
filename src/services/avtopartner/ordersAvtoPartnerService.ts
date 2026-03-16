@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { Logger } from 'winston';
 import { Order } from '../../models/Order.js';
 import { getAllBrandsListSync } from '../brands/allBrandsCache.js';
-import type { UnifiedOrderItem } from '../orders/orders.types.js';
+import type { UnifiedOrderItem } from '../orchestration/orders/orders.types.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
 

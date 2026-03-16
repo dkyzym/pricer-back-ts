@@ -3,7 +3,7 @@ import { getAxiosInstance } from '../../../infrastructure/http/apiClient.js';
 import {
   ABCP_API_CartResponse,
   BasketPositionUG,
-} from '../../cart/cart.types.js';
+} from '../../orchestration/cart/cart.types.js';
 import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 
 // Примечание: Эта функция не экспортируется, так как она является вспомогательной.
