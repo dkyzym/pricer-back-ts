@@ -14,7 +14,7 @@ const baseURL = 'https://avtopartner-yug.ru';
 const userAgent =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0';
 
-// Константы для присвоения товару
+
 const AVTOPARTNER_CONSTANTS = {
   WAREHOUSE: 'Свой',
   PROBABILITY: 95,
@@ -45,7 +45,7 @@ const parseProductCard = (
   const brand = card.find('.product-card__brand [itemprop="name"]').text().trim();
   const description = card.find('.product-card__title').text().trim();
 
-  // 🧩 Удаляем вложенные теги (рубли, span и т.п.)
+ 
   const priceText = card.find('.product-card__price--list .price__current')
     .clone()
     .children()
@@ -58,12 +58,11 @@ const parseProductCard = (
 
   const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
 
-  // Проверяем, есть ли товар в наличии
+
   const isOutOfStock = card.find('.product-post__status.out-of-stock').length > 0;
 
-  // ❗ НОВОЕ ИЗМЕНЕНИЕ: Если товара нет, сразу возвращаем null
   if (isOutOfStock) {
-    // logger.debug(`[avtoPartner] Пропущена карточка (нет в наличии): ${brand} ${article}`);
+
     return null;
   }
 
@@ -73,7 +72,7 @@ const parseProductCard = (
   const imageUrlRaw = card.find('.product-card__picture img').attr('src') || '';
   const imageUrl = imageUrlRaw.startsWith('http') ? imageUrlRaw : `${baseURL}${imageUrlRaw}`;
 
-  // Старая проверка на неполные данные остается
+ 
   if (!article || !brand || price <= 0) {
     logger.debug(`[avtoPartner] Пропущена карточка — неполные данные (${brand} ${article})`);
     return null;

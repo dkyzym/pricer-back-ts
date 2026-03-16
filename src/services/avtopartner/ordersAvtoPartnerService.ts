@@ -1,12 +1,11 @@
+import { brandGroupsMap } from '@constants/brandGroupsMap.js';
 import * as cheerio from 'cheerio';
 import { Logger } from 'winston';
-import { brandGroupsMap } from '@constants/brandGroupsMap.js';
 import { Order } from '../../models/Order.js';
-import type { UnifiedOrderItem } from '../orders/orders.types.js';
 import { getAllBrandsListSync } from '../brands/allBrandsCache.js';
+import type { UnifiedOrderItem } from '../orders/orders.types.js';
 import { clientAvtoPartner } from './client.js';
 import { ensureAvtoPartnerLoggedIn } from './loginAvtoPartner.js';
-import { logger } from '../../config/logger/index.js';
 
 const SUPPLIER_KEY = 'avtoPartner';
 const MAX_HISTORY_PAGES = 10;
@@ -118,9 +117,9 @@ export interface AvtoPartnerOrderSummary {
 }
 
 export function parseHistoryPageHtml(html: string): AvtoPartnerOrderSummary[] {
-  logger.debug(`[Cheerio] Loading HTML size: ${html.length} bytes for ${'autopartner'}`);
+ 
   const $ = cheerio.load(html);
-  logger.debug(`[Cheerio] HTML parsed for ${'autopartner'}`);
+
   const rows = $(
     '.account-orders__table table tbody tr, .view-content table tbody tr'
   );

@@ -1,7 +1,7 @@
 import { logger } from '../../config/logger/index.js';
 import { Order } from '../../models/Order.js';
-import type { UnifiedOrderItem } from '../orders/orders.types.js';
 import { yieldToEventLoop } from '../../utils/yieldToEventLoop.js';
+import type { UnifiedOrderItem } from '../orders/orders.types.js';
 
 /** Размер чанка для bulkWrite — баланс между throughput и нагрузкой на Event Loop */
 const BULK_WRITE_CHUNK_SIZE = 500;
@@ -122,9 +122,9 @@ export const syncOrdersBatch = async (
       // и BSON-сериализацией внутри драйвера MongoDB даём Event Loop
       // обработать таймеры и I/O (AbortController, PULSE, cron).
       await yieldToEventLoop();
-      logger.debug(`[DB] Starting bulkWrite for chunk of ${chunk.length} items`);
+      
       const result = await Order.bulkWrite(operations, { ordered: false });
-      logger.debug(`[DB] Finished bulkWrite`);
+   
 
       totals.insertedCount += result.insertedCount;
       totals.upsertedCount += result.upsertedCount;

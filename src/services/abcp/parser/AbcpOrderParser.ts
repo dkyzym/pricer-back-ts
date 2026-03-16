@@ -1,7 +1,6 @@
 import * as cheerio from 'cheerio';
-import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
-import { logger } from '../../../config/logger/index.js';
 import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
+import { OrderStatus, UnifiedOrderItem } from '../../orders/orders.types.js';
 
 // --- Constants & Types ---
 
@@ -238,11 +237,11 @@ export const parseAbcpHtml = async (
   supplier: string
 ): Promise<UnifiedOrderItem[]> => {
   if (!html) return [];
-  logger.debug(`[Cheerio] Loading HTML size: ${html.length} bytes for ${supplier}`);
+
   await yieldToEventLoop();
   const $ = cheerio.load(html);
   await yieldToEventLoop();
-  logger.debug(`[Cheerio] HTML parsed for ${supplier}`);
+
 
   const strategies = [parseBlockLayout, parseTableLayout];
 

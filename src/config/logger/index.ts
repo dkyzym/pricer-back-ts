@@ -13,7 +13,6 @@ const customLevels = {
     warn: 1,
     info: 2,
     http: 3,
-    pulse: 5,
     debug: 6,
   },
   colors: {
@@ -139,16 +138,7 @@ export const logger = createLogger({
       level: 'http', // <--
       format: combine(filterOnly('http'), fileJsonFormat),
     }),
-    new DailyRotateFile({
-      dirname: path.join('logs/pulse'),
-      filename: 'pulse-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
-      maxSize: '20m',
-      level: 'pulse',
-      format: combine(filterOnly('pulse'), fileJsonFormat),
-    }),
-    new DailyRotateFile({
+      new DailyRotateFile({
       dirname: path.join('logs/debug'),
       filename: 'debug-%DATE%.log',
       datePattern: 'YYYY-MM-DD',

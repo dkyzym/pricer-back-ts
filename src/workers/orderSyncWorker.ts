@@ -8,13 +8,7 @@ import { orderHandlers } from '../services/orders/orderHandlers.js';
 import type { UnifiedOrderItem } from '../services/orders/orders.types.js';
 import { sendRefusedOrdersNotification } from '../services/telegram/notifyRefusedOrders.js';
 
-// setInterval(() => {
-//   logger.debug('[PULSE] Event loop is alive, memory:', process.memoryUsage().rss / 1024 / 1024, 'MB');
-// }, 60000); // Раз в минуту
 
-setInterval(() => {
-  logger.debug(`[PULSE] Event loop is alive, memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`);
-}, 60000);
 
 const ACTIVE_STATUSES = ['pending', 'work', 'shipping'] as const;
 const BUFFER_DAYS = 2;
@@ -23,7 +17,7 @@ const MAX_LOOKBACK_DAYS = 45;
 const EMPTY_DB_LOOKBACK_DAYS = 90;
 
 
-/** Cron: at :00 only in hours 0-7 and 19-23 (no runs 8:00-18:59 server time) */
+
 const SCHEDULE = '0 6-20 * * *';
 /** Max random delay before cycle start (ms), to spread load and avoid thundering herd */
 const MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
