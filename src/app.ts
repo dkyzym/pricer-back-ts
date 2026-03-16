@@ -11,7 +11,7 @@ import express from 'express';
 import path from 'path';
 import { CLIENT_BUILD_PATH, corsOptions } from './config/index.js';
 import { morganMiddleware } from './config/logger/morganMiddleware.js';
-import { helloController } from './controllers/helloController.js';
+
 
 const distPath = path.resolve(process.cwd(), CLIENT_BUILD_PATH);
 
@@ -39,7 +39,7 @@ app.use('/api', authRoutes);
 app.use('/api', dataRoutes);
 app.use('/api', logsRoutes);
 app.use('/api', ordersRoutes);
-app.use('/test', helloController);
+
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/socket.io')) {
