@@ -6,10 +6,10 @@ import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { CookieJar } from 'tough-cookie';
 
 import { logger } from '../../../config/logger/index.js';
-import { ugHeaders } from '../../../constants/headers.js';
+import { abcpHeaders } from '../../../constants/headers.js';
 import {
-  ParallelSearchParams,
-  SearchResultsParsed,
+    ParallelSearchParams,
+    SearchResultsParsed,
 } from '../../../types/search.types.js';
 import { checkIsLoggedIn } from '../../../utils/auth/checkIsLoggedIn.js';
 import { transformArticleByBrand } from '../../../utils/data/brand/transformArticleByBrand.js';
@@ -87,7 +87,7 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
     data.append('login', credentials.username!);
     data.append('pass', credentials.password!);
 
-    const response = await client.post(baseUrl, data, { headers: ugHeaders, signal });
+    const response = await client.post(baseUrl, data, { headers: abcpHeaders, signal });
     const cookies = await cookieJar.getCookies(baseUrl);
     if (!cookies.some((cookie) => cookie.key === 'ABCPUser')) {
       throw new Error(`Missing ABCPUser cookie for ${supplierName}`);
@@ -173,7 +173,7 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
     );
 
     const searchUrl = `${baseUrl}/search?pcode=${encodeURIComponent(articleToSearch)}`;
-    const response = await makeRequest(searchUrl, { headers: ugHeaders });
+    const response = await makeRequest(searchUrl, { headers: abcpHeaders });
 
     let finalHtml: string;
 
@@ -206,7 +206,7 @@ export const createAbcpClientParser = (config: AbcpClientConfig) => {
         );
         const detailUrl = `${baseUrl}/search/${dataLinkContent}`;
         const detailResponse = await makeRequest(detailUrl, {
-          headers: ugHeaders,
+          headers: abcpHeaders,
         });
         finalHtml = detailResponse.data;
       } else {

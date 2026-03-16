@@ -18,7 +18,7 @@ import {
   SupplierConfigABCP,
 } from '../abcp/parser/abcpOrderServiceParser.js';
 
-import { ugHeaders } from '../../constants/headers.js';
+import { abcpHeaders } from '../../constants/headers.js';
 import { autoImpulseClient, mikanoClient } from '../abcp/parser/index.js';
 import { fetchAvtoPartnerOrders } from '../avtopartner/ordersAvtoPartnerService.js';
 
@@ -109,7 +109,7 @@ const createConfiguredClient = (
         };
       }
 
-      const mergedHeaders = { ...ugHeaders, ...(options.headers || {}) };
+      const mergedHeaders = { ...abcpHeaders, ...(options.headers || {}) };
       return baseClient.makeRequest(url, {
         ...options,
         headers: mergedHeaders,

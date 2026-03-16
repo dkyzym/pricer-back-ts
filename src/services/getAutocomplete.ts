@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import chalk from 'chalk';
 import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { CookieJar } from 'tough-cookie';
-import { ugHeaders } from '../constants/headers.js';
+import { abcpHeaders } from '../constants/headers.js';
 
 // Переменные модуля
 const cookieJar = new CookieJar();
@@ -31,7 +31,7 @@ const initializeCookies = (): Promise<void> => {
   }
 
   initializationPromise = client
-    .get('https://ugautopart.ru/', { headers: ugHeaders })
+    .get('https://ugautopart.ru/', { headers: abcpHeaders })
     .then(() => {
       console.log(chalk.green('Куки Автокомплита ЮГ успешно инициализированы'));
     })
@@ -55,7 +55,7 @@ export const getAutocomplete = async (term: string): Promise<any> => {
   try {
     const response = await client.get(url, {
       params: { term, locale: 'ru_RU' },
-      headers: ugHeaders,
+      headers: abcpHeaders,
     });
 
     return response.data;
@@ -73,7 +73,7 @@ export const getAutocomplete = async (term: string): Promise<any> => {
 
         const retryResponse = await client.get(url, {
           params: { term, locale: 'ru_RU' },
-          headers: ugHeaders,
+          headers: abcpHeaders,
         });
         return retryResponse.data;
       } else {

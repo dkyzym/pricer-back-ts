@@ -1,8 +1,8 @@
 import { logger } from '../../../config/logger/index.js';
-import { ugHeaders } from '../../../constants/headers.js';
+import { abcpHeaders } from '../../../constants/headers.js';
 import type {
-  ABCP_API_CartResponse,
-  BasketPositionUG,
+    ABCP_API_CartResponse,
+    BasketPositionUG,
 } from '../../../controllers/data/cart/cart.types.js';
 import { cleanArticleString } from '../../../utils/data/brand/cleanArticleString.js';
 import { yieldToEventLoop } from '../../../utils/yieldToEventLoop.js';
@@ -50,7 +50,7 @@ export const addAbcpCartParser = async (
       const cleanUrlNumber = cleanArticleString(position.number);
       const searchUrl = `${baseUrl}/search/${encodeURIComponent(position.brand)}/${encodeURIComponent(cleanUrlNumber)}`;
 
-      const response = await client.makeRequest(searchUrl, { headers: ugHeaders });
+      const response = await client.makeRequest(searchUrl, { headers: abcpHeaders });
 
       await yieldToEventLoop();
 
@@ -81,7 +81,7 @@ export const addAbcpCartParser = async (
 
       const postResponse = await client.makePostRequest(postUrl, payloadStr, {
         headers: {
-          ...ugHeaders,
+          ...abcpHeaders,
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Requested-With': 'XMLHttpRequest',
           'Referer': searchUrl,
