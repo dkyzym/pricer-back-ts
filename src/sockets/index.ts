@@ -4,7 +4,7 @@ import { attachSocketTransport, logger } from 'config/logger/index.js';
 import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
-import { verifyToken } from '../controllers/auth.js';
+import { verifyToken } from '../services/auth/auth.js';
 import { createBrandClarificationHandler } from './handlers/brandClarificationHandler.js';
 import { createItemResultsHandler } from './handlers/itemResultsHandler.js';
 

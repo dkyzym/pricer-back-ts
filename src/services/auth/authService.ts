@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { logger } from '../../config/logger/index.js';
-import { authenticateUser, signToken } from '../../controllers/auth.js';
+import { authenticateUser, signToken } from './auth.js';
 
 interface AuthRequestBody {
   username?: string;
