@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { runCalculationEngine } from './deliveryCalculator.js';
 import { suppliersConfig } from './suppliersConfig/suppliersConfig.declarative.js';
-import { ProductProfit } from '../../services/profit/profit.types.js';
+import { ProductProfit } from '../../services/suppliers/profit/profit.types.js';
 import { SearchResultsParsed } from '../../types/search.types.js';
 
 

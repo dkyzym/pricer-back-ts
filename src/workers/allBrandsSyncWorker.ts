@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { logger } from '../config/logger/index.js';
-import { syncAllBrandsCache } from '../services/brands/allBrandsCache.js';
+import { syncAllBrandsCache } from '../services/suppliers/brands/allBrandsCache.js';
 
 const SCHEDULE = '0 4 1 * *';
 

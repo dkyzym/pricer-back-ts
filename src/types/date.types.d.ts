@@ -1,5 +1,5 @@
 import { DurationLike } from 'luxon';
-import { ProductProfit } from '../services/profit/profit.types';
+import { ProductProfit } from '../services/suppliers/profit/profit.types';
 import { SearchResultsParsed } from './search.types';
 
 // Base type for any calculation strategy

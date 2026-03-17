@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { ProductProfit } from '../../services/profit/profit.types.js';
+import { ProductProfit } from '../../services/suppliers/profit/profit.types.js';
 import {
   CalculationStrategy,
   DirectFromApiStrategy,

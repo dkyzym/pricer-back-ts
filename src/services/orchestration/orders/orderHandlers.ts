@@ -1,26 +1,27 @@
 import { Logger } from 'winston';
-import { AbcpSupplierAlias } from '../../abcp/abcpPlatform.types.js';
-import { mapAbcpOrdersToUnified } from '../../abcp/api/abcpOrdersMapper.js';
-import { fetchAbcpOrders } from '../../abcp/api/fetchAbcpOrders.js';
-import { mapAutosputnikOrdersToUnified } from '../../autosputnik/orders/autosputnikOrdersMapper.js';
-import { fetchAutosputnikOrders } from '../../autosputnik/orders/fetchAutosputnikOrders.js';
-import { fetchProfitOrders } from '../../profit/orders/fetchProfitOrders.js';
-import { mapProfitOrdersToUnified } from '../../profit/orders/profitMapper.js';
-import { fetchTurboCarsOrders } from '../../turboCars/fetchTurboCarsOrders.js';
-import { mapTurboCarsOrdersToUnified } from '../../turboCars/turboCarsMapper.js';
+import { AbcpSupplierAlias } from '../../platforms/abcp/abcpPlatform.types.js';
+import { mapAbcpOrdersToUnified } from '../../platforms/abcp/api/abcpOrdersMapper.js';
+import { fetchAbcpOrders } from '../../platforms/abcp/api/fetchAbcpOrders.js';
+import { mapAutosputnikOrdersToUnified } from '../../suppliers/autosputnik/orders/autosputnikOrdersMapper.js';
+import { fetchAutosputnikOrders } from '../../suppliers/autosputnik/orders/fetchAutosputnikOrders.js';
+import { fetchProfitOrders } from '../../suppliers/profit/orders/fetchProfitOrders.js';
+import { mapProfitOrdersToUnified } from '../../suppliers/profit/orders/profitMapper.js';
+import { fetchTurboCarsOrders } from '../../suppliers/turboCars/fetchTurboCarsOrders.js';
+import { mapTurboCarsOrdersToUnified } from '../../suppliers/turboCars/turboCarsMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
 
-import { parseAbcpHtml } from '../../abcp/parser/AbcpOrderParser.js';
+import { parseAbcpHtml } from '../../platforms/abcp/parser/AbcpOrderParser.js';
 import {
   AbcpRequestOptions,
   createAbcpOrderService,
   IAbcpClientWrapper,
   SupplierConfigABCP,
-} from '../../abcp/parser/abcpOrderServiceParser.js';
+} from '../../platforms/abcp/parser/abcpOrderServiceParser.js';
 
 import { abcpHeaders } from '../../../constants/headers.js';
-import { autoImpulseClient, mikanoClient } from '../../abcp/parser/index.js';
-import { fetchAvtoPartnerOrders } from '../../avtopartner/ordersAvtoPartnerService.js';
+import { autoImpulseClient } from '../../suppliers/autoImpulse/client.js';
+import { mikanoClient } from '../../suppliers/mikano/client.js';
+import { fetchAvtoPartnerOrders } from '../../suppliers/avtopartner/ordersAvtoPartnerService.js';
 
 // --- Types ---
 

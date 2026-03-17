@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { syncAllBrandsCache } from '../services/brands/allBrandsCache.js';
+import { syncAllBrandsCache } from '../services/suppliers/brands/allBrandsCache.js';
 
 async function main(): Promise<void> {
   const force = process.argv.includes('--force');

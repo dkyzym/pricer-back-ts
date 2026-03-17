@@ -6,43 +6,39 @@ import {
 
 // --- Импорты бизнес-логики ---
 // ABCP (API)
-import {
-  avtodinamikaConfig,
-  npnConfig,
-  patriotConfig,
-  ugConfig,
-} from '../../services/abcp/abcp.configs.js';
-import { AbcpSupplierAlias } from '../../services/abcp/abcpPlatform.types.d.js';
-import { mapAbcpResponse } from '../../services/abcp/abcpResponseMapper.js';
-import { fetchAbcpData } from '../../services/abcp/api/fetchAbcpData.js';
+import { avtodinamikaConfig } from '../../services/suppliers/avtodinamika/config.js';
+import { npnConfig } from '../../services/suppliers/npn/config.js';
+import { patriotConfig } from '../../services/suppliers/patriot/config.js';
+import { ugConfig } from '../../services/suppliers/ug/config.js';
+import { AbcpSupplierAlias } from '../../services/platforms/abcp/abcpPlatform.types.js';
+import { mapAbcpResponse } from '../../services/platforms/abcp/abcpResponseMapper.js';
+import { fetchAbcpData } from '../../services/platforms/abcp/api/fetchAbcpData.js';
 
 // ABCP (Парсеры)
-import {
-  autoImpulseClient,
-  mikanoClient,
-} from '../../services/abcp/parser/index.js';
+import { autoImpulseClient } from '../../services/suppliers/autoImpulse/client.js';
+import { mikanoClient } from '../../services/suppliers/mikano/client.js';
 
 // Profit
-import { getItemsListByArticleService } from '../../services/profit/getItemsListByArticleService.js';
-import { getItemsWithRest } from '../../services/profit/getItemsWithRest.js';
-import { parseProfitApiResponse } from '../../services/profit/parseProfitApiResponse.js';
+import { getItemsListByArticleService } from '../../services/suppliers/profit/getItemsListByArticleService.js';
+import { getItemsWithRest } from '../../services/suppliers/profit/getItemsWithRest.js';
+import { parseProfitApiResponse } from '../../services/suppliers/profit/parseProfitApiResponse.js';
 
 // Armtek
-import { parseArmtekResults } from '../../services/armtek/parseArmtekResults.js';
-import { searchArmtekArticle } from '../../services/armtek/searchArmtekArticle.js';
-import { getCachedStoreList } from '../../services/armtek/storeList.js';
+import { parseArmtekResults } from '../../services/suppliers/armtek/parseArmtekResults.js';
+import { searchArmtekArticle } from '../../services/suppliers/armtek/searchArmtekArticle.js';
+import { getCachedStoreList } from '../../services/suppliers/armtek/storeList.js';
 
 // Autosputnik
-import { parseAutosputnikData } from '../../services/autosputnik/parseAutosputnikData.js';
+import { parseAutosputnikData } from '../../services/suppliers/autosputnik/parseAutosputnikData.js';
 
 // AvtoPartner
-import { itemDataAvtoPartnerService } from '../../services/avtopartner/itemDataAvtoPartnerService.js';
+import { itemDataAvtoPartnerService } from '../../services/suppliers/avtopartner/itemDataAvtoPartnerService.js';
 
 // TurboCars
-import { parseTurboCarsData } from '../../services/turboCars/parseTurboCarsData.js';
+import { parseTurboCarsData } from '../../services/suppliers/turboCars/parseTurboCarsData.js';
 
 // Общие утилиты
-import { fetchAbcpOrders } from '../../services/abcp/api/fetchAbcpOrders.js';
+import { fetchAbcpOrders } from '../../services/platforms/abcp/api/fetchAbcpOrders.js';
 import { createAbcpError } from '../../utils/abcpErrorHandler.js';
 import { isRelevantBrand } from '../../utils/data/brand/isRelevantBrand.js';
 import {
