@@ -6,11 +6,11 @@ import type {
   ABCP_API_CartResponse,
   BasketPositionUG,
 } from '../../../orchestration/cart/cart.types.js';
-import { parseAddToCartData } from './abcpCartParser.js';
+import { parseCartDataHtml } from './parseCartDataHtml.js';
 import { autoImpulseClient } from '../../../suppliers/autoImpulse/client.js';
 import { mikanoClient } from '../../../suppliers/mikano/client.js';
 
-type AbcpClient = ReturnType<typeof import('./abcpClientParser.js').createAbcpClientParser>;
+type AbcpClient = ReturnType<typeof import('./createHtmlClient.js').createHtmlClient>;
 
 /** Маппинг имени поставщика → синглтон-клиент из suppliers/ */
 const clientMap: Record<string, AbcpClient> = {
@@ -32,12 +32,12 @@ const resolveClient = (supplierName: string): AbcpClient => {
  * Поток:
  * positions[] → for-of (sequential, rate-limit safe)
  * → GET /search/{brand}/{number}  (получаем HTML с параметрами корзины)
- * → parseAddToCartData            (cheerio → hidden inputs)
+ * → parseCartDataHtml             (cheerio → hidden inputs)
  * → POST /?page=addToBasket       (x-www-form-urlencoded)
  * → проверка { status: "ok" }
  * → ABCP_API_CartResponse
  */
-export const addAbcpCartParser = async (
+export const addToCartHtml = async (
   positions: BasketPositionUG[],
   supplierName: string
 ): Promise<ABCP_API_CartResponse> => {
@@ -55,7 +55,7 @@ export const addAbcpCartParser = async (
 
       await yieldToEventLoop();
 
-      const parsedData = parseAddToCartData(
+      const parsedData = parseCartDataHtml(
         response.data,
         position.number,
         position.brand,

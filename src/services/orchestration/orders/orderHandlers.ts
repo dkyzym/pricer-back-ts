@@ -10,13 +10,13 @@ import { fetchTurboCarsOrders } from '../../suppliers/turboCars/fetchTurboCarsOr
 import { mapTurboCarsOrdersToUnified } from '../../suppliers/turboCars/turboCarsMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
 
-import { parseAbcpHtml } from '../../platforms/abcp/parser/AbcpOrderParser.js';
+import { parseOrdersHtml } from '../../platforms/abcp/parser/parseOrdersHtml.js';
 import {
   AbcpRequestOptions,
-  createAbcpOrderService,
+  fetchOrdersHtml,
   IAbcpClientWrapper,
   SupplierConfigABCP,
-} from '../../platforms/abcp/parser/abcpOrderServiceParser.js';
+} from '../../platforms/abcp/parser/fetchOrdersHtml.js';
 
 import { abcpHeaders } from '../../../constants/headers.js';
 import { autoImpulseClient } from '../../suppliers/autoImpulse/client.js';
@@ -125,7 +125,7 @@ const createParserHandler = (config: ParserConfig): OrderHandler => {
     config.paginationStrategy
   );
 
-  const service = createAbcpOrderService(smartClient, parseAbcpHtml);
+  const service = fetchOrdersHtml(smartClient, parseOrdersHtml);
 
   const handler: OrderHandler = async (logger, targetSyncDate, signal) => {
     return service.syncSupplier(config.serviceConfig, logger, targetSyncDate, signal);

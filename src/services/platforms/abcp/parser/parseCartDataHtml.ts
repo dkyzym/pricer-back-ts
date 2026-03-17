@@ -32,7 +32,7 @@ export interface AddToCartData {
  * @param targetRouteId    - Опциональный ID маршрута поставщика для приоритетного выбора предложения
  * @throws {Error} Если элемент не найден, все предложения недоступны (availability=0) или отсутствует критический атрибут `datasetkey`
  */
-export const parseAddToCartData = (
+export const parseCartDataHtml = (
   html: string,
   targetNumber: string,
   targetBrand: string,

@@ -15,7 +15,7 @@ import { checkIsLoggedIn } from '../../../../utils/auth/checkIsLoggedIn.js';
 import { transformArticleByBrand } from '../../../../utils/data/brand/transformArticleByBrand.js';
 import { parsePickedABCPresults } from '../../../../utils/parsePickedABCPresults.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
-import type { AbcpRequestOptions } from './abcpOrderServiceParser.js';
+import type { AbcpRequestOptions } from './fetchOrdersHtml.js';
 
 export interface AbcpClientConfig {
   supplierName: string;
@@ -28,7 +28,7 @@ export interface AbcpClientConfig {
 }
 
 // Фабричная функция для создания клиента
-export const createAbcpClientParser = (config: AbcpClientConfig) => {
+export const createHtmlClient = (config: AbcpClientConfig) => {
   if (
     !config.credentials.username ||
     !config.credentials.password ||

@@ -1,7 +1,7 @@
-import { createAbcpClientParser } from '../../platforms/abcp/parser/abcpClientParser.js';
+import { createHtmlClient } from '../../platforms/abcp/parser/createHtmlClient.js';
 
 /** Клиент ABCP-парсера для поставщика AutoImpulse */
-export const autoImpulseClient = createAbcpClientParser({
+export const autoImpulseClient = createHtmlClient({
   supplierName: 'AutoImpulse',
   baseUrl: process.env.AUTOIMPULSE_URL!,
   credentials: {

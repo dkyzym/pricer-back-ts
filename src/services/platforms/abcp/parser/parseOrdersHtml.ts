@@ -232,7 +232,7 @@ const parseBlockLayout: LayoutStrategy = async ($, supplier) => {
  * Основная функция парсинга.
  * Применяет стратегии по очереди.
  */
-export const parseAbcpHtml = async (
+export const parseOrdersHtml = async (
   html: string,
   supplier: string
 ): Promise<UnifiedOrderItem[]> => {
@@ -255,4 +255,4 @@ export const parseAbcpHtml = async (
   return [];
 };
 
-export type AbcpParserFn = typeof parseAbcpHtml;
+export type ParseOrdersHtmlFn = typeof parseOrdersHtml;

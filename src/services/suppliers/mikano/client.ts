@@ -1,7 +1,7 @@
-import { createAbcpClientParser } from '../../platforms/abcp/parser/abcpClientParser.js';
+import { createHtmlClient } from '../../platforms/abcp/parser/createHtmlClient.js';
 
 /** Клиент ABCP-парсера для поставщика Mikano */
-export const mikanoClient = createAbcpClientParser({
+export const mikanoClient = createHtmlClient({
   supplierName: 'mikano',
   baseUrl: process.env.MIKANO_LOGIN_URL!,
   credentials: {

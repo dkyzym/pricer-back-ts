@@ -1,6 +1,6 @@
 import { AbcpSupplierAlias } from '../../platforms/abcp/abcpPlatform.types.js';
 import { updateAbcpCart } from '../../platforms/abcp/api/abcpCartService.js';
-import { addAbcpCartParser } from '../../platforms/abcp/parser/abcpCartParserService.js';
+import { addToCartHtml } from '../../platforms/abcp/parser/addToCartHtml.js';
 import { addAvtopartnerCart } from '../../suppliers/avtopartner/cart/addAvtopartnerCartService.js';
 import { addToCartProfitService } from '../../suppliers/profit/addToCartProfitService.js';
 import {
@@ -83,7 +83,7 @@ const abcpParserCartHandler: CartHandler = async (
     number: article,
   };
 
-  const result = await addAbcpCartParser([position], supplier);
+  const result = await addToCartHtml([position], supplier);
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';

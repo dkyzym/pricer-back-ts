@@ -2,7 +2,7 @@ import { AxiosResponse } from 'axios';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { UnifiedOrderItem } from '../../../orchestration/orders/orders.types.js';
-import { AbcpParserFn } from './AbcpOrderParser.js';
+import { ParseOrdersHtmlFn } from './parseOrdersHtml.js';
 
 // --- Types ---
 
@@ -25,7 +25,7 @@ export interface SupplierConfigABCP {
 
 interface ServiceDependencies {
   client: IAbcpClientWrapper;
-  parser: AbcpParserFn;
+  parser: ParseOrdersHtmlFn;
 }
 
 // --- Constants ---
@@ -192,9 +192,9 @@ const fetchPagesRecursive = async (
  * Фабрика сервиса. Заменяет класс abcpOrderServiceParser.
  * Принимает зависимости (Client, Parser) и возвращает методы работы с ними.
  */
-export const createAbcpOrderService = (
+export const fetchOrdersHtml = (
   client: IAbcpClientWrapper,
-  parser: AbcpParserFn
+  parser: ParseOrdersHtmlFn
 ) => {
   const syncSupplier = async (
     config: SupplierConfigABCP,
