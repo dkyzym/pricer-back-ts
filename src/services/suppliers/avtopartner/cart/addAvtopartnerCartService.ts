@@ -6,7 +6,7 @@ import { isRelevantBrand } from '../../../../utils/data/brand/isRelevantBrand.js
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import type {
   ABCP_API_CartResponse,
-  BasketPositionUG,
+  UnifiedCartPosition,
 } from '../../../orchestration/cart/cart.types.js';
 import { clientAvtoPartner } from '../client.js';
 import { ensureAvtoPartnerLoggedIn } from '../loginAvtoPartner.js';
@@ -29,7 +29,7 @@ const normalizeForComparison = (str: string): string =>
  *  → ABCP_API_CartResponse
  */
 export const addAvtopartnerCart = async (
-  positions: BasketPositionUG[],
+  positions: UnifiedCartPosition[],
   supplierName: string
 ): Promise<ABCP_API_CartResponse> => {
   await ensureAvtoPartnerLoggedIn();

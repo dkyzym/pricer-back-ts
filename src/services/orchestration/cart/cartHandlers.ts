@@ -4,11 +4,33 @@ import { addToCartHtml } from '../../platforms/abcp/parser/addToCartHtml.js';
 import { addAvtopartnerCart } from '../../suppliers/avtopartner/cart/addAvtopartnerCartService.js';
 import { addToCartProfitService } from '../../suppliers/profit/addToCartProfitService.js';
 import {
-  BasketPositionUG,
   CartHandler,
   CartHandlerResponse,
+  UnifiedCartPosition,
   UnifiedCartRequest,
 } from './cart.types.js';
+
+/**
+ * Извлекает supplierData, itemKey, supplierCode, article из UnifiedCartRequest
+ * и собирает объект позиции корзины для ABCP/парсер/автопартнёр.
+ */
+const buildCartPosition = (data: UnifiedCartRequest): UnifiedCartPosition => {
+  const { supplier, quantity, item } = data;
+  const supplierData = item[supplier];
+  const itemKey =
+    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
+  const supplierCode =
+    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
+  const article = item.article ?? item.number;
+
+  return {
+    brand: item.brand,
+    supplierCode,
+    quantity,
+    itemKey,
+    number: article,
+  };
+};
 
 const profitCartHandler: CartHandler = async (
   data: UnifiedCartRequest
@@ -41,22 +63,8 @@ const profitCartHandler: CartHandler = async (
 const abcpCartHandler: CartHandler = async (
   data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
-  const { supplier, quantity, item } = data;
-  const supplierData = item[supplier];
-  const itemKey =
-    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
-  const supplierCode =
-    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
-  const article = item.article ?? item.number;
-
-  const position: BasketPositionUG = {
-    brand: item.brand,
-    supplierCode,
-    quantity,
-    itemKey,
-    number: article,
-  };
-  const result = await updateAbcpCart([position], supplier as AbcpSupplierAlias);
+  const position = buildCartPosition(data);
+  const result = await updateAbcpCart([position], data.supplier as AbcpSupplierAlias);
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';
@@ -67,23 +75,8 @@ const abcpCartHandler: CartHandler = async (
 const abcpParserCartHandler: CartHandler = async (
   data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
-  const { supplier, quantity, item } = data;
-  const supplierData = item[supplier];
-  const itemKey =
-    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
-  const supplierCode =
-    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
-  const article = item.article ?? item.number;
-
-  const position: BasketPositionUG = {
-    brand: item.brand,
-    supplierCode,
-    quantity,
-    itemKey,
-    number: article,
-  };
-
-  const result = await addToCartHtml([position], supplier);
+  const position = buildCartPosition(data);
+  const result = await addToCartHtml([position], data.supplier);
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';
@@ -94,23 +87,8 @@ const abcpParserCartHandler: CartHandler = async (
 const avtopartnerCartHandler: CartHandler = async (
   data: UnifiedCartRequest
 ): Promise<CartHandlerResponse> => {
-  const { supplier, quantity, item } = data;
-  const supplierData = item[supplier];
-  const itemKey =
-    item.itemKey ?? item.inner_product_code ?? supplierData?.itemKey;
-  const supplierCode =
-    item.supplierCode ?? item.warehouse_id ?? supplierData?.supplierCode;
-  const article = item.article ?? item.number;
-
-  const position: BasketPositionUG = {
-    brand: item.brand,
-    supplierCode,
-    quantity,
-    itemKey,
-    number: article,
-  };
-
-  const result = await addAvtopartnerCart([position], supplier);
+  const position = buildCartPosition(data);
+  const result = await addAvtopartnerCart([position], data.supplier);
 
   const message =
     result.positions[0]?.errorMessage || 'Товар добавлен/обновлен в корзине';

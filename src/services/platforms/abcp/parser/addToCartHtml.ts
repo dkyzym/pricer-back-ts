@@ -4,7 +4,7 @@ import { cleanArticleString } from '../../../../utils/data/brand/cleanArticleStr
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import type {
   ABCP_API_CartResponse,
-  BasketPositionUG,
+  UnifiedCartPosition,
 } from '../../../orchestration/cart/cart.types.js';
 import { parseCartDataHtml } from './parseCartDataHtml.js';
 import { autoImpulseClient } from '../../../suppliers/autoImpulse/client.js';
@@ -38,7 +38,7 @@ const resolveClient = (supplierName: string): AbcpClient => {
  * → ABCP_API_CartResponse
  */
 export const addToCartHtml = async (
-  positions: BasketPositionUG[],
+  positions: UnifiedCartPosition[],
   supplierName: string
 ): Promise<ABCP_API_CartResponse> => {
   const client = resolveClient(supplierName);

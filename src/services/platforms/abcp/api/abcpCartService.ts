@@ -2,14 +2,14 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { getAxiosInstance } from '../../../../infrastructure/http/apiClient.js';
 import {
   ABCP_API_CartResponse,
-  BasketPositionUG,
+  UnifiedCartPosition,
 } from '../../../orchestration/cart/cart.types.js';
 import { AbcpSupplierAlias } from '../abcpPlatform.types.js';
 
 // Примечание: Эта функция не экспортируется, так как она является вспомогательной.
 // Она отправляет сырой запрос к API.
 const sendCartRequest = async (
-  positions: BasketPositionUG[],
+  positions: UnifiedCartPosition[],
   supplier: AbcpSupplierAlias
 ): Promise<AxiosResponse<ABCP_API_CartResponse>> => {
   const axiosInstance = await getAxiosInstance(supplier);
@@ -38,7 +38,7 @@ const sendCartRequest = async (
  * @returns - Ответ от API ABCP.
  */
 export const updateAbcpCart = async (
-  positions: BasketPositionUG[],
+  positions: UnifiedCartPosition[],
   supplier: AbcpSupplierAlias
 ): Promise<ABCP_API_CartResponse> => {
   try {
@@ -82,7 +82,7 @@ export const updateAbcpCart = async (
  * @returns - Ответ от API.
  */
 export const removeAbcpCart = async (
-  positions: BasketPositionUG[],
+  positions: UnifiedCartPosition[],
   supplier: AbcpSupplierAlias
 ): Promise<ABCP_API_CartResponse> => {
   const positionsToRemove = positions.map((p) => ({ ...p, quantity: 0 }));

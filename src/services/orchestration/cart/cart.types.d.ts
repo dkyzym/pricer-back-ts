@@ -18,8 +18,8 @@ export interface AddToCartConfig {
   supplier?: SupplierName;
 }
 
-//** Параметры для добавления в корзину ЮГ */
-export interface BasketPositionUG {
+/** Параметры для добавления в корзину (унифицированная позиция) */
+export interface UnifiedCartPosition {
   number: string;
   brand: string;
   supplierCode: string;
