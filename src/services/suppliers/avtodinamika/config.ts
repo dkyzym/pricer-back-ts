@@ -7,6 +7,6 @@ export const avtodinamikaConfig: AbcpMapperConfig = {
   getProbability: (item) => item.deliveryProbability ?? 0,
   getDeadlines: (item, _logger: Logger) => ({
     deadline: item.deliveryPeriod || 1,
-    deadLineMax: item.deliveryPeriodMax || item.deliveryPeriod || 1,
+    deadLineMax: (item.deliveryPeriodMax || item.deliveryPeriod || 1) as number,
   }),
 };

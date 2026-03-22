@@ -15,6 +15,6 @@ export const ugConfig: AbcpMapperConfig = {
   },
   getDeadlines: (item, _logger: Logger) => ({
     deadline: item.deliveryPeriod || 1,
-    deadLineMax: item.deliveryPeriodMax || item.deliveryPeriod || 1,
+    deadLineMax: (item.deliveryPeriodMax || item.deliveryPeriod || 1) as number,
   }),
 };

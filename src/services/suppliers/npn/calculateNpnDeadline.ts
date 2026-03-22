@@ -25,6 +25,27 @@ const weeklyRuleRegex = new RegExp(
   `(?:до\\s+)?(${dayNamesForRegex})[а-я.]*\\s.*?(\\d{1,2})[.:-](\\d{2}).*?(?:доставка|получение).*?(?:наш\\s+склад\\s+в|в)?\\s*(${dayNamesForRegex})[а-я.]*(?:\\s+после\\s+(\\d{1,2})[.:-](\\d{2}))?`
 );
 
+/**
+ * Только fallback в конце функции (когда `deadlineReplace` не разобрана).
+ * Разбор дат по тексту правил выше — без изменений.
+ *
+ * У НПН `deliveryPeriodMax` иногда приходит пустой строкой; `??` её не подменяет,
+ * из‑за чего в ответ уходила нечисловая `deadLineMax`. Исправляем только этот случай
+ * и строковое число; `deliveryPeriod` не трогаем (как раньше: `?? 24`).
+ */
+const npnResolveDeliveryPeriodMaxHours = (
+  rawMax: number | string | null | undefined,
+  deliveryPeriodHours: number
+): number => {
+  if (rawMax === '' || rawMax == null) return deliveryPeriodHours;
+  if (typeof rawMax === 'number' && Number.isFinite(rawMax)) return rawMax;
+  if (typeof rawMax === 'string' && rawMax.trim() !== '') {
+    const parsed = parseInt(rawMax.trim(), 10);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return deliveryPeriodHours;
+};
+
 export const calculateNpnDeadlineHours = (
   originalItem: AbcpArticleSearchResult,
   logger: Logger
@@ -32,8 +53,10 @@ export const calculateNpnDeadlineHours = (
   const now = DateTime.now().setZone('Europe/Moscow');
 
   const deliveryPeriodHours = originalItem.deliveryPeriod ?? 24;
-  const deliveryPeriodMaxHours =
-    originalItem.deliveryPeriodMax ?? deliveryPeriodHours;
+  const deliveryPeriodMaxHours = npnResolveDeliveryPeriodMaxHours(
+    originalItem.deliveryPeriodMax,
+    deliveryPeriodHours
+  );
 
   if (
     typeof originalItem.deadlineReplace === 'string' &&

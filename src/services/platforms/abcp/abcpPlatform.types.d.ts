@@ -22,12 +22,13 @@ export interface AbcpArticleSearchResult {
   availability: number;
   packing: number;
   deliveryPeriod: number;
-  deliveryPeriodMax: number;
-  deadlineReplace: '';
-  distributorCode: '';
+  /** API иногда отдаёт пустую строку вместо числа */
+  deliveryPeriodMax: number | string;
+  deadlineReplace: string;
+  distributorCode: string;
   supplierCode: number;
-  supplierColor: null;
-  supplierDescription: '';
+  supplierColor: string | null;
+  supplierDescription: string;
   itemKey: string;
   price: number;
   weight: number;
@@ -41,7 +42,7 @@ export interface AbcpArticleSearchResult {
     wearout: number;
     isUsed: boolean;
     images: null;
-    abcpWh: string;
+    abcpWh?: string;
   };
   deliveryProbability: 0;
 }

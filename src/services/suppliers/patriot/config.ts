@@ -7,6 +7,6 @@ export const patriotConfig: AbcpMapperConfig = {
   getProbability: (_item) => 95,
   getDeadlines: (item, _logger: Logger) => ({
     deadline: item.deliveryPeriod || 24,
-    deadLineMax: item.deliveryPeriodMax || item.deliveryPeriod || 24,
+    deadLineMax: (item.deliveryPeriodMax || item.deliveryPeriod || 24) as number,
   }),
 };
