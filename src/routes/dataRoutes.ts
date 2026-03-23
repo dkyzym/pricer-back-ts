@@ -1,4 +1,5 @@
 import { addToCartController } from '@controllers/cart/addToCartController.js';
+import { getCartController } from '@controllers/cart/getCartController.js';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
@@ -21,6 +22,7 @@ router.get(
   autocompleteLimiter,
   ctrlWrapper(autocompleteUgController)
 );
-router.post('/cart/add', ctrlWrapper(addToCartController));
+router.post('/cart/add', authMiddleware, ctrlWrapper(addToCartController));
+router.get('/cart', authMiddleware, ctrlWrapper(getCartController));
 
 export default router;

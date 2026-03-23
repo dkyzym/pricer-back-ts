@@ -15,8 +15,7 @@ export const authMiddleware = (
 
   try {
     const token = header.slice(7);
-    const payload = verifyToken(token);
-    (req as any).user = payload;
+    req.user = verifyToken(token);
     next();
   } catch {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
