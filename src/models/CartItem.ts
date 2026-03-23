@@ -22,6 +22,8 @@ export interface ICartItemDocument extends Document {
   name: string;
   quantity: number;
   initialPrice: number;
+  /** Актуальная цена после последней актуализации (null — ещё не проверялась). */
+  currentPrice: number | null;
   status: CartItemStatus;
   /** Исходный объект item из результата поиска на фронте (произвольная структура). */
   rawItemData: unknown;
@@ -38,6 +40,7 @@ const cartItemSchema = new Schema<ICartItemDocument>(
     name: { type: String, required: true },
     quantity: { type: Number, required: true, default: 1 },
     initialPrice: { type: Number, required: true },
+    currentPrice: { type: Number, default: null },
     status: {
       type: String,
       required: true,

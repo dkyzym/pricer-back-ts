@@ -1,5 +1,9 @@
+import { actualizeCartController } from '@controllers/cart/actualizeCartController.js';
 import { addToCartController } from '@controllers/cart/addToCartController.js';
+import { deleteCartItemController } from '@controllers/cart/deleteCartItemController.js';
 import { getCartController } from '@controllers/cart/getCartController.js';
+import { updateCartItemQuantityController } from '@controllers/cart/updateCartItemQuantityController.js';
+import { updateCartItemStatusController } from '@controllers/cart/updateCartItemStatusController.js';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { ctrlWrapper } from 'middleware/ctrlWrapper.js';
@@ -24,5 +28,25 @@ router.get(
 );
 router.post('/cart/add', authMiddleware, ctrlWrapper(addToCartController));
 router.get('/cart', authMiddleware, ctrlWrapper(getCartController));
+router.delete(
+  '/cart/:id',
+  authMiddleware,
+  ctrlWrapper(deleteCartItemController)
+);
+router.patch(
+  '/cart/:id/quantity',
+  authMiddleware,
+  ctrlWrapper(updateCartItemQuantityController)
+);
+router.patch(
+  '/cart/:id/status',
+  authMiddleware,
+  ctrlWrapper(updateCartItemStatusController)
+);
+router.post(
+  '/cart/actualize',
+  authMiddleware,
+  ctrlWrapper(actualizeCartController)
+);
 
 export default router;
