@@ -48,7 +48,7 @@ const profitCartHandler: CartHandler = async (
 
   const profitMessageMap = {
     success: 'Товар успешно добавлен',
-    'no - quantity': 'На складе нет такого количества',
+    'no-quantity': 'На складе нет такого количества',
     less: 'Количество должно быть больше нуля',
     error: 'Ошибка добавления, товар не определен',
   };
