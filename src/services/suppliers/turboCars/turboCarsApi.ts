@@ -174,13 +174,14 @@ const extractErrorMessage = (resp: TurboCarsErrorResponse): string => {
 
 export const createTurboCarsOrder = async (
   positions: TurboCarsOrderCreatePosition[],
-  logger: Logger
+  logger: Logger,
+  isTest: 0 | 1 = 0,
 ): Promise<TurboCarsOrderCreateResponse> => {
   const { urlBase, headers } = createTurboCarsClientConfig();
   const url = `${urlBase}/order:create`;
 
   const body: TurboCarsOrderCreateRequest = {
-    is_test: 0,
+    is_test: isTest,
     positions,
   };
 

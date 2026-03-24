@@ -1,6 +1,9 @@
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
 import { CheckoutHandler, CheckoutResult } from '../cart/cart.types.js';
+import { armtekCheckoutHandler } from '../../suppliers/armtek/armtekCheckoutService.js';
+import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsCheckoutService.js';
+import { createAbcpCheckoutHandler } from '../../platforms/abcp/abcpCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Вспомогательная фабрика «заглушки»
@@ -21,43 +24,17 @@ const notImplemented =
   };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Armtek
+//  Armtek  →  реализация в armtekCheckoutService.ts (тестовый endpoint)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Алгоритм реализации (Armtek):
- *   1. Из `rawItemData` собрать payload для endpoint создания заказа
- *      (поля ARTID, KEYZAK, PARNR, RVALUE, PRICE).
- *   2. Вызвать метод API Armtek «create_order» единым запросом.
- *   3. Извлечь из ответа идентификаторы заказов и вернуть в `externalOrderIds`.
- */
-const armtekHandler: CheckoutHandler = notImplemented('armtek');
-
 // ─────────────────────────────────────────────────────────────────────────────
-//  TurboCars
+//  TurboCars  →  реализация в turboCarsCheckoutService.ts (тестовый режим)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Алгоритм реализации (TurboCars):
- *   1. Из `rawItemData` собрать массив позиций payload для API TurboCars.
- *   2. Отправить единый запрос на checkout-endpoint TurboCars.
- *   3. Разобрать ответ и вернуть номера заказов в `externalOrderIds`.
- */
-const turboCarsHandler: CheckoutHandler = notImplemented('turboCars');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ABCP  (покрывает: ug, patriot, npn и аналогичные ABCP-площадки)
+//  Реализация: createAbcpCheckoutHandler (abcpCheckoutService.ts)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Алгоритм реализации (ABCP):
- *   1. Очистить корзину поставщика через DELETE /basket.
- *   2. Последовательно добавить каждую позицию через POST /basket,
- *      используя свежие токены из `rawItemData` (number, brand, supplierCode, itemKey).
- *   3. Инициировать оформление заказа через POST /orders.
- *   4. Извлечь и вернуть идентификаторы созданных заказов.
- */
-const abcpHandler: CheckoutHandler = notImplemented('abcp');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Profit
@@ -94,20 +71,20 @@ const autosputnikHandler: CheckoutHandler = notImplemented('autosputnik');
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const checkoutHandlers: Record<string, CheckoutHandler> = {
-  armtek: armtekHandler,
-  turboCars: turboCarsHandler,
+  armtek: armtekCheckoutHandler,
+  turboCars: turboCarsCheckoutHandler,
   profit: profitHandler,
   autosputnik: autosputnikHandler,
   autosputnik_bn: autosputnikHandler,
 
-  /** ABCP-площадки — один адаптер, разные аккаунты/витрины. */
-  ug: abcpHandler,
-  ug_f: abcpHandler,
-  ug_bn: abcpHandler,
-  patriot: abcpHandler,
-  npn: abcpHandler,
-  avtodinamika: abcpHandler,
-  mikano: abcpHandler,
-  autoImpulse: abcpHandler,
-  avtoPartner: abcpHandler,
+  /** ABCP-площадки — фабрика создаёт адаптер под конкретный supplierAlias (аккаунт/витрину). */
+  ug: createAbcpCheckoutHandler('ug'),
+  ug_f: createAbcpCheckoutHandler('ug_f'),
+  ug_bn: createAbcpCheckoutHandler('ug_bn'),
+  patriot: createAbcpCheckoutHandler('patriot'),
+  npn: createAbcpCheckoutHandler('npn'),
+  avtodinamika: createAbcpCheckoutHandler('avtodinamika'),
+  mikano: createAbcpCheckoutHandler('mikano'),
+  autoImpulse: createAbcpCheckoutHandler('autoImpulse'),
+  avtoPartner: createAbcpCheckoutHandler('avtoPartner'),
 };
