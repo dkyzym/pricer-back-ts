@@ -1,6 +1,8 @@
 import axios from 'axios';
-import { ArmtekSearchResponse, StoreResponseItem } from './armtek.types';
+import { ArmtekSearchResponse, StoreResponseItem } from './armtek.types.js';
 
+const ARMTEK_BASE_URL =
+  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '');
 
 /**
  * Функция для получения списка складов.
@@ -17,7 +19,7 @@ export async function getArmtekStoresList(): Promise<
 
   try {
     const response = await axios.post<ArmtekSearchResponse<StoreResponseItem>>(
-      'http://ws.armtek.by/api/ws_user/getStoreList?format=json',
+      `${ARMTEK_BASE_URL}/api/ws_user/getStoreList?format=json`,
       formData,
       {
         headers: {

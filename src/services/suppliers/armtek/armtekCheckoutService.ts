@@ -4,12 +4,13 @@ import { ICartItemDocument } from '../../../models/CartItem.js';
 import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.types.js';
 import { SearchResponseItem } from './armtek.types.js';
 
+const ARMTEK_BASE_URL =
+  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '')
+
 /**
  * ТЕСТОВЫЙ endpoint для создания заказа — НЕ создаёт реальных финансовых обязательств.
  * При переходе в прод заменить `createTestOrder` на `createOrder`.
  */
-const ARMTEK_CREATE_ORDER_URL =
-  'http://ws.armtek.by/api/ws_order/createTestOrder?format=json';
 
 interface ArmtekOrderItem {
   PIN: string;
@@ -77,13 +78,8 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
   };
 
   try {
-    userLogger.info('[ArmtekCheckout] Отправка тестового заказа', {
-      itemCount: items.length,
-      pins: payload.ITEMS.map((i) => i.PIN),
-    });
-
     const response = await axios.post<ArmtekOrderResponse>(
-      ARMTEK_CREATE_ORDER_URL,
+      `${ARMTEK_BASE_URL}/api/ws_order/createTestOrder?format=json`,
       payload,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -110,8 +106,6 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
     const externalOrderIds = (RESP ?? [])
       .map((r) => r.VBELN)
       .filter((id): id is string => !!id);
-
-    userLogger.info('[ArmtekCheckout] Тестовый заказ создан', { externalOrderIds });
 
     return { success: true, cartItemIds, externalOrderIds };
   } catch (error: unknown) {

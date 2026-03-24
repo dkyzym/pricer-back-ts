@@ -1,4 +1,24 @@
 /**
+ * Тело поля RESP у `ws_search/search` (док. §4.2): либо список в ARRAY, либо (устар.) плоский массив.
+ */
+export interface SearchWsResponseBody {
+  ARRAY?: SearchResponseItem[];
+}
+
+/**
+ * Сырой JSON от search до нормализации в плоский массив позиций.
+ */
+export interface ArmtekSearchRawResponse {
+  STATUS: number;
+  MESSAGES?: {
+    TYPE: 'A' | 'E' | 'S' | 'W' | 'I';
+    TEXT: string;
+    DATE?: string;
+  }[];
+  RESP?: SearchResponseItem[] | SearchWsResponseBody;
+}
+
+/**
  * Общая структура ответа веб-сервиса (ver. 1.1.7)
  * - STATUS: код ответа
  * - MESSAGES: массив сообщений

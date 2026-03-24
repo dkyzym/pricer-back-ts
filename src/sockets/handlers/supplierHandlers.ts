@@ -88,7 +88,10 @@ export const supplierHandlers: Record<string, SupplierHandler> = {
       supplier
     );
     const { RESP } = await searchArmtekArticle(
-      { PIN: articleToSearch },
+      {
+        PIN: articleToSearch,
+        BRAND: item.brand ?? '',
+      },
       userLogger
     );
     if (!RESP || !RESP.length) return [];

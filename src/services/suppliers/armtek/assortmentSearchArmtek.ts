@@ -7,8 +7,8 @@ import {
   AssortmentSearchRequest,
 } from './armtek.types.js';
 
-const ARMTEK_ASSORTMENT_URL =
-  'http://ws.armtek.by/api/ws_search/assortment_search?format=json';
+const ARMTEK_BASE_URL =
+  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '');
 
 /**
  * Поиск по ассортименту Armtek (assortment_search).
@@ -22,7 +22,7 @@ export async function assortmentSearchArmtek(
 
   try {
     const response = await axios.post<ArmtekAssortmentApiResponse>(
-      ARMTEK_ASSORTMENT_URL,
+      `${ARMTEK_BASE_URL}/api/ws_search/assortment_search?format=json`,
       { VKORG, PIN, PROGRAM },
       {
         headers: { 'Content-Type': 'application/json' },
@@ -47,13 +47,9 @@ export async function assortmentSearchArmtek(
     return items;
   } catch (error) {
     if (error instanceof AxiosError) {
-      userLogger.warn(
-        'Armtek assortment_search request failed:',
-        error.message,
-        error.response?.data
-      );
+      userLogger.warn(`Armtek assortment_search: ${error.message}`);
     } else {
-      userLogger.warn('Armtek assortment_search error:', error);
+      userLogger.warn('Armtek assortment_search:', { error });
     }
     return [];
   }

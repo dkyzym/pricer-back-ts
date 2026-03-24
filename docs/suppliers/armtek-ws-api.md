@@ -1,7 +1,7 @@
 # ARMTEK REST API — документация для JavaScript/TypeScript
 
 Версия API: **1.1.7**  
-Базовый URL: `http://ws.armtek.by`  
+Базовый URL: `http://ws.armtek.ru`  
 Формат ответа: **JSON** (`?format=json`)
 
 ---
@@ -13,7 +13,7 @@
 Все запросы выполняются с заголовком Basic Auth. В JS/Node:
 
 ```ts
-const BASE_URL = 'http://ws.armtek.by';
+const BASE_URL = 'http://ws.armtek.ru';
 const credentials = Buffer.from(`${login}:${password}`).toString('base64');
 
 const response = await fetch(`${BASE_URL}/api/ws_order/getOrder?VKORG=4000&KUNRG=...&ORDER=...&format=json`, {
@@ -95,7 +95,7 @@ function formatArmtekDate(d: Date): string {
 ### 3.1 Создание заказа — createOrder
 
 - **Метод:** `POST`
-- **URL:** `http://ws.armtek.by/api/ws_order/createOrder?format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/createOrder?format=json`
 
 **Тело запроса (JSON):**
 
@@ -188,7 +188,7 @@ const data = await res.json() as ArmtekApiResponse<CreateOrderResponse>;
 ### 3.2 Создание тестового заказа — createTestOrder
 
 - **Метод:** `POST`
-- **URL:** `http://ws.armtek.by/api/ws_order/createTestOrder?format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/createTestOrder?format=json`
 
 Параметры и структура ответа аналогичны **createOrder** (те же типы `CreateOrderRequest` / `CreateOrderResponse`).
 
@@ -197,7 +197,7 @@ const data = await res.json() as ArmtekApiResponse<CreateOrderResponse>;
 ### 3.3 Подробная информация по заказу — getOrder
 
 - **Метод:** `GET`
-- **URL:** `http://ws.armtek.by/api/ws_order/getOrder?VKORG=...&KUNRG=...&ORDER=...&format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/getOrder?VKORG=...&KUNRG=...&ORDER=...&format=json`
 
 **Query-параметры:**
 
@@ -306,7 +306,7 @@ const items = data.RESP?.ITEMS ?? [];
 ### 3.4 Подробная информация по заказу (v2) — getOrder2
 
 - **Метод:** `GET`
-- **URL:** `http://ws.armtek.by/api/ws_order/getOrder2?VKORG=...&KUNRG=...&ORDER=...&format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/getOrder2?VKORG=...&KUNRG=...&ORDER=...&format=json`
 
 **Доп. параметр:** `STATUS=1` — в ответ добавляется расшифровка статусов по позициям (вложенные массивы `STATUSES` с полями Processing, Ready, Delivered и т.д.).
 
@@ -326,7 +326,7 @@ const items = data.RESP?.ITEMS ?? [];
 ### 3.5 Подробная информация по возврату — getRefund
 
 - **Метод:** `GET`
-- **URL:** `http://ws.armtek.by/api/ws_order/getRefund?VKORG=...&KUNRG=...&RETURN=...&format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/getRefund?VKORG=...&KUNRG=...&RETURN=...&format=json`
 
 **Query:** VKORG, KUNRG, RETURN (номер возврата) — все обязательные.
 
@@ -337,7 +337,7 @@ const items = data.RESP?.ITEMS ?? [];
 ### 3.6 Редактирование заказа — editOrder
 
 - **Метод:** `POST`
-- **URL:** `http://ws.armtek.by/api/ws_order/editOrder?format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_order/editOrder?format=json`
 
 **Тело запроса:**
 
@@ -387,7 +387,7 @@ await fetch(`${BASE_URL}/api/ws_order/editOrder?format=json`, {
 ### 4.1 Поиск по ассортименту — assortment_search
 
 - **Метод:** `POST`
-- **URL:** `http://ws.armtek.by/api/ws_search/assortment_search?format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_search/assortment_search?format=json`
 
 **Тело запроса:**
 
@@ -418,7 +418,7 @@ interface AssortmentSearchResponse {
 ### 4.2 Поиск (остатки, цены, аналоги) — search
 
 - **Метод:** `POST`
-- **URL:** `http://ws.armtek.by/api/ws_search/search?format=json`
+- **URL:** `http://ws.armtek.ru/api/ws_search/search?format=json`
 
 **Тело запроса:**
 
@@ -524,4 +524,4 @@ SubStatus для **Processing**:
 
 ---
 
-*Документация собрана из официальных материалов ws.armtek.by (возвращаемый ответ, заказы, поиск, описание getOrder2) и адаптирована для использования в JavaScript/TypeScript.*
+*Документация собрана из официальных материалов ws.armtek.ru (возвращаемый ответ, заказы, поиск, описание getOrder2) и адаптирована для использования в JavaScript/TypeScript.*
