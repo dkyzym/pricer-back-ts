@@ -4,6 +4,8 @@ import { CheckoutHandler, CheckoutResult } from '../cart/cart.types.js';
 import { armtekCheckoutHandler } from '../../suppliers/armtek/armtekCheckoutService.js';
 import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsCheckoutService.js';
 import { createAbcpCheckoutHandler } from '../../platforms/abcp/abcpCheckoutService.js';
+import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
+import { manualCheckoutHandler } from './manualCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Вспомогательная фабрика «заглушки»
@@ -37,18 +39,8 @@ const notImplemented =
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Profit
+//  Profit  →  реализация в profitCheckoutService.ts
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Алгоритм реализации (Profit):
- *   1. Очистить корзину поставщика (DELETE корзины Profit).
- *   2. Последовательно добавить каждую позицию через POST /cart,
- *      используя свежие токены из `rawItemData` (product_code, warehouse_id, donkey).
- *   3. Вызвать checkout-endpoint Profit для подтверждения заказа.
- *   4. Разобрать ответ и вернуть order_id в `externalOrderIds`.
- */
-const profitHandler: CheckoutHandler = notImplemented('profit');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Autosputnik
@@ -73,7 +65,7 @@ const autosputnikHandler: CheckoutHandler = notImplemented('autosputnik');
 export const checkoutHandlers: Record<string, CheckoutHandler> = {
   armtek: armtekCheckoutHandler,
   turboCars: turboCarsCheckoutHandler,
-  profit: profitHandler,
+  profit: profitCheckoutHandler,
   autosputnik: autosputnikHandler,
   autosputnik_bn: autosputnikHandler,
 
@@ -84,7 +76,9 @@ export const checkoutHandlers: Record<string, CheckoutHandler> = {
   patriot: createAbcpCheckoutHandler('patriot'),
   npn: createAbcpCheckoutHandler('npn'),
   avtodinamika: createAbcpCheckoutHandler('avtodinamika'),
-  mikano: createAbcpCheckoutHandler('mikano'),
-  autoImpulse: createAbcpCheckoutHandler('autoImpulse'),
-  avtoPartner: createAbcpCheckoutHandler('avtoPartner'),
+
+  /** HTML-скраперы — ручное оформление на сайте поставщика. */
+  mikano: manualCheckoutHandler,
+  autoImpulse: manualCheckoutHandler,
+  avtoPartner: manualCheckoutHandler,
 };

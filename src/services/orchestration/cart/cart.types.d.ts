@@ -66,7 +66,7 @@ export type CartHandler = (
 ) => Promise<CartHandlerResponse>;
 
 export type ProfitAPIresponse = {
-  status: 'success' | 'no - quantity' | 'less' | 'error';
+  status: 'success' | 'no-quantity' | 'less' | 'error';
   total: number;
   count: number;
 };
@@ -80,6 +80,7 @@ export interface CheckoutResult {
   cartItemIds: string[];
   externalOrderIds?: string[];
   error?: string;
+  note?: string;
 }
 
 /**
