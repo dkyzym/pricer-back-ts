@@ -1,48 +1,31 @@
 import { Request, Response } from 'express';
-import { UnifiedCartRequest } from '../../services/orchestration/cart/cart.types.js';
-import { CartItem } from '../../models/CartItem.js';
+import {
+  CartHandler,
+  UnifiedCartRequest,
+} from '../../services/orchestration/cart/cart.types.js';
+import { cartSupplierHandlers } from '../../services/orchestration/cart/cartHandlers.js';
 
-/**
- * Виртуальная корзина: сохраняет позицию в MongoDB вместо отправки поставщику.
- * Фактический заказ у поставщика будет оформлен позже, после одобрения (approve flow).
- */
 export const addToCartController = async (req: Request, res: Response) => {
-  const username = req.user!.username;
-  const { supplier, quantity, item } = req.body as UnifiedCartRequest;
+  const { supplier } = req.body as UnifiedCartRequest;
 
-  if (!supplier || !quantity || !item) {
+  const handler: CartHandler | undefined = cartSupplierHandlers[supplier];
+
+  if (!handler) {
     return res.status(400).json({
       success: false,
-      message: 'Поля supplier, quantity и item обязательны.',
+      message: `Поставщик '${supplier}' не поддерживается для этой операции.`,
     });
   }
 
-  const article = item.article ?? item.number;
-  const brand = item.brand;
-  const name = item.name ?? item.description ?? '';
-  const initialPrice = item.price ?? 0;
+  try {
+    const result = await handler(req.body as UnifiedCartRequest);
 
-  if (!article || !brand) {
-    return res.status(400).json({
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(`Ошибка при добавлении в корзину ${supplier}:`, error);
+    return res.status(500).json({
       success: false,
-      message: 'item должен содержать article (или number) и brand.',
+      message: (error as Error).message || 'Внутренняя ошибка сервера',
     });
   }
-
-  const cartItem = await CartItem.create({
-    username,
-    supplier,
-    article,
-    brand,
-    name,
-    quantity,
-    initialPrice,
-    rawItemData: item,
-  });
-
-  return res.status(201).json({
-    success: true,
-    message: 'Товар добавлен в виртуальную корзину.',
-    data: cartItem,
-  });
 };

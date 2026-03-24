@@ -1,5 +1,6 @@
 import { actualizeCartController } from '@controllers/cart/actualizeCartController.js';
 import { addToCartController } from '@controllers/cart/addToCartController.js';
+import { addToVirtualCartController } from '@controllers/cart/addToVirtualCartController.js';
 import { checkoutCartController } from '@controllers/cart/checkoutCartController.js';
 import { deleteCartItemController } from '@controllers/cart/deleteCartItemController.js';
 import { getCartController } from '@controllers/cart/getCartController.js';
@@ -28,6 +29,11 @@ router.get(
   ctrlWrapper(autocompleteUgController)
 );
 router.post('/cart/add', authMiddleware, ctrlWrapper(addToCartController));
+router.post(
+  '/virtual-cart/add',
+  authMiddleware,
+  ctrlWrapper(addToVirtualCartController)
+);
 router.get('/cart', authMiddleware, ctrlWrapper(getCartController));
 router.delete(
   '/cart/:id',
