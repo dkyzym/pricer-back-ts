@@ -12,27 +12,60 @@ const CONFIG = {
   baseUrl: 'https://api.pr-lg.ru',
   siteUrl: 'https://pr-lg.ru',
   delayBetweenRequests: 2000,
-  contextSwitchDelay: 1000,
+  delayBetweenPages: 1000,
+  contextSwitchDelay: 2000,
+  contextVerifyRetries: 3,
+  contextVerifyBackoff: 2000,
   timeout: 60_000,
   maxRetries: 3,
-  userAgent:
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+} as const;
+
+/**
+ * Полный набор заголовков десктопного Chrome.
+ * Сайт отдаёт разную разметку для мобильных/десктопных UA —
+ * без этих заголовков элементы навигации профиля (.media-heading, .copy-n)
+ * могут отсутствовать в ответе.
+ */
+const DESKTOP_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Accept:
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Sec-CH-UA':
+    '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+  'Sec-CH-UA-Mobile': '?0',
+  'Sec-CH-UA-Platform': '"Windows"',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'same-origin',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
+  Connection: 'keep-alive',
 } as const;
 
 const ORGANIZATIONS = [
-  { name: 'IP_Kizim_Cash', switchId: '14869822' },
-  { name: 'IP_Kizim_Bank', switchId: '495435' },
+  { name: 'IP_Kizim_Cash', switchId: '495435', profileId: '000009687' },
+  { name: 'IP_Kizim_Bank', switchId: '14869822', profileId: '000047092' },
 ] as const;
 
 // --- Types ---
 type ProfitClient = AxiosInstance;
 type Organization = (typeof ORGANIZATIONS)[number];
 
+interface ActiveProfile {
+  profileName: string;
+  profileId: string;
+  clientType: string;
+}
+
 // --- Helpers ---
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Создает настроенный экземпляр Axios с поддержкой CookieJar и Connection Pooling
+ * Создает настроенный экземпляр Axios с поддержкой CookieJar и Connection Pooling.
+ * Все запросы идут с полным набором десктопных заголовков.
  */
 const createClient = (): ProfitClient => {
   const jar = new CookieJar();
@@ -48,7 +81,7 @@ const createClient = (): ProfitClient => {
   return axios.create({
     httpsAgent,
     withCredentials: true,
-    headers: { 'User-Agent': CONFIG.userAgent },
+    headers: { ...DESKTOP_HEADERS },
     timeout: CONFIG.timeout,
   });
 };
@@ -92,6 +125,43 @@ const withRetry = async <T>(
   }
 };
 
+// --- Profile Verification ---
+
+/**
+ * Парсит HTML и извлекает данные активного профиля из боковой панели.
+ * Селекторы: .media-heading > a (имя), .copy-n[data-id] (ID), .media-text (тип).
+ */
+const parseActiveProfile = (html: string): ActiveProfile | null => {
+  const $ = cheerio.load(html);
+
+  const profileName = $('.media-heading > a').first().text().trim();
+  const profileId = $('.copy-n').first().attr('data-id')?.trim() ?? '';
+  const clientType = $('.media-text').first().text().trim();
+
+  if (!profileId) return null;
+
+  return { profileName, profileId, clientType };
+};
+
+/**
+ * Загружает страницу профиля и определяет, какой клиент сейчас активен.
+ * Используется как fallback, если parseActiveProfile не находит данных
+ * в ответе на переключение контекста.
+ */
+const getActiveProfile = async (
+  client: ProfitClient,
+  logger: Logger,
+  signal?: AbortSignal
+): Promise<ActiveProfile | null> => {
+  const { data: html } = await client.get(`${CONFIG.siteUrl}/account/profile`, {
+    headers: { Referer: CONFIG.siteUrl },
+    maxRedirects: 5,
+    signal,
+  });
+
+  return parseActiveProfile(html);
+};
+
 // --- Core Business Logic ---
 
 /**
@@ -111,33 +181,46 @@ const performLogin = async (
   logger.debug(chalk.blue('[profit] Starting login sequence...'));
 
   try {
-    // 1. Получаем CSRF токен
-    const { data: html } = await client.get(`${CONFIG.siteUrl}/login`, { signal });
+    const { data: html } = await client.get(`${CONFIG.siteUrl}/login`, {
+      headers: { Referer: CONFIG.siteUrl },
+      signal,
+    });
     const $ = cheerio.load(html);
     const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
 
-    // 2. Подготавливаем данные (используем URLSearchParams вместо querystring)
     const params = new URLSearchParams();
     params.append('_csrf', csrfToken);
     params.append('UserForm[email]', email);
     params.append('UserForm[password]', password);
     params.append('UserForm[rememberMe]', '1');
 
-    // 3. Отправляем форму
-    const { data } = await client.post(`${CONFIG.siteUrl}/login`, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Referer: `${CONFIG.siteUrl}/login`,
-      },
-      maxRedirects: 5,
-      signal,
-    });
+    const { data: loginHtml } = await client.post(
+      `${CONFIG.siteUrl}/login`,
+      params,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Referer: `${CONFIG.siteUrl}/login`,
+          Origin: CONFIG.siteUrl,
+        },
+        maxRedirects: 5,
+        signal,
+      }
+    );
 
-    if (!data.includes('Оптовый клиент')) {
+    if (!loginHtml.includes('Оптовый клиент')) {
       throw new Error('Marker "Оптовый клиент" not found in response');
     }
 
-    logger.info(chalk.green('✔ [profit] Login successful'));
+    const profile = parseActiveProfile(loginHtml);
+    if (profile) {
+      logger.info(
+        chalk.green('✔ [profit] Login successful') +
+          ` — active profile: ${chalk.cyan(profile.profileName)} (${profile.profileId})`
+      );
+    } else {
+      logger.info(chalk.green('✔ [profit] Login successful'));
+    }
   } catch (error) {
     logger.error(chalk.red('[profit] Login failed'));
     throw error;
@@ -145,7 +228,12 @@ const performLogin = async (
 };
 
 /**
- * Переключает контекст организации
+ * Переключает контекст организации и верифицирует результат.
+ *
+ * HTML ответа на /account/legals/select/id/{id} содержит данные
+ * ПРЕДЫДУЩЕГО профиля (сервер рендерит страницу до применения switch).
+ * Поэтому верификация всегда выполняется отдельным запросом
+ * к /account/profile после задержки.
  */
 const switchContext = async (
   client: ProfitClient,
@@ -157,11 +245,50 @@ const switchContext = async (
     await client.get(
       `${CONFIG.siteUrl}/account/legals/select/id/${org.switchId}`,
       {
+        headers: { Referer: `${CONFIG.siteUrl}/account/legals` },
         maxRedirects: 5,
         signal,
       }
     );
-    logger.debug(`[profit] Switched context to ${chalk.cyan(org.name)}`);
+
+    await delay(CONFIG.contextSwitchDelay);
+
+    // Повторная верификация с backoff: сервер может применить switch
+    // с задержкой, поэтому делаем несколько попыток
+    let profile: ActiveProfile | null = null;
+
+    for (let attempt = 0; attempt <= CONFIG.contextVerifyRetries; attempt++) {
+      profile = await getActiveProfile(client, logger, signal);
+
+      if (profile?.profileId === org.profileId) break;
+
+      if (attempt < CONFIG.contextVerifyRetries) {
+        const backoff = CONFIG.contextVerifyBackoff * (attempt + 1);
+        logger.debug(
+          `[profit] Profile mismatch on verify attempt ${attempt + 1}, ` +
+            `retrying in ${backoff}ms...`
+        );
+        await delay(backoff);
+      }
+    }
+
+    if (!profile) {
+      throw new Error(
+        `Не удалось определить активный профиль после переключения на ${org.name}`
+      );
+    }
+
+    if (profile.profileId !== org.profileId) {
+      throw new Error(
+        `Верификация контекста не пройдена: ожидался profileId=${org.profileId} (${org.name}), ` +
+          `получен profileId=${profile.profileId} (${profile.profileName})`
+      );
+    }
+
+    logger.debug(
+      `[profit] Switched & verified: ${chalk.cyan(org.name)} — ` +
+        `profile: ${profile.profileName}, id: ${profile.profileId}`
+    );
   } catch (error) {
     throw new Error(
       `Failed to switch to ${org.name}: ${error instanceof Error ? error.message : 'Unknown'}`
@@ -170,19 +297,74 @@ const switchContext = async (
 };
 
 /**
- * Получает список заказов
+ * Проверяет, что ВСЕ заказы на странице старше cutoff.
+ * API отдаёт заказы от новых к старым — если целая страница старше порога,
+ * все последующие страницы тоже будут старше.
  */
-const fetchOrders = async (
+const isPageBeyondCutoff = (
+  orders: ProfitGetOrdersResponse['data'],
+  cutoffMs: number
+): boolean => {
+  if (orders.length === 0) return true;
+  return orders.every((o) => {
+    const dt = DateTime.fromISO(o.datetime);
+    return dt.isValid && dt.toMillis() < cutoffMs;
+  });
+};
+
+/**
+ * Получает заказы для текущего контекста с ранним прекращением пагинации.
+ * API не поддерживает серверную фильтрацию по дате (date_start/date_end disabled),
+ * но заказы отсортированы от новых к старым — как только целая страница
+ * оказывается старше cutoffDate, дальнейшие страницы не запрашиваются.
+ */
+const fetchAllOrders = async (
   client: ProfitClient,
   secret: string,
+  cutoffDate: Date,
+  logger: Logger,
   signal?: AbortSignal
 ): Promise<ProfitGetOrdersResponse> => {
-  const params = { secret, action: 'list', page: 1 };
-  const { data } = await client.get<ProfitGetOrdersResponse>(
+  const cutoffMs = cutoffDate.getTime();
+
+  const { data: firstPage } = await client.get<ProfitGetOrdersResponse>(
     `${CONFIG.baseUrl}/orders/list`,
-    { params, signal }
+    { params: { secret, action: 'list', page: 1 }, signal }
   );
-  return data;
+
+  const result: ProfitGetOrdersResponse = {
+    pages: firstPage.pages,
+    currentPage: 1,
+    pageSize: firstPage.pageSize,
+    data: [...(firstPage.data ?? [])],
+  };
+
+  if (firstPage.pages > 1 && !isPageBeyondCutoff(firstPage.data ?? [], cutoffMs)) {
+    logger.debug(
+      `[profit] Found ${chalk.yellow(firstPage.pages)} total pages, paginating until cutoff ${cutoffDate.toISOString()}...`
+    );
+
+    for (let page = 2; page <= firstPage.pages; page++) {
+      await delay(CONFIG.delayBetweenPages);
+      const { data } = await client.get<ProfitGetOrdersResponse>(
+        `${CONFIG.baseUrl}/orders/list`,
+        { params: { secret, action: 'list', page }, signal }
+      );
+
+      if (!data?.data || !Array.isArray(data.data)) break;
+
+      result.data.push(...data.data);
+
+      if (isPageBeyondCutoff(data.data, cutoffMs)) {
+        logger.debug(
+          `[profit] Page ${page} fully beyond cutoff, stopping pagination`
+        );
+        break;
+      }
+    }
+  }
+
+  return result;
 };
 
 // --- Main Workflow ---
@@ -218,7 +400,6 @@ export const fetchProfitOrders = async (
     );
 
     try {
-      // 1. Переключаем
       await withRetry(
         () => switchContext(client, org, logger, signal),
         2,
@@ -226,12 +407,8 @@ export const fetchProfitOrders = async (
         logger
       );
 
-      // 2. Ждем применения кук на сервере
-      await delay(CONFIG.contextSwitchDelay);
-
-      // 3. Забираем данные с ретраями
       const response = await withRetry(
-        () => fetchOrders(client, secret, signal),
+        () => fetchAllOrders(client, secret, targetSyncDate, logger, signal),
         CONFIG.maxRetries,
         2000,
         logger
@@ -270,7 +447,7 @@ export const fetchProfitOrders = async (
   // High-Water Mark: отсекаем заказы старше targetSyncDate
   const targetMs = targetSyncDate.getTime();
   const filteredOrders = uniqueOrders.filter((order) => {
-    const parsed = DateTime.fromSQL(order.datetime);
+    const parsed = DateTime.fromISO(order.datetime);
     return parsed.isValid && parsed.toMillis() >= targetMs;
   });
 
