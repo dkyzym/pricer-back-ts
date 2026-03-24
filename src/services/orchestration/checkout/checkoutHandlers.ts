@@ -6,6 +6,7 @@ import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsChe
 import { createAbcpCheckoutHandler } from '../../platforms/abcp/abcpCheckoutService.js';
 import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
 import { manualCheckoutHandler } from './manualCheckoutService.js';
+import { autosputnikCheckoutHandler } from '../../suppliers/autosputnik/autosputnikCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Вспомогательная фабрика «заглушки»
@@ -43,19 +44,9 @@ const notImplemented =
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Autosputnik
+//  Autosputnik  →  реализация в autosputnikCheckoutService.ts
+//                   (basket/clear → basket/add; финальный order endpoint не документирован)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Алгоритм реализации (Autosputnik):
- *   1. Очистить корзину поставщика (удалить все позиции через API Autosputnik).
- *   2. Последовательно добавить каждую позицию через POST /addtocart,
- *      используя свежие токены из `rawItemData`
- *      (brand — id бренда, articul, id_shop_prices, amount, price).
- *   3. Инициировать оформление заказа через POST /makeorder.
- *   4. Извлечь и вернуть customers_basket_id каждой строки в `externalOrderIds`.
- */
-const autosputnikHandler: CheckoutHandler = notImplemented('autosputnik');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Реестр обработчиков checkout (Паттерн «Registry / Strategy»)
@@ -66,8 +57,8 @@ export const checkoutHandlers: Record<string, CheckoutHandler> = {
   armtek: armtekCheckoutHandler,
   turboCars: turboCarsCheckoutHandler,
   profit: profitCheckoutHandler,
-  autosputnik: autosputnikHandler,
-  autosputnik_bn: autosputnikHandler,
+  autosputnik: autosputnikCheckoutHandler,
+  autosputnik_bn: autosputnikCheckoutHandler,
 
   /** ABCP-площадки — фабрика создаёт адаптер под конкретный supplierAlias (аккаунт/витрину). */
   ug: createAbcpCheckoutHandler('ug'),
