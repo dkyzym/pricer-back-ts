@@ -1,3 +1,5 @@
+import { Logger } from 'winston';
+import { ICartItemDocument } from '../../../models/CartItem.js';
 import { SupplierName } from '../../../types/common.types.js';
 
 /**
@@ -68,3 +70,24 @@ export type ProfitAPIresponse = {
   total: number;
   count: number;
 };
+
+/**
+ * Результат checkout (оформления заказа) для одного поставщика.
+ * `externalOrderIds` — идентификаторы заказов, присвоенные на стороне поставщика.
+ */
+export interface CheckoutResult {
+  success: boolean;
+  cartItemIds: string[];
+  externalOrderIds?: string[];
+  error?: string;
+}
+
+/**
+ * Контракт адаптера оформления заказа (checkout) у конкретного поставщика.
+ * Принимает массив позиций корзины (уже отфильтрованных по поставщику)
+ * и логгер запроса для трассировки.
+ */
+export type CheckoutHandler = (
+  items: ICartItemDocument[],
+  userLogger: Logger
+) => Promise<CheckoutResult>;

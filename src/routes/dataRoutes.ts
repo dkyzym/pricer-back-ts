@@ -1,5 +1,6 @@
 import { actualizeCartController } from '@controllers/cart/actualizeCartController.js';
 import { addToCartController } from '@controllers/cart/addToCartController.js';
+import { checkoutCartController } from '@controllers/cart/checkoutCartController.js';
 import { deleteCartItemController } from '@controllers/cart/deleteCartItemController.js';
 import { getCartController } from '@controllers/cart/getCartController.js';
 import { updateCartItemQuantityController } from '@controllers/cart/updateCartItemQuantityController.js';
@@ -47,6 +48,11 @@ router.post(
   '/cart/actualize',
   authMiddleware,
   ctrlWrapper(actualizeCartController)
+);
+router.post(
+  '/cart/checkout',
+  authMiddleware,
+  ctrlWrapper(checkoutCartController)
 );
 
 export default router;
