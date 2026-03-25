@@ -98,7 +98,7 @@ const buildOrderDocs = (
  * Оформление заказов из виртуальной корзины.
  *
  * Поток данных:
- *   1. Загрузка CartItem-документов по ID (только status === 'approved').
+ *   1. Загрузка CartItem-документов по ID (status: draft или approved).
  *   2. Группировка по supplier.
  *   3. Для каждой группы — получение CheckoutHandler из реестра checkoutHandlers.
  *      Если обработчик отсутствует, группа помечается как failed.
@@ -116,7 +116,7 @@ export const checkoutCartItems = async (
   });
 
   if (!cartItems.length) {
-    userLogger.warn('[Checkout] Нет одобренных позиций для оформления.');
+    userLogger.warn('[Checkout] Нет позиций со статусом draft/approved для оформления.');
     return { totalItems: 0, successfulItems: 0, failedItems: 0, suppliers: [] };
   }
 

@@ -80,10 +80,14 @@ const parseAvailability = (value: number | string): number | null => {
 /**
  * Ищет точное совпадение в результатах поиска.
  *
- * Стратегия (по убыванию надёжности):
- *   1. `innerId` — постоянный внутренний ID товара у ряда поставщиков.
- *   2. `warehouse` — идентификатор склада / маршрута.
- *   3. `warehouse` + `deadline` — для случаев нескольких строк с одного склада.
+ * Из `rawItemData` используются `innerId` и `warehouse_id`. Если в корзине
+ * сохранён `warehouse_id`, кандидат обязан иметь тот же `result.warehouse_id`.
+ *
+ * Порядок оценки:
+ *   1. точное совпадение `innerId`;
+ *   2. однозначное совпадение по `warehouse_id` (ровно одна строка в пуле);
+ *   3. совпадение `warehouse` + `deadline` (при нескольких строках с тем же названием склада);
+ *   4. совпадение по имени склада `warehouse`.
  *
  * Не используем временные токены (itemKey, KEYZAK и пр.) — они обновляются при каждом поиске.
  */
@@ -94,13 +98,38 @@ const findExactMatch = (
   const raw = cartItem.rawItemData as Partial<SearchResultsParsed> | null;
   if (!raw) return results[0];
 
-  if (raw.innerId) {
-    const byInnerId = results.find((r) => r.innerId === raw.innerId);
+  const innerId = raw.innerId;
+  const rawWarehouseId = raw.warehouse_id;
+  const warehouseIdRequired =
+    rawWarehouseId !== undefined &&
+    rawWarehouseId !== null &&
+    String(rawWarehouseId).trim() !== '';
+
+  let pool = results;
+  if (warehouseIdRequired) {
+    pool = results.filter((r) => r.warehouse_id === rawWarehouseId);
+    if (!pool.length) return undefined;
+  }
+
+  if (
+    innerId !== undefined &&
+    innerId !== null &&
+    String(innerId).trim() !== ''
+  ) {
+    const byInnerId = pool.find((r) => r.innerId === innerId);
     if (byInnerId) return byInnerId;
   }
 
+  if (warehouseIdRequired) {
+    const byWarehouseId = pool.filter(
+      (r) => r.warehouse_id === rawWarehouseId,
+    );
+    if (byWarehouseId.length === 1) return byWarehouseId[0];
+    pool = byWarehouseId;
+  }
+
   if (raw.warehouse) {
-    const byWarehouse = results.filter((r) => r.warehouse === raw.warehouse);
+    const byWarehouse = pool.filter((r) => r.warehouse === raw.warehouse);
     if (byWarehouse.length === 1) return byWarehouse[0];
 
     if (byWarehouse.length > 1 && raw.deadline != null) {
@@ -109,6 +138,7 @@ const findExactMatch = (
       );
       if (byDeadline) return byDeadline;
     }
+
     if (byWarehouse.length > 0) return byWarehouse[0];
   }
 
