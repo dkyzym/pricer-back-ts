@@ -112,7 +112,7 @@ export const checkoutCartItems = async (
 ): Promise<CheckoutReport> => {
   const cartItems = await CartItem.find({
     _id: { $in: cartItemIds },
-    status: 'approved',
+    status: { $in: ['draft', 'approved'] },
   });
 
   if (!cartItems.length) {
