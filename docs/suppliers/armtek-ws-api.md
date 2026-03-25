@@ -112,8 +112,8 @@ interface CreateOrderItem {
 }
 
 interface CreateOrderRequest {
-  VKORG: string;      // сбытовая организация, 4 символа (обяз.)
-  KUNRG: string;      // покупатель, 10 символов (обяз.)
+  VKORG: string;      // сбытовая организация, макс. 4 символа (обяз.)
+  KUNRG: string;      // покупатель, макс. 10 символов (обяз.; передавать как в ответе API, без искусственных ведущих нулей)
   KUNWE?: string;     // грузополучатель
   KUNZA?: string;     // адрес доставки / пункт выдачи
   INCOTERMS?: '0' | '1'; // 1 — самовывоз
@@ -167,7 +167,7 @@ interface CreateOrderResponse {
 ```ts
 const body: CreateOrderRequest = {
   VKORG: '4000',
-  KUNRG: '0000000001',
+  KUNRG: '48376950',
   ITEMS: [
     { PIN: '12345', BRAND: 'BRAND', KWMENG: 2, KEYZAK: '01' },
   ],
@@ -203,9 +203,9 @@ const data = await res.json() as ArmtekApiResponse<CreateOrderResponse>;
 
 | Параметр | Тип    | Обязательный | Описание |
 |----------|--------|--------------|----------|
-| VKORG    | string(4) | Да        | Сбытовая организация |
-| KUNRG    | string(10) | Да       | Покупатель |
-| ORDER    | string(10) | Да       | Номер заказа |
+| VKORG    | string, макс. 4 | Да        | Сбытовая организация |
+| KUNRG    | string, макс. 10 | Да       | Покупатель |
+| ORDER    | string, макс. 10 | Да       | Номер заказа |
 | EDIT     | '0' \| '1' | Нет     | Для изменения |
 
 **Ответ (RESP):**
@@ -289,7 +289,7 @@ interface GetOrderResponse {
 ```ts
 const params = new URLSearchParams({
   VKORG: '4000',
-  KUNRG: '0000000001',
+  KUNRG: '48376950',
   ORDER: '1234567890',
   format: 'json',
 });
@@ -350,9 +350,9 @@ interface EditOrderPositionInput {
 }
 
 interface EditOrderRequest {
-  VKORG: string;
-  KUNRG: string;
-  ORDER: string;
+  VKORG: string;   // макс. 4 символа
+  KUNRG: string;   // макс. 10 символов
+  ORDER: string;   // макс. 10 символов
   POSITION_INPUT: EditOrderPositionInput[];
 }
 ```
@@ -362,7 +362,7 @@ interface EditOrderRequest {
 ```ts
 const body: EditOrderRequest = {
   VKORG: '4000',
-  KUNRG: '0000000001',
+  KUNRG: '48376950',
   ORDER: '1234567890',
   POSITION_INPUT: [
     { POSNR: '000010', KWMENG: 1, ABGRU: '001' },
@@ -393,7 +393,7 @@ await fetch(`${BASE_URL}/api/ws_order/editOrder?format=json`, {
 
 ```ts
 interface AssortmentSearchRequest {
-  VKORG: string;   // 4 символа, обяз.
+  VKORG: string;   // макс. 4 символа, обяз.
   PIN: string;     // артикул, макс. 40, обяз.
   PROGRAM?: 'LP' | 'GP'; // LP — легковая, GP — грузовая
 }
@@ -425,7 +425,7 @@ interface AssortmentSearchResponse {
 ```ts
 interface SearchRequest {
   VKORG: string;      // обяз.
-  KUNNR_RG: string;   // покупатель, обяз.
+  KUNNR_RG: string;   // покупатель, обяз., макс. 10 символов (как KUNRG; без лишних ведущих нулей)
   PIN: string;        // артикул, обяз.
   BRAND?: string;     // рекомендуется всегда заполнять
   QUERY_TYPE?: '1' | '2'; // 1 — без аналогов, 2 — с аналогами (при пустом BRAND лучше 1)
@@ -491,7 +491,7 @@ interface SearchResponse {
 
 ```ts
 interface GetUserVkorgListItem {
-  VKORG?: string;         // Сбытовая организация (4 символа)
+  VKORG?: string;         // Сбытовая организация (макс. 4 символа)
   PROGRAM_NAME?: string;  // Наименование программы (макс. 100 символов)
 }
 
@@ -526,7 +526,7 @@ const vkorgList = data.RESP?.ARRAY ?? [];
 
 | Параметр | Тип | Обязательный | Описание |
 |----------|-----|--------------|----------|
-| VKORG | string(4) | Да | Сбытовая организация (из getUserVkorgList) |
+| VKORG | string, макс. 4 | Да | Сбытовая организация (из getUserVkorgList) |
 | STRUCTURE | '0' \| '1' \| '' | Нет | 1 — получить структуру; 0 — не получать |
 
 **Ответ (RESP):**
@@ -558,7 +558,7 @@ interface GetUserInfoContract {
   KLIMK?: string;        // Кредит
   KLIMKU?: string;       // Кредитный остаток
   OEIKW?: string;        // Зарезервировано товара (заказы+поставки)
-  WAERS?: string;        // Валюта (4 символа)
+  WAERS?: string;        // Валюта (макс. 4 символа)
   ZTERM?: string;        // Условия платежа (отсрочка)
   SCALE_TAB?: GetUserInfoScaleItem[]; // Таблица шкалы скидок
 }
@@ -672,14 +672,14 @@ const brands = data.RESP?.ARRAY?.map(b => b.BRAND) ?? [];
 
 | Параметр | Тип | Обязательный | Описание |
 |----------|-----|--------------|----------|
-| VKORG | string(4) | Да | Сбытовая организация (из getUserVkorgList) |
+| VKORG | string, макс. 4 | Да | Сбытовая организация (из getUserVkorgList) |
 
 **Ответ (RESP):**
 
 ```ts
 interface GetStoreListItem {
-  KEYZAK?: string;  // Код склада (10 символов)
-  SKLCODE?: string; // Технический идентификатор склада (10 символов)
+  KEYZAK?: string;  // Код склада (макс. 10 символов)
+  SKLCODE?: string; // Технический идентификатор склада (макс. 10 символов)
   SKLNAME?: string; // Наименование склада (макс. 100 символов)
 }
 
