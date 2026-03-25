@@ -20,6 +20,8 @@ const ORDER_STATUS_VALUES: OrderStatus[] = [
 export interface IOrderDocument extends Document {
   id: string;
   orderId: string;
+  /** Номер заказа у поставщика после оформления из корзины (если известен). */
+  externalOrderId?: string;
   supplier: string;
   brand: string;
   article: string;
@@ -44,6 +46,7 @@ const orderSchema = new Schema<IOrderDocument>(
   {
     id: { type: String, required: true },
     orderId: { type: String, required: true },
+    externalOrderId: { type: String, required: false },
     supplier: { type: String, required: true },
     brand: { type: String, required: true },
     article: { type: String, required: true },

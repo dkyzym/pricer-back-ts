@@ -46,10 +46,12 @@ const groupBySupplier = (
 /**
  * Маппит CartItem + externalOrderIds → массив документов для Order.insertMany.
  *
- * Стратегия назначения orderId:
- *   - 1 externalOrderId → все позиции группы получают его.
- *   - N externalOrderIds === N позиций → сопоставляем по индексу.
- *   - Иные случаи → берём первый; остальные попадут в rawProviderData.
+ * Стратегия orderId / externalOrderId:
+ *   - 1 externalOrderId → все строки: одинаковые orderId и externalOrderId.
+ *   - N externalOrderIds === N позиций → сопоставление по индексу.
+ *   - Несколько ID, но не 1:1 с позициями → orderId = первый ID (как раньше);
+ *     externalOrderId не задаём (неоднозначно), полный список — в rawProviderData.externalOrderIds.
+ *   - Нет ID от поставщика → orderId = cart-{timestamp}, без externalOrderId.
  */
 const buildOrderDocs = (
   items: ICartItemDocument[],
@@ -57,6 +59,8 @@ const buildOrderDocs = (
 ) => {
   const extIds = checkoutResult.externalOrderIds ?? [];
   const oneToOne = extIds.length === items.length;
+  const ambiguousBulk =
+    extIds.length > 1 && extIds.length !== items.length;
   const fallbackOrderId = extIds[0] ?? `cart-${Date.now()}`;
 
   return items.map((item, idx) => {
@@ -66,11 +70,25 @@ const buildOrderDocs = (
         ? extIds[0]
         : fallbackOrderId;
 
+    const externalOrderId = ambiguousBulk
+      ? undefined
+      : oneToOne
+        ? extIds[idx]
+        : extIds[0];
+
     const price = item.currentPrice ?? item.initialPrice;
+
+    const rawProviderData: Record<string, unknown> = {
+      cartItemId: String(item._id),
+    };
+    if (ambiguousBulk) {
+      rawProviderData.externalOrderIds = extIds;
+    }
 
     return {
       id: `cart_${String(item._id)}`,
       orderId,
+      ...(externalOrderId !== undefined ? { externalOrderId } : {}),
       supplier: item.supplier,
       brand: item.brand,
       article: item.article,
@@ -82,10 +100,7 @@ const buildOrderDocs = (
       status: 'pending' as const,
       statusRaw: 'Оформлен через виртуальную корзину',
       providerCreatedAt: new Date(),
-      rawProviderData: {
-        cartItemId: String(item._id),
-        allExternalOrderIds: extIds.length > 1 ? extIds : undefined,
-      },
+      rawProviderData,
     };
   });
 };

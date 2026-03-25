@@ -476,7 +476,243 @@ interface SearchResponse {
 
 ---
 
-## 5. Справочник кодов ответа (STATUS)
+## 5. Сервисы настроек пользователя (ws_user)
+
+Базовый путь: `/api/ws_user/<method>?format=json`
+
+### 5.1 Получение сбытовых организаций клиента — getUserVkorgList
+
+- **Метод:** `GET`
+- **URL:** `http://ws.armtek.ru/api/ws_user/getUserVkorgList?format=json`
+
+**Входные параметры:** отсутствуют (список пуст)
+
+**Ответ (RESP):**
+
+```ts
+interface GetUserVkorgListItem {
+  VKORG?: string;         // Сбытовая организация (4 символа)
+  PROGRAM_NAME?: string;  // Наименование программы (макс. 100 символов)
+}
+
+interface GetUserVkorgListResponse {
+  ARRAY?: GetUserVkorgListItem[];
+}
+```
+
+**Описание полей:**
+- **VKORG** — код сбытовой организации (4-значный код, например: 4000)
+- **PROGRAM_NAME** — наименование программы снабжения
+
+**Пример:**
+
+```ts
+const res = await fetch(`${BASE_URL}/api/ws_user/getUserVkorgList?format=json`, {
+  headers: { Authorization: `Basic ${credentials}` },
+});
+const data = await res.json() as ArmtekApiResponse<GetUserVkorgListResponse>;
+const vkorgList = data.RESP?.ARRAY ?? [];
+// Использовать VKORG в качестве параметра для других сервисов
+```
+
+---
+
+### 5.2 Получение структуры клиента — getUserInfo
+
+- **Метод:** `POST`
+- **URL:** `http://ws.armtek.ru/api/ws_user/getUserInfo?format=json`
+
+**Входные параметры:**
+
+| Параметр | Тип | Обязательный | Описание |
+|----------|-----|--------------|----------|
+| VKORG | string(4) | Да | Сбытовая организация (из getUserVkorgList) |
+| STRUCTURE | '0' \| '1' \| '' | Нет | 1 — получить структуру; 0 — не получать |
+
+**Ответ (RESP):**
+
+```ts
+interface GetUserInfoScaleItem {
+  SUMMA?: string;   // Сумма
+  DISCOUNT?: string; // Процент скидки
+}
+
+interface GetUserInfoContact {
+  PARNR?: string;   // Контактное лицо
+  DEFAULT?: string; // Признак установки по умолчанию (0 или 1)
+  FNAME?: string;   // Полное наименование
+  LNAME?: string;   // Фамилия
+  MNAME?: string;   // Отчество
+  PHONE?: string;   // Контактный телефон
+  EMAIL?: string;   // Email
+}
+
+interface GetUserInfoContract {
+  VBELN?: string;        // Договор
+  BSTKD?: string;        // Номер договора
+  BSTKDT?: string;       // Спец. условия договора
+  BSTDK?: string;        // Дата договора (YYYYMMDDHHIISS)
+  DATBI?: string;        // Дата действия договора (YYYYMMDDHHIISS)
+  DEFAULT?: string;      // Признак установки по умолчанию
+  AUART?: string;        // Вид договора
+  KLIMK?: string;        // Кредит
+  KLIMKU?: string;       // Кредитный остаток
+  OEIKW?: string;        // Зарезервировано товара (заказы+поставки)
+  WAERS?: string;        // Валюта (4 символа)
+  ZTERM?: string;        // Условия платежа (отсрочка)
+  SCALE_TAB?: GetUserInfoScaleItem[]; // Таблица шкалы скидок
+}
+
+interface GetUserInfoWarehouse {
+  KUNNR?: string;   // Идентификатор
+  DEFAULT?: string; // Признак установки по умолчанию
+  SNAME?: string;   // Краткое наименование
+  FNAME?: string;   // Полное наименование
+  ADRESS?: string;  // Адрес
+  PHONE?: string;   // Контактный телефон
+}
+
+interface GetUserInfoPickup {
+  ID?: string;   // Уникальный номер
+  NAME?: string; // Наименование (артикула или пункта самовывоза)
+}
+
+interface GetUserInfoBuyer {
+  KUNAG?: string;
+  VKORG?: string;
+  SNAME?: string;      // Краткое наименование
+  FNAME?: string;      // Полное наименование
+  ADRESS?: string;     // Адрес
+  PHONE?: string;      // Контактный телефон
+  RG_TAB?: GetUserInfoWarehouse[]; // Таблица доступных покупателей
+  WE_TAB?: GetUserInfoWarehouse[]; // Таблица доступных грузополучателей
+  ZA_TAB?: GetUserInfoWarehouse[]; // Таблица доступных адресов доставки
+  EXW_TAB?: GetUserInfoPickup[];    // Таблица доступных адресов самовывоза
+  DOGOVOR_TAB?: GetUserInfoContract[]; // Таблица доступных договоров
+  CONTACT_TAB?: GetUserInfoContact[]; // Таблица доступных контактных лиц
+}
+
+interface GetUserInfoResponse {
+  STRUCTURE?: GetUserInfoBuyer[];
+}
+```
+
+**Описание ключевых групп:**
+- **RG_TAB** — доступные покупатели (для параметра KUNRG в методах заказа)
+- **WE_TAB** — доступные грузополучатели (для параметра KUNWE)
+- **ZA_TAB** — доступные адреса доставки / пункты выдачи (для параметра KUNZA)
+- **EXW_TAB** — доступные адреса самовывоза (для параметра INCOTERMS=1)
+- **DOGOVOR_TAB** — доступные договоры (для параметра VBELN), включая шкалы скидок в SCALE_TAB
+- **CONTACT_TAB** — доступные контактные лица (для параметра PARNR)
+
+**Пример использования:**
+
+```ts
+const body = {
+  VKORG: '4000',
+  STRUCTURE: '1'
+};
+const res = await fetch(`${BASE_URL}/api/ws_user/getUserInfo?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(body),
+});
+const data = await res.json() as ArmtekApiResponse<GetUserInfoResponse>;
+const structure = data.RESP?.STRUCTURE?.[0];
+// structure содержит все доступные покупатели, договоры, контакты и т.д.
+
+// Пример: получить список доступных контактных лиц
+const contacts = structure?.CONTACT_TAB ?? [];
+const defaultContact = contacts.find(c => c.DEFAULT === '1');
+```
+
+---
+
+### 5.3 Получение списка брендов — getBrandList
+
+- **Метод:** `GET`
+- **URL:** `http://ws.armtek.ru/api/ws_user/getBrandList?format=json`
+
+**Входные параметры:** отсутствуют (список пуст)
+
+**Ответ (RESP):**
+
+```ts
+interface GetBrandListItem {
+  BRAND?: string; // Наименование бренда (макс. 100 символов)
+}
+
+interface GetBrandListResponse {
+  ARRAY?: GetBrandListItem[];
+}
+```
+
+**Пример:**
+
+```ts
+const res = await fetch(`${BASE_URL}/api/ws_user/getBrandList?format=json`, {
+  headers: { Authorization: `Basic ${credentials}` },
+});
+const data = await res.json() as ArmtekApiResponse<GetBrandListResponse>;
+const brands = data.RESP?.ARRAY?.map(b => b.BRAND) ?? [];
+// Использовать в качестве справочника брендов при поиске и заказе
+```
+
+---
+
+### 5.4 Получение списка складов — getStoreList
+
+- **Метод:** `POST`
+- **URL:** `http://ws.armtek.ru/api/ws_user/getStoreList?format=json`
+
+**Входные параметры:**
+
+| Параметр | Тип | Обязательный | Описание |
+|----------|-----|--------------|----------|
+| VKORG | string(4) | Да | Сбытовая организация (из getUserVkorgList) |
+
+**Ответ (RESP):**
+
+```ts
+interface GetStoreListItem {
+  KEYZAK?: string;  // Код склада (10 символов)
+  SKLCODE?: string; // Технический идентификатор склада (10 символов)
+  SKLNAME?: string; // Наименование склада (макс. 100 символов)
+}
+
+interface GetStoreListResponse {
+  ARRAY?: GetStoreListItem[];
+}
+```
+
+**Описание полей:**
+- **KEYZAK** — основной код склада (использовать в методах поиска и заказа)
+- **SKLCODE** — технический идентификатор
+- **SKLNAME** — человеко-читаемое имя склада
+
+**Пример:**
+
+```ts
+const body = { VKORG: '4000' };
+const res = await fetch(`${BASE_URL}/api/ws_user/getStoreList?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(body),
+});
+const data = await res.json() as ArmtekApiResponse<GetStoreListResponse>;
+const stores = data.RESP?.ARRAY ?? [];
+// Использовать KEYZAK при поиске остатков и создании заказа
+```
+
+---
+
+## 6. Справочник кодов ответа (STATUS)
 
 Используются стандартные HTTP-коды, например:
 
@@ -489,7 +725,7 @@ interface SearchResponse {
 
 ---
 
-## 6. Поля перезаказа и некондиции (v1.1.7)
+## 7. Поля перезаказа и некондиции (v1.1.7)
 
 В ответах getOrder / getOrder2 по позициям (ITEMS) могут быть:
 
@@ -502,7 +738,7 @@ interface SearchResponse {
 
 ---
 
-## 7. getOrder2: расшифровка статусов (STATUS=1)
+## 8. getOrder2: расшифровка статусов (STATUS=1)
 
 При вызове getOrder2 с параметром **STATUS=1** в ответ добавляется массив **STATUSES**. Каждый элемент привязан к позиции заказа (ORDER, POSNR) и содержит:
 
@@ -521,6 +757,180 @@ SubStatus для **Processing**:
 - **Shipped** — партнёр отгрузил в адрес АРМТЕК  
 
 Если Werks/WerksName пусты — субстатус относится к складу партнёра.
+
+---
+
+---
+
+*Документация собрана из официальных материалов ws.armtek.ru (возвращаемый ответ, заказы, поиск, описание getOrder2) и адаптирована для использования в JavaScript/TypeScript.*
+
+---
+
+## Приложение: Типичный поток работы с API
+
+### Инициализация и получение справочников
+
+```ts
+// 1. Получить доступные сбытовые организации
+const vkorgRes = await fetch(`${BASE_URL}/api/ws_user/getUserVkorgList?format=json`, {
+  headers: { Authorization: `Basic ${credentials}` },
+});
+const vkorgData = await vkorgRes.json() as ArmtekApiResponse<GetUserVkorgListResponse>;
+const VKORG = vkorgData.RESP?.ARRAY?.[0]?.VKORG || '4000';
+
+// 2. Получить структуру клиента, договоры, контакты
+const userInfoRes = await fetch(`${BASE_URL}/api/ws_user/getUserInfo?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ VKORG, STRUCTURE: '1' }),
+});
+const userInfoData = await userInfoRes.json() as ArmtekApiResponse<GetUserInfoResponse>;
+const structure = userInfoData.RESP?.STRUCTURE?.[0];
+const KUNRG = structure?.RG_TAB?.[0]?.KUNNR;    // покупатель по умолчанию
+const VBELN = structure?.DOGOVOR_TAB?.[0]?.VBELN; // договор по умолчанию
+
+// 3. Получить список брендов (справочник)
+const brandsRes = await fetch(`${BASE_URL}/api/ws_user/getBrandList?format=json`, {
+  headers: { Authorization: `Basic ${credentials}` },
+});
+const brandsData = await brandsRes.json() as ArmtekApiResponse<GetBrandListResponse>;
+const BRANDS = brandsData.RESP?.ARRAY?.map(b => b.BRAND) ?? [];
+
+// 4. Получить доступные склады
+const storesRes = await fetch(`${BASE_URL}/api/ws_user/getStoreList?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ VKORG }),
+});
+const storesData = await storesRes.json() as ArmtekApiResponse<GetStoreListResponse>;
+const STORES = storesData.RESP?.ARRAY ?? [];
+```
+
+### Поиск товара и создание заказа
+
+```ts
+// 5. Поиск товара по артикулу
+const searchRes = await fetch(`${BASE_URL}/api/ws_search/search?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    VKORG,
+    KUNNR_RG: KUNRG,
+    PIN: '12345',           // артикул, который ищем
+    BRAND: BRANDS[0],       // выбранный бренд
+    QUERY_TYPE: '1',        // без аналогов
+  }),
+});
+const searchData = await searchRes.json() as ArmtekApiResponse<SearchResponse>;
+const searchItem = searchData.RESP?.ARRAY?.[0];
+const KEYZAK = searchItem?.KEYZAK; // код склада с товаром
+
+// 6. Создать заказ
+const createOrderRes = await fetch(`${BASE_URL}/api/ws_order/createOrder?format=json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Basic ${credentials}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    VKORG,
+    KUNRG,
+    VBELN,                       // договор
+    ITEMS: [
+      {
+        PIN: '12345',
+        BRAND: BRANDS[0],
+        KWMENG: 2,
+        KEYZAK,                  // важно указать, иначе ищет только в основном складе
+      },
+    ],
+  } as CreateOrderRequest),
+});
+const createData = await createOrderRes.json() as ArmtekApiResponse<CreateOrderResponse>;
+const ORDER = createData.RESP?.ITEMS?.[0]?.RESULT?.[0]?.VBELN;
+```
+
+### Отслеживание статуса заказа
+
+```ts
+// 7. Получить полную информацию по заказу с детализированными статусами
+const getOrderRes = await fetch(
+  `${BASE_URL}/api/ws_order/getOrder2?${new URLSearchParams({
+    VKORG,
+    KUNRG,
+    ORDER: ORDER || '1234567890',
+    STATUS: '1',                // запросить детализацию статусов
+    format: 'json',
+  })}`,
+  { headers: { Authorization: `Basic ${credentials}` } }
+);
+const orderData = await getOrderRes.json() as ArmtekApiResponse<GetOrderResponse>;
+const orderHeader = orderData.RESP?.HEADER?.[0];
+const orderItems = orderData.RESP?.ITEMS ?? [];
+
+// Проверить статус позиций (если в ответе STATUSES)
+const statusesArray = (orderData.RESP as any)?.STATUSES ?? [];
+for (const status of statusesArray) {
+  if (status.Processing?.length) {
+    console.log(`Позиция ${status.POSNR}: в обработке`);
+  }
+  if (status.Ready?.length) {
+    console.log(`Позиция ${status.POSNR}: готово к отгрузке`);
+  }
+  if (status.Delivered?.length) {
+    console.log(`Позиция ${status.POSNR}: отгружено`);
+  }
+}
+```
+
+### Обработка ошибок
+
+```ts
+// Вспомогательная функция для обработки ответов
+async function makeApiRequest<T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Basic ${credentials}`,
+    },
+  });
+
+  const data = (await response.json()) as ArmtekApiResponse<T>;
+
+  if (data.STATUS !== 200) {
+    const errors = data.MESSAGES?.filter(
+      m => m.TYPE === 'A' || m.TYPE === 'E'
+    ) ?? [];
+    const errorMessage = errors.map(e => e.TEXT).join('; ') || `HTTP ${data.STATUS}`;
+    throw new Error(errorMessage);
+  }
+
+  return data.RESP as T;
+}
+
+// Использование:
+try {
+  const payload = await makeApiRequest<GetUserVkorgListResponse>(
+    `${BASE_URL}/api/ws_user/getUserVkorgList?format=json`
+  );
+  console.log('Сбытовые организации:', payload.ARRAY);
+} catch (error) {
+  console.error('Ошибка при получении сбытовых организаций:', error.message);
+}
+```
 
 ---
 

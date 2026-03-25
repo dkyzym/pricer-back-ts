@@ -5,7 +5,7 @@ import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.t
 import { SearchResponseItem } from './armtek.types.js';
 
 const ARMTEK_BASE_URL =
-  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '')
+  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '');
 
 /**
  * ТЕСТОВЫЙ endpoint для создания заказа — НЕ создаёт реальных финансовых обязательств.
