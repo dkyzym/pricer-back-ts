@@ -1,5 +1,6 @@
 import { error } from '@middleware/errorsMiddleware.js';
 import { securityFilter } from '@middleware/securityFilterMiddleware.js';
+import healthRoutes from '@routes/healthRoutes.js';
 import authRoutes from '@routes/authRoutes.js';
 import dataRoutes from '@routes/dataRoutes.js';
 import logsRoutes from '@routes/logsRoutes.js';
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(distPath));
 
+app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
 app.use('/api', dataRoutes);
 app.use('/api', logsRoutes);

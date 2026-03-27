@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const PORT = process.env.PORT || 3000;
+
+/** Токен для GET /api/health/detailed (заголовок X-Metrics-Token). Без переменной — детальные метрики отключены. */
+export const HEALTH_METRICS_TOKEN = process.env.HEALTH_METRICS_TOKEN?.trim() || undefined;
 export const CLIENT_BUILD_PATH = process.env.CLIENT_BUILD_PATH || '../pricer-front/dist';
 const rawClientUrls = [
   process.env.CLIENT_URL,
