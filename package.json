@@ -8,6 +8,7 @@
     "build": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "dev": "nodemon --exec tsx src/index.ts",
     "fetch-brands": "tsx src/scripts/fetchAllBrands.ts",
+    "profit-set-default-point": "tsx src/scripts/profitSetDefaultTradePoint.ts",
     "test": "node --test --import tsx src/services/avtopartner/ordersAvtoPartnerService.test.ts",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'"
