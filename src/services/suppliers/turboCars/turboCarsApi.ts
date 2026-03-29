@@ -7,6 +7,7 @@ import {
   TurboCarsErrorResponse,
   TurboCarsOffersSearchResponse,
   TurboCarsOffersSearchSuccess,
+  TurboCarsOrderCreateBadOffer,
   TurboCarsOrderCreatePosition,
   TurboCarsOrderCreateRequest,
   TurboCarsOrderCreateResponse,
@@ -172,6 +173,66 @@ const extractErrorMessage = (resp: TurboCarsErrorResponse): string => {
   return JSON.stringify(em);
 };
 
+/**
+ * Разбор и проверка тела успешного ответа POST /order:create.
+ * HTTP 200 без полей контракта не должен приводить к «успешному» чекауту в нашей БД.
+ */
+const parseOrderCreateSuccessBody = (data: unknown): TurboCarsOrderCreateResponse => {
+  if (!data || typeof data !== 'object') {
+    throw new Error(
+      'Некорректный ответ TurboCars /order:create: ожидался объект JSON',
+    );
+  }
+
+  const raw = data as Record<string, unknown>;
+  const orderNumberRaw = raw.order_number;
+
+  if (typeof orderNumberRaw !== 'string' || orderNumberRaw.trim() === '') {
+    throw new Error(
+      'Некорректный ответ TurboCars /order:create: отсутствует или пустой order_number',
+    );
+  }
+
+  const isTestVal = raw.is_test;
+  if (isTestVal !== 0 && isTestVal !== 1) {
+    throw new Error(
+      'Некорректный ответ TurboCars /order:create: поле is_test должно быть 0 или 1',
+    );
+  }
+
+  let badOffers: TurboCarsOrderCreateBadOffer[] | undefined;
+
+  if (raw.bad_offers !== undefined && raw.bad_offers !== null) {
+    if (!Array.isArray(raw.bad_offers)) {
+      throw new Error(
+        'Некорректный ответ TurboCars /order:create: bad_offers должен быть массивом',
+      );
+    }
+
+    badOffers = raw.bad_offers.map((entry, index) => {
+      if (!entry || typeof entry !== 'object') {
+        throw new Error(
+          `Некорректный ответ TurboCars /order:create: bad_offers[${index}] не объект`,
+        );
+      }
+      const b = entry as Record<string, unknown>;
+      const { code, brand, reason } = b;
+      if (typeof code !== 'string' || typeof brand !== 'string' || typeof reason !== 'string') {
+        throw new Error(
+          `Некорректный ответ TurboCars /order:create: bad_offers[${index}] — ожидаются строки code, brand, reason`,
+        );
+      }
+      return { code, brand, reason };
+    });
+  }
+
+  return {
+    order_number: orderNumberRaw.trim(),
+    is_test: isTestVal,
+    ...(badOffers !== undefined && badOffers.length > 0 ? { bad_offers: badOffers } : {}),
+  };
+};
+
 export const createTurboCarsOrder = async (
   positions: TurboCarsOrderCreatePosition[],
   logger: Logger,
@@ -200,7 +261,20 @@ export const createTurboCarsOrder = async (
       throw new Error(`TurboCars: ${(data as TurboCarsErrorResponse).error_code} — ${msg}`);
     }
 
-    return data as TurboCarsOrderCreateResponse;
+    logger.debug('[turboCars] Ответ поставщика POST /order:create', {
+      responseBody: data,
+    });
+
+    const parsed = parseOrderCreateSuccessBody(data);
+
+    if (parsed.is_test !== isTest) {
+      logger.warn('[turboCars] Ответ /order:create: is_test не совпадает с телом запроса', {
+        requested: isTest,
+        received: parsed.is_test,
+      });
+    }
+
+    return parsed;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const axErr = error as AxiosError<unknown>;

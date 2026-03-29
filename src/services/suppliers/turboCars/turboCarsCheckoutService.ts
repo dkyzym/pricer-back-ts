@@ -38,7 +38,7 @@ const mapCartItemToPosition = (
  * Поток данных:
  *  1. Маппинг ICartItemDocument[] → positions[] (provider_id, price, code, brand, count).
  *  2. POST на /order:create с флагом is_test: 1.
- *  3. Разбор ответа: bad_offers → частичный или полный отказ, иначе — success.
+ *  3. Разбор ответа в createTurboCarsOrder (валидация контракта, debug-лог тела): bad_offers → частичный или полный отказ, иначе — success.
  */
 export const turboCarsCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
