@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
 import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.types.js';
@@ -46,11 +46,12 @@ interface AutosputnikOrderCreateResponse {
   data: Array<{ id: number; userid?: number; date?: string; comment?: string | null }> | null;
 }
 
-/** Тело POST /order/create: в OAS указан только comment; доп. поля — опционально через env. */
+/** Значение comment по умолчанию; позже может заменяться текстом с фронтенда при checkout. */
+const AUTOSPUTNIK_DEFAULT_ORDER_COMMENT = 'Заказ через API';
+
+/** Тело POST /order/create: по API поле comment обязательно. */
 type AutosputnikCreateOrderBody = {
-  comment?: string | null;
-  delivery_method?: string;
-  payment_type?: string;
+  comment: string;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,19 +105,27 @@ const normalizeAutosputnikError = (e: string | null | undefined): string | null 
 };
 
 /**
- * Сборка тела POST /order/create: базово только comment; delivery/payment — если заданы в env
- * (в Swagger v1 может не быть — поля не отправляем, чтобы не ломать контракт).
+ * Извлекает тело ответа API при ошибке Axios (4xx/5xx), чтобы видеть валидацию и прочие детали сервера.
+ * Без response.data — fallback на message исключения.
  */
-const buildCreateOrderPayload = (): AutosputnikCreateOrderBody => {
-  const comment = process.env.AUTOSPUTNIK_ORDER_COMMENT?.trim();
-  const delivery_method = process.env.AUTOSPUTNIK_ORDER_DELIVERY_METHOD?.trim();
-  const payment_type = process.env.AUTOSPUTNIK_ORDER_PAYMENT_TYPE?.trim();
-  const body: AutosputnikCreateOrderBody = {};
-  if (comment) body.comment = comment;
-  if (delivery_method) body.delivery_method = delivery_method;
-  if (payment_type) body.payment_type = payment_type;
-  return body;
+const formatAutosputnikHttpErrorDetails = (err: unknown): string => {
+  if (axios.isAxiosError(err) && err.response?.data != null) {
+    const d = err.response.data;
+    if (typeof d === 'string') return d;
+    try {
+      return JSON.stringify(d);
+    } catch {
+      return String(d);
+    }
+  }
+  if (err instanceof Error) return err.message;
+  return String(err);
 };
+
+/** Тело POST /order/create: { comment } — пока фиксированный дефолт, без .env. */
+const buildCreateOrderPayload = (): AutosputnikCreateOrderBody => ({
+  comment: AUTOSPUTNIK_DEFAULT_ORDER_COMMENT,
+});
 
 /**
  * Строгая проверка ответа создания заказа: не полагаемся на HTTP 200.
@@ -194,11 +203,12 @@ const authedPost = async <T>(
  *
  * Поток данных:
  *  1. POST /basket/clear — полная очистка корзины поставщика (идемпотентно).
- *  2. POST /basket/add для каждой позиции — articul, brandid, id_shop_prices,
- *     price извлекаются из rawItemData[supplier]; аудит: полный payload и тело ответа в лог.
+ *  2. POST /basket/add для каждой позиции — атомарно «всё или ничего»: при любой ошибке
+ *     добавления сразу после цикла POST /basket/clear и выход без order/create и без safety lock.
  *  3. Если AUTOSPUTNIK_ENABLE_REAL_ORDERS !== 'true' — стоп: корзина у поставщика заполнена,
  *     POST /order/create не вызывается (safety lock).
- *  4. Иначе POST /order/create — создание заказа из корзины; проверка поля error и id в data.
+ *  4. Иначе POST /order/create — тело { comment } (дефолт в коде; позже — с фронтенда);
+ *     проверка поля error и id в data.
  *
  * Один handler обслуживает оба контура (autosputnik / autosputnik_bn) —
  * алиас определяется из item.supplier.
@@ -305,31 +315,62 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
           });
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        failedItems.push({ cartItemId, article: item.article, reason: msg });
-        userLogger.error('[AutosputnikCheckout] Исключение при добавлении позиции', {
+        const errorDetails = formatAutosputnikHttpErrorDetails(err);
+        failedItems.push({
           cartItemId,
           article: item.article,
-          error: msg,
+          reason: errorDetails,
+        });
+        userLogger.error('[AutosputnikCheckout] Исключение при POST /basket/add', {
+          cartItemId,
+          article: item.article,
+          apiError: errorDetails,
+          status: axios.isAxiosError(err) ? err.response?.status : undefined,
         });
       }
     }
 
-    if (latestBasket.length === 0 && failedItems.length > 0) {
-      const failSummary = failedItems
-        .map((f) => `${f.article}: ${f.reason}`)
-        .join('; ');
+    // ── Атомарность: частичная корзина недопустима — сброс и выход без order/create ──
+    if (failedItems.length > 0) {
+      userLogger.warn(
+        '[AutosputnikCheckout] Транзакция прервана — очистка частично собранной корзины',
+        {
+          supplier,
+          failedCount: failedItems.length,
+          failures: failedItems.map((f) => ({
+            cartItemId: f.cartItemId,
+            article: f.article,
+            reason: f.reason,
+          })),
+        },
+      );
+      try {
+        const emergencyClear = await authedPost<AutosputnikBasketResponse>(
+          '/basket/clear',
+          supplier,
+        );
+        const ecErr = normalizeAutosputnikError(emergencyClear.error);
+        if (ecErr) {
+          userLogger.error('[AutosputnikCheckout] emergency POST /basket/clear — ошибка API', {
+            supplier,
+            error: ecErr,
+          });
+        }
+      } catch (emergencyErr: unknown) {
+        const msg =
+          emergencyErr instanceof Error ? emergencyErr.message : String(emergencyErr);
+        userLogger.error('[AutosputnikCheckout] emergency POST /basket/clear — исключение', {
+          supplier,
+          error: msg,
+        });
+      }
       return {
         success: false,
         cartItemIds,
-        error: `Все позиции отклонены: ${failSummary}`,
+        error:
+          'Транзакция прервана. Не удалось добавить некоторые позиции. Корзина очищена.',
       };
     }
-
-    const failNote =
-      failedItems.length > 0
-        ? `Не добавлены: ${failedItems.map((f) => `${f.article}(${f.reason})`).join(', ')}`
-        : undefined;
 
     const realOrdersEnabled = process.env.AUTOSPUTNIK_ENABLE_REAL_ORDERS === 'true';
 
@@ -340,7 +381,6 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
         {
           supplier,
           addedCount: latestBasket.length,
-          failedCount: failedItems.length,
         },
       );
       return {
@@ -348,7 +388,6 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
         cartItemIds,
         externalOrderIds: [],
         note: 'Safety lock active. Order is in vendor basket.',
-        ...(failNote && { error: failNote }),
       };
     }
 
@@ -359,11 +398,26 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       payloadJson: JSON.stringify(createBody),
     });
 
-    const createRaw = await authedPost<AutosputnikOrderCreateResponse>(
-      '/order/create',
-      supplier,
-      createBody,
-    );
+    let createRaw: AutosputnikOrderCreateResponse;
+    try {
+      createRaw = await authedPost<AutosputnikOrderCreateResponse>(
+        '/order/create',
+        supplier,
+        createBody,
+      );
+    } catch (err: unknown) {
+      const errorDetails = formatAutosputnikHttpErrorDetails(err);
+      userLogger.error('[AutosputnikCheckout] Исключение при POST /order/create', {
+        supplier,
+        apiError: errorDetails,
+        status: axios.isAxiosError(err) ? err.response?.status : undefined,
+      });
+      return {
+        success: false,
+        cartItemIds,
+        error: `POST /order/create: ${errorDetails}`,
+      };
+    }
 
     userLogger.info('[Autosputnik] POST /order/create — сырой JSON ответа (аудит)', {
       supplier,
@@ -376,7 +430,6 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
         success: false,
         cartItemIds,
         error: parsedCreate.vendorMessage,
-        ...(failNote && { note: failNote }),
       };
     }
 
@@ -384,16 +437,16 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       success: true,
       cartItemIds,
       externalOrderIds: parsedCreate.orderIds,
-      ...(failNote && { error: failNote }),
     };
   } catch (error: unknown) {
-    const message =
-      error instanceof AxiosError
-        ? `Autosputnik request failed: ${error.message}`
-        : `Autosputnik unexpected error: ${String(error)}`;
+    const errorDetails = formatAutosputnikHttpErrorDetails(error);
+    const message = axios.isAxiosError(error)
+      ? `Autosputnik request failed: ${errorDetails}`
+      : `Autosputnik unexpected error: ${errorDetails}`;
 
     userLogger.error('[AutosputnikCheckout] Исключение при checkout', {
-      error: message,
+      apiError: errorDetails,
+      status: axios.isAxiosError(error) ? error.response?.status : undefined,
     });
 
     return { success: false, cartItemIds, error: message };
