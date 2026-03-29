@@ -35,7 +35,23 @@ interface AutosputnikBasketAddPayload {
   quantity: number;
   price: number;
   id_shop_prices: number;
+  comment?: string | null;
 }
+
+/** Ответ POST /order/create — см. OrderViewModelRequestcs в документации Autosputnik. */
+interface AutosputnikOrderCreateResponse {
+  error: string | null;
+  countorders: number;
+  totalpages: number;
+  data: Array<{ id: number; userid?: number; date?: string; comment?: string | null }> | null;
+}
+
+/** Тело POST /order/create: в OAS указан только comment; доп. поля — опционально через env. */
+type AutosputnikCreateOrderBody = {
+  comment?: string | null;
+  delivery_method?: string;
+  payment_type?: string;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Извлечение полей из rawItemData для basket/add
@@ -78,6 +94,58 @@ const extractAutosputnikFields = (
   }
 
   return { articul, brandid, id_shop_prices: idShopPrices, price: Number(price) };
+};
+
+/** Пустая/null error у поставщика считается успехом (см. документацию Autosputnik). */
+const normalizeAutosputnikError = (e: string | null | undefined): string | null => {
+  if (e == null) return null;
+  const t = String(e).trim();
+  return t.length === 0 ? null : t;
+};
+
+/**
+ * Сборка тела POST /order/create: базово только comment; delivery/payment — если заданы в env
+ * (в Swagger v1 может не быть — поля не отправляем, чтобы не ломать контракт).
+ */
+const buildCreateOrderPayload = (): AutosputnikCreateOrderBody => {
+  const comment = process.env.AUTOSPUTNIK_ORDER_COMMENT?.trim();
+  const delivery_method = process.env.AUTOSPUTNIK_ORDER_DELIVERY_METHOD?.trim();
+  const payment_type = process.env.AUTOSPUTNIK_ORDER_PAYMENT_TYPE?.trim();
+  const body: AutosputnikCreateOrderBody = {};
+  if (comment) body.comment = comment;
+  if (delivery_method) body.delivery_method = delivery_method;
+  if (payment_type) body.payment_type = payment_type;
+  return body;
+};
+
+/**
+ * Строгая проверка ответа создания заказа: не полагаемся на HTTP 200.
+ * Возвращает список id заказов из data или текст ошибки поставщика.
+ */
+const parseOrderCreateResult = (
+  raw: AutosputnikOrderCreateResponse,
+): { ok: true; orderIds: string[] } | { ok: false; vendorMessage: string } => {
+  const err = normalizeAutosputnikError(raw.error);
+  if (err) {
+    return { ok: false, vendorMessage: err };
+  }
+  const rows = raw.data;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return {
+      ok: false,
+      vendorMessage: 'Ответ order/create: пустой data или заказ не создан',
+    };
+  }
+  const ids = rows
+    .map((o) => o.id)
+    .filter((id): id is number => typeof id === 'number' && !Number.isNaN(id));
+  if (ids.length === 0) {
+    return {
+      ok: false,
+      vendorMessage: 'Ответ order/create: отсутствует числовой id заказа в data',
+    };
+  }
+  return { ok: true, orderIds: ids.map(String) };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,9 +195,10 @@ const authedPost = async <T>(
  * Поток данных:
  *  1. POST /basket/clear — полная очистка корзины поставщика (идемпотентно).
  *  2. POST /basket/add для каждой позиции — articul, brandid, id_shop_prices,
- *     price извлекаются из rawItemData[supplier].
- *  3. Финальный endpoint оформления заказа не документирован —
- *     позиции остаются в корзине для ручного подтверждения.
+ *     price извлекаются из rawItemData[supplier]; аудит: полный payload и тело ответа в лог.
+ *  3. Если AUTOSPUTNIK_ENABLE_REAL_ORDERS !== 'true' — стоп: корзина у поставщика заполнена,
+ *     POST /order/create не вызывается (safety lock).
+ *  4. Иначе POST /order/create — создание заказа из корзины; проверка поля error и id в data.
  *
  * Один handler обслуживает оба контура (autosputnik / autosputnik_bn) —
  * алиас определяется из item.supplier.
@@ -157,11 +226,12 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       supplier,
     );
 
-    if (clearResult.error) {
+    const clearErr = normalizeAutosputnikError(clearResult.error);
+    if (clearErr) {
       return {
         success: false,
         cartItemIds,
-        error: `Ошибка очистки корзины: ${clearResult.error}`,
+        error: `Ошибка очистки корзины: ${clearErr}`,
       };
     }
 
@@ -195,25 +265,40 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
           id_shop_prices: fields.id_shop_prices,
         };
 
+        userLogger.info('[Autosputnik] POST /basket/add — тело запроса (аудит)', {
+          cartItemId,
+          article: item.article,
+          payloadJson: JSON.stringify(payload),
+        });
+
         const addResult = await authedPost<AutosputnikBasketResponse>(
           '/basket/add',
           supplier,
           payload,
         );
 
-        if (addResult.error) {
+        userLogger.info('[Autosputnik] POST /basket/add — сырой JSON ответа (аудит)', {
+          cartItemId,
+          article: item.article,
+          responseJson: JSON.stringify(addResult),
+        });
+
+        const addErr = normalizeAutosputnikError(addResult.error);
+        const basketDataOk = Array.isArray(addResult.data);
+        if (addErr || !basketDataOk) {
+          const reason = addErr ?? 'Некорректное тело ответа (ожидался массив data)';
           failedItems.push({
             cartItemId,
             article: item.article,
-            reason: addResult.error,
+            reason,
           });
           userLogger.warn('[AutosputnikCheckout] Позиция не добавлена в корзину', {
             cartItemId,
             article: item.article,
-            error: addResult.error,
+            error: reason,
           });
         } else {
-          latestBasket = addResult.data ?? [];
+          latestBasket = addResult.data;
           userLogger.info('[AutosputnikCheckout] Позиция добавлена в корзину', {
             cartItemId,
             article: item.article,
@@ -241,31 +326,64 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       };
     }
 
-    // ── 3. Финальный endpoint оформления заказа не документирован ────────
-    const basketIds = latestBasket.map((bp) => String(bp.id));
-
-    userLogger.warn(
-      '[AutosputnikCheckout] Позиции добавлены в корзину, но финальный API оформления заказа ' +
-        'не документирован. Требуется ручное подтверждение.',
-      {
-        supplier,
-        addedCount: latestBasket.length,
-        failedCount: failedItems.length,
-        basketIds,
-      },
-    );
-
     const failNote =
       failedItems.length > 0
         ? `Не добавлены: ${failedItems.map((f) => `${f.article}(${f.reason})`).join(', ')}`
         : undefined;
 
+    const realOrdersEnabled = process.env.AUTOSPUTNIK_ENABLE_REAL_ORDERS === 'true';
+
+    // ── 3. Safety lock: без явного флага заказ у поставщика не создаём ─────
+    if (!realOrdersEnabled) {
+      userLogger.warn(
+        '[Autosputnik] Safety lock active. Items added to basket, but final order was NOT placed.',
+        {
+          supplier,
+          addedCount: latestBasket.length,
+          failedCount: failedItems.length,
+        },
+      );
+      return {
+        success: true,
+        cartItemIds,
+        externalOrderIds: [],
+        note: 'Safety lock active. Order is in vendor basket.',
+        ...(failNote && { error: failNote }),
+      };
+    }
+
+    // ── 4. POST /order/create — финальное оформление ─────────────────────
+    const createBody = buildCreateOrderPayload();
+    userLogger.info('[Autosputnik] POST /order/create — тело запроса (аудит)', {
+      supplier,
+      payloadJson: JSON.stringify(createBody),
+    });
+
+    const createRaw = await authedPost<AutosputnikOrderCreateResponse>(
+      '/order/create',
+      supplier,
+      createBody,
+    );
+
+    userLogger.info('[Autosputnik] POST /order/create — сырой JSON ответа (аудит)', {
+      supplier,
+      responseJson: JSON.stringify(createRaw),
+    });
+
+    const parsedCreate = parseOrderCreateResult(createRaw);
+    if (!parsedCreate.ok) {
+      return {
+        success: false,
+        cartItemIds,
+        error: parsedCreate.vendorMessage,
+        ...(failNote && { note: failNote }),
+      };
+    }
+
     return {
       success: true,
       cartItemIds,
-      externalOrderIds: basketIds,
-      note:
-        'Autosputnik: позиции добавлены в корзину, финальное оформление не выполнено (API не документирован)',
+      externalOrderIds: parsedCreate.orderIds,
       ...(failNote && { error: failNote }),
     };
   } catch (error: unknown) {
