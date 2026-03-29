@@ -211,66 +211,45 @@ const products = data.error ? [] : (data.data ?? []);
 
 ### 4.1 POST /order/get — список заказов
 
-Обязательно указать либо даты, либо номер заказа.
+Получение списка заказов. **Обязательно указать либо даты, либо номер заказа.**
+
+Доступны два маршрута:
+- `POST /order/get` — возвращает JSON (по умолчанию)
+- `POST /order/get.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/order/get.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                                     |
+| -------- | ------ | ------------ | -------------------------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml                  |
 
 **Тело запроса:**
 
 ```ts
-interface AutosputnikOrderGetRequest {
+interface OrderGetViewModelPost {
   date_start?: string; // ISO date-time, начало периода
   date_end?: string; // ISO date-time, конец периода
-  orderid?: number; // 0 — не по номеру, иначе фильтр по заказу
-  page?: number; // страница, в проекте 1
-  pageSize?: number; // размер страницы, в проекте 500
+  orderid?: number; // 0 — не по номеру, иначе фильтр по номеру заказа
+  page?: number; // номер страницы (по умолчанию 1)
+  pageSize?: number; // размер страницы (по умолчанию 500)
 }
 ```
 
 **Ответ 200:**
 
-```ts
-interface AutosputnikProductRaw {
-  id: number;
-  orderid: number;
-  articul: string;
-  brand_id: number;
-  brand_name: string;
-  product_name: string;
-  statusid: number;
-  status: string;
-  date_delivery: string | null;
-  price: number;
-  quantity: number;
-  amount: number;
-  comment_product?: string | null;
-  return_possible?: boolean | null;
-}
+Возвращает `OrderViewModelRequestcs` (см. раздел Schemas).
 
-interface AutosputnikOrderRaw {
-  id: number;
-  userid: number;
-  date: string;
-  comment: string;
-  products: AutosputnikProductRaw[];
-}
-
-interface AutosputnikGetOrdersResponse {
-  error: string | null;
-  countorders: number;
-  totalpages: number;
-  data: AutosputnikOrderRaw[];
-}
-```
-
-**Пример (по периоду с пагинацией):**
+**Пример (запрос по периоду дат):**
 
 ```ts
-const payload = {
-  date_start: new Date().toISOString(), // или startOf('day')
+const payload: OrderGetViewModelPost = {
+  date_start: new Date().toISOString(),
   date_end: new Date().toISOString(),
   orderid: 0,
   page: 1,
   pageSize: 500,
 };
+
 const res = await fetch(`${BASE_URL}/order/get`, {
   method: 'POST',
   headers: {
@@ -279,12 +258,83 @@ const res = await fetch(`${BASE_URL}/order/get`, {
   },
   body: JSON.stringify(payload),
 });
-const data = (await res.json()) as AutosputnikGetOrdersResponse;
-const orders = data.data ?? [];
-// data.countorders, data.totalpages — для пагинации
+
+const data = (await res.json()) as OrderViewModelRequestcs;
+if (!data.error) {
+  const orders = data.data ?? [];
+  console.log(`Всего заказов: ${data.countorders}, страниц: ${data.totalpages}`);
+}
+```
+
+**Пример (запрос с указанием формата):**
+
+```ts
+const res = await fetch(`${BASE_URL}/order/get.json`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(payload),
+});
 ```
 
 При 401 в проекте токен для текущего алиаса сбрасывается, запрашивается новый и запрос повторяется.
+
+---
+
+### 4.2 POST /order/create — создание заказа
+
+Создание нового заказа на основе товаров в корзине.
+
+Доступны два маршрута:
+- `POST /order/create` — возвращает JSON (по умолчанию)
+- `POST /order/create.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/order/create.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Тело запроса:**
+
+```ts
+interface CreateOrderModelViewPost {
+  comment?: string; // опциональный комментарий к заказу
+}
+```
+
+**Ответ 200:**
+
+Возвращает `OrderViewModelRequestcs` (см. раздел Schemas). В поле `data` будет массив с созданным заказом.
+
+**Пример:**
+
+```ts
+const payload: CreateOrderModelViewPost = {
+  comment: 'Срочный заказ',
+};
+
+const res = await fetch(`${BASE_URL}/order/create`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(payload),
+});
+
+const data = (await res.json()) as OrderViewModelRequestcs;
+if (!data.error && data.data && data.data.length > 0) {
+  const createdOrder = data.data[0];
+  console.log(`Заказ создан, ID: ${createdOrder.id}`);
+} else {
+  console.error('Ошибка создания заказа:', data.error);
+}
+```
+
+**Примечание:** Перед созданием заказа убедитесь, что в корзине есть товары (см. раздел 5 Basket).
 
 ---
 
@@ -294,12 +344,381 @@ const orders = data.data ?? [];
 
 ### 5.1 GET /basket/get — список позиций в корзине
 
-Параметров нет.
+Получение содержимого корзины пользователя.
 
-**Ответ 200:** `{ error: string | null; data: BasketProduct[] }`
+Доступны два маршрута:
+- `GET /basket/get` — возвращает JSON (по умолчанию)
+- `GET /basket/get.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/basket/get.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Ответ 200:**
+
+Возвращает `BasketViewModelRequest` (см. раздел Schemas).
+
+**Пример:**
 
 ```ts
-interface AutosputnikBasketProduct {
+const res = await fetch(`${BASE_URL}/basket/get`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const data = (await res.json()) as BasketViewModelRequest;
+if (!data.error) {
+  const basketItems = data.data ?? [];
+  console.log(`В корзине ${basketItems.length} позиций`);
+  basketItems.forEach(item => {
+    console.log(`${item.name} (${item.articul}): ${item.quantity} шт. = ${item.amount}`);
+  });
+}
+```
+
+---
+
+### 5.2 POST /basket/add — добавить позицию
+
+Добавление товара в корзину.
+
+Доступны два маршрута:
+- `POST /basket/add` — возвращает JSON (по умолчанию)
+- `POST /basket/add.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/basket/add.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Тело запроса:**
+
+```ts
+interface AddBasketViewModelPost {
+  articul: string; // артикул товара
+  brandid: number; // ID производителя
+  quantity: number; // количество товара
+  price: number; // цена товара
+  id_shop_prices: number; // ID склада
+  comment?: string; // опциональный комментарий (переносится в заказ при оформлении)
+}
+```
+
+**Ответ 200:**
+
+Возвращает обновлённый список корзины (`BasketViewModelRequest`).
+
+**Пример:**
+
+```ts
+const payload: AddBasketViewModelPost = {
+  articul: '102870',
+  brandid: 1,
+  quantity: 2,
+  price: 1500,
+  id_shop_prices: 5,
+  comment: 'Оригинал',
+};
+
+const res = await fetch(`${BASE_URL}/basket/add`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(payload),
+});
+
+const data = (await res.json()) as BasketViewModelRequest;
+if (!data.error) {
+  console.log('Товар добавлен в корзину');
+}
+```
+
+---
+
+### 5.3 POST /basket/clear — очистить корзину
+
+Полная очистка корзины пользователя.
+
+Доступны два маршрута:
+- `POST /basket/clear` — возвращает JSON (по умолчанию)
+- `POST /basket/clear.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/basket/clear.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Тело запроса:** пусто
+
+**Ответ 200:**
+
+Возвращает пустой список корзины (`BasketViewModelRequest` с `data: []`).
+
+**Пример:**
+
+```ts
+const res = await fetch(`${BASE_URL}/basket/clear`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({}),
+});
+
+const data = (await res.json()) as BasketViewModelRequest;
+if (!data.error) {
+  console.log('Корзина очищена');
+}
+```
+
+---
+
+### 5.4 POST /basket/deleteposition — удалить позиции
+
+Удаление одной или нескольких позиций из корзины.
+
+Доступны два маршрута:
+- `POST /basket/deleteposition` — возвращает JSON (по умолчанию)
+- `POST /basket/deleteposition.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/basket/deleteposition.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Тело запроса:**
+
+Массив ID позиций корзины (число или массив чисел):
+
+```ts
+type DeleteBasketPositions = number | number[];
+
+// Пример: [123, 456] — удалить две позиции
+```
+
+**Ответ 200:**
+
+Возвращает обновлённый список корзины (`BasketViewModelRequest`).
+
+**Пример:**
+
+```ts
+const positionsToDelete = [123, 456];
+
+const res = await fetch(`${BASE_URL}/basket/deleteposition`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(positionsToDelete),
+});
+
+const data = (await res.json()) as BasketViewModelRequest;
+if (!data.error) {
+  console.log('Позиции удалены из корзины');
+}
+```
+
+---
+
+### 5.5 POST /basket/editquantity — изменить количество
+
+Изменение количества товара в корзине.
+
+Доступны два маршрута:
+- `POST /basket/editquantity` — возвращает JSON (по умолчанию)
+- `POST /basket/editquantity.{format}` — позволяет указать формат ответа (json или xml)
+
+**Параметры пути (для `/basket/editquantity.{format}`):**
+
+| Параметр | Тип    | Обязательный | Описание                  |
+| -------- | ------ | ------------ | ------------------------- |
+| format   | string | Нет          | Формат ответа: json или xml |
+
+**Параметры query:**
+
+| Параметр   | Тип    | Обязательный | Описание                           |
+| ---------- | ------ | ------------ | ---------------------------------- |
+| basketid   | number | Да           | ID позиции в корзине               |
+| quantity   | number | Да           | Новое количество товара            |
+
+**Ответ 200:**
+
+Возвращает обновлённый список корзины (`BasketViewModelRequest`).
+
+**Пример:**
+
+```ts
+const basketItemId = 123;
+const newQuantity = 5;
+
+const params = new URLSearchParams({
+  basketid: String(basketItemId),
+  quantity: String(newQuantity),
+});
+
+const res = await fetch(`${BASE_URL}/basket/editquantity?${params}`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const data = (await res.json()) as BasketViewModelRequest;
+if (!data.error) {
+  console.log(`Количество обновлено на ${newQuantity}`);
+}
+```
+
+**Альтернативный вариант (с форматом):**
+
+```ts
+const res = await fetch(
+  `${BASE_URL}/basket/editquantity.json?basketid=${basketItemId}&quantity=${newQuantity}`,
+  {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+```
+
+---
+
+## 6. Schemas — модели данных
+
+Полная типизация для TypeScript/JavaScript проектов.
+
+### Авторизация
+
+```ts
+interface LoginViewModel {
+  login: string | null;
+  password: string | null;
+}
+
+interface AutosputnikAuthResponse {
+  error: string | null;
+  token: string | null;
+  userid: number;
+}
+```
+
+### Бренды и товары
+
+```ts
+interface Brand {
+  id: number;
+  name: string | null;
+}
+
+interface Product_short {
+  articul: string | null;
+  brand: Brand;
+  name: string | null;
+  countproduct: number;
+}
+
+interface BrandsViewModelRequest {
+  error: string | null;
+  data: Product_short[] | null;
+}
+
+interface BrandsViewModelRequestAll {
+  error: string | null;
+  data: Brand[] | null;
+}
+
+interface Product {
+  articul: string;
+  articul_search: string;
+  brand: Brand;
+  name: string;
+  quantity: number;
+  price: number;
+  delivery_day: number;
+  price_name: string | null;
+  delivery_date: string;
+  our: boolean;
+  analog: boolean;
+  id_shop_prices: number;
+  unit: string | null;
+  min: number;
+  cratnost: number;
+  vozvrat: boolean;
+  official_diler: boolean;
+  ismark: boolean;
+  shipping_proc: number;
+}
+```
+
+### Заказы
+
+```ts
+interface OrderGetViewModelPost {
+  date_start?: string; // ISO date-time
+  date_end?: string; // ISO date-time
+  orderid?: number;
+  page?: number;
+  pageSize?: number;
+}
+
+interface CreateOrderModelViewPost {
+  comment?: string | null;
+}
+
+interface Order_product {
+  id: number;
+  orderid: number;
+  articul: string | null;
+  brand_id: number | null;
+  brand_name: string | null;
+  product_name: string | null;
+  statusid: number | null;
+  status: string | null;
+  date_delivery: string | null; // ISO date-time
+  price: number;
+  quantity: number;
+  amount: number;
+  id_shop_prices: number | null;
+  return_possible: boolean | null;
+  comment_product: string | null;
+}
+
+interface Order {
+  id: number;
+  userid: number;
+  date: string; // ISO date-time
+  comment: string | null;
+  products: Order_product[] | null;
+}
+
+interface OrderViewModelRequestcs {
+  error: string | null;
+  countorders: number;
+  totalpages: number;
+  data: Order[] | null;
+}
+```
+
+### Корзина
+
+```ts
+interface AddBasketViewModelPost {
+  articul: string; // обязательный, minLength: 1
+  brandid: number;
+  quantity: number;
+  price: number;
+  id_shop_prices: number;
+  comment?: string | null;
+}
+
+interface Basket_product {
   id: number;
   articul: string | null;
   brand: string | null;
@@ -312,50 +731,16 @@ interface AutosputnikBasketProduct {
   id_shop_prices: number;
   comment: string | null;
 }
-```
 
----
-
-### 5.2 POST /basket/add — добавить позицию
-
-**Тело запроса:**
-
-```ts
-interface AutosputnikBasketAddRequest {
-  articul: string;
-  brandid: number;
-  quantity: number;
-  price: number;
-  id_shop_prices: number;
-  comment?: string;
+interface BasketViewModelRequest {
+  error: string | null;
+  data: Basket_product[] | null;
 }
 ```
 
-**Ответ 200:** тот же формат, что у GET /basket/get (обновлённый список в `data`).
-
 ---
 
-### 5.3 POST /basket/clear — очистить корзину
-
-Параметров и тела нет. Ответ — как у GET /basket/get (пустой массив в `data`).
-
----
-
-### 5.4 POST /basket/deleteposition — удалить позиции
-
-**Тело запроса:** массив ID позиций корзины, например `[123, 456]`.
-
-**Ответ 200:** обновлённый список корзины в `data`.
-
----
-
-### 5.5 POST /basket/editquantity — изменить количество
-
-**Тело запроса:** идентификатор позиции в корзине и новое количество (точная схема в Swagger: BasketViewModelRequest и связанные модели). Ответ — обновлённая корзина.
-
----
-
-## 6. Формат дат
+## 7. Формат дат
 
 - В запросах (**date_start**, **date_end**): **ISO 8601** (например `2026-03-07T05:13:24.717Z`). В проекте для периода используется Luxon: `DateTime.fromJSDate(date).startOf('day').toISO()` и т.п.
 - В ответах (**date**, **date_delivery**, **delivery_date**): строка в формате **date-time** (ISO 8601).
@@ -364,7 +749,7 @@ interface AutosputnikBasketAddRequest {
 
 ---
 
-## 7. Переменные окружения (проект)
+## 8. Переменные окружения (проект)
 
 | Переменная           | Описание                          |
 | -------------------- | --------------------------------- |
@@ -377,7 +762,7 @@ interface AutosputnikBasketAddRequest {
 
 ---
 
-## 8. Статусы заказа (statusid)
+## 9. Статусы заказа (statusid)
 
 В ответе заказов у каждой позиции есть **statusid** и текст **status**. Маппинг в единый `OrderStatus` выполняется в `autosputnikOrdersMapper.ts` (функция `mapAutosputnikStatus`). Актуальные значения и названия статусов берутся из ответов API или документации поставщика.
 
