@@ -16,10 +16,7 @@ export const getItemsWithRest = async (
     throw new Error('API key is not defined');
   }
 
-  const uri = `https://api.pr-lg.ru/search/crosses?secret=${apiKey}&article=${items[0].article}&brand=${items[0].brand}`;
-  // эдпоинт до костыля с crosses
-  //  const uri = `https://api.pr-lg.ru/search/items?secret=${apiKey}&article=${items[0].article}&brand=${items[0].brand}`;
-  //
+  const uri = `https://api.pr-lg.ru/search/items?secret=${apiKey}&article=${items[0].article}&brand=${items[0].brand}`;
 
   // Создаем HTTPS агент для игнорирования SSL  ошибок
   const httpsAgent = new https.Agent({
