@@ -1,5 +1,6 @@
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
+import { submitAbcpOrderHtml } from '../../platforms/abcp/parser/submitAbcpOrderHtml.js';
 import { cartSupplierHandlers } from '../cart/cartHandlers.js';
 import {
   CartHandlerResponse,
@@ -34,8 +35,9 @@ const cartItemToUnifiedRequest = (cartItem: ICartItemDocument): UnifiedCartReque
 };
 
 /**
- * HTML-скраперы (mikano, autoImpulse, avtoPartner): физически добавляем позиции в корзину
- * на стороне поставщика через существующие cartSupplierHandlers, затем сообщаем о ручном шаге оформления.
+ * HTML-скраперы (mikano, autoImpulse, avtoPartner): добавляем позиции в корзину поставщика
+ * через cartSupplierHandlers. Для ABCP (mikano, autoImpulse) затем вызывается автоматическое
+ * оформление заказа; для остальных — плейсхолдер MANUAL-ORDER и примечание о ручном шаге.
  */
 export const manualCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
@@ -53,6 +55,9 @@ export const manualCheckoutHandler: CheckoutHandler = async (
     list.push(item);
     bySupplier.set(item.supplier, list);
   }
+
+  const externalOrderIds: string[] = [];
+  let needsManualNote = false;
 
   for (const [supplier, groupItems] of bySupplier) {
     const cartHandler = cartSupplierHandlers[supplier];
@@ -94,17 +99,33 @@ export const manualCheckoutHandler: CheckoutHandler = async (
         };
       }
     }
+
+    if (supplier === 'mikano' || supplier === 'autoImpulse') {
+      const submitRes = await submitAbcpOrderHtml(supplier);
+      if (!submitRes.success) {
+        userLogger.error('[ManualCheckout] Ошибка автоматического оформления ABCP', {
+          supplier,
+          error: submitRes.error,
+        });
+        return { success: false, cartItemIds: ids, error: submitRes.error };
+      }
+      externalOrderIds.push(submitRes.externalOrderId);
+    } else {
+      externalOrderIds.push('MANUAL-ORDER');
+      needsManualNote = true;
+    }
   }
 
   userLogger.info('[ManualCheckout] Позиции добавлены в корзину поставщика', {
     itemCount: items.length,
     cartItemIds: ids,
+    externalOrderIds,
   });
 
   return {
     success: true,
     cartItemIds: ids,
-    externalOrderIds: ['MANUAL-ORDER'],
-    note: NOTE_SUCCESS,
+    externalOrderIds,
+    ...(needsManualNote ? { note: NOTE_SUCCESS } : {}),
   };
 };
