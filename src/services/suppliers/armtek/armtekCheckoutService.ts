@@ -4,7 +4,6 @@ import { ICartItemDocument } from '../../../models/CartItem.js';
 import type { SearchResultsParsed } from '../../../types/search.types.js';
 import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.types.js';
 import { SearchResponseItem } from './armtek.types.js';
-import { searchArmtekArticle } from './searchArmtekArticle.js';
 
 /** Сырое rawItemData: ответ WS или нормализованный результат после актуализации (parseArmtekResults). */
 type CartArmtekRaw = Partial<SearchResponseItem> & Partial<SearchResultsParsed>;
@@ -58,6 +57,7 @@ type ArmtekCreateOrderItem = {
 interface ArmtekCreateOrderPayload {
   VKORG: string;
   KUNRG: string;
+  DBTYP: '1' | '2' | '3';
   ITEMS: ArmtekCreateOrderItem[];
 }
 
@@ -176,94 +176,6 @@ const pickSearchRowForCartItem = (
   return withKeyzak ?? pool[0];
 };
 
-/**
- * Перед createTestOrder: ws_search/search по каждой позиции — в заказ уходят PIN, BRAND, KEYZAK как в ответе API.
- */
-const buildOrderItemsFromFreshSearch = async (
-  items: ICartItemDocument[],
-  vkorg: string,
-  kunnrRg: string,
-  userLogger: Logger,
-): Promise<{ ok: true; orderItems: ArmtekCreateOrderItem[] } | { ok: false; error: string }> => {
-  try {
-    const orderItems = await Promise.all(
-      items.map(async (item) => {
-        const pinQuery = String(item.article ?? '').trim();
-        const brandQuery = String(item.brand ?? '').trim();
-        if (!pinQuery) {
-          throw new Error('Armtek: в позиции корзины пустой артикул');
-        }
-
-        const { RESP: rows } = await searchArmtekArticle(
-          {
-            VKORG: vkorg,
-            KUNNR_RG: kunnrRg,
-            PIN: pinQuery,
-            BRAND: brandQuery,
-            QUERY_TYPE: '1',
-          },
-          userLogger,
-        );
-
-        const row = pickSearchRowForCartItem(rows, item);
-        if (!row) {
-          const kz = extractSavedArmtekKeyzak(item.rawItemData);
-          const ar = extractSavedArmtekArtid(item.rawItemData);
-          if (!rows.length) {
-            throw new Error(
-              `Armtek: search не вернул строк для «${pinQuery}» / «${brandQuery}»`,
-            );
-          }
-          throw new Error(
-            kz
-              ? `Armtek: среди ${rows.length} строк search нет совпадения со складом корзины (KEYZAK/warehouse_id=${kz})` +
-                  (ar ? ` и ARTID=${ar}` : '') +
-                  '. Выполните актуализацию корзины.'
-              : `Armtek: не удалось сопоставить позицию с одной из ${rows.length} строк search (нет warehouse_id в rawItemData). Выполните актуализацию корзины.`,
-          );
-        }
-
-        const pin = String(row.PIN ?? '').trim();
-        const brand = String(row.BRAND ?? '').trim();
-        const keyzak = row.KEYZAK?.trim();
-
-        if (!pin) {
-          throw new Error(
-            `Armtek: в ответе search пустой PIN (запрос «${pinQuery}»)`,
-          );
-        }
-        if (!keyzak) {
-          throw new Error(
-            `Armtek: для «${pin}» / «${brand}» в search нет KEYZAK (склад); оформление невозможно`,
-          );
-        }
-
-        const qty = Math.max(1, Math.floor(Number(item.quantity)) || 1);
-        const cartPriceRaw = item.currentPrice ?? item.initialPrice;
-
-        userLogger.info('[ArmtekCheckout] Строка search → позиция заказа', {
-          cartItemId: String(item._id),
-          query: { PIN: pinQuery, BRAND: brandQuery },
-          savedFromCart: {
-            warehouse_id_or_KEYZAK: extractSavedArmtekKeyzak(item.rawItemData),
-            ARTID_or_inner_product_code: extractSavedArmtekArtid(item.rawItemData),
-            price: cartPriceRaw,
-          },
-          orderLine: { PIN: pin, BRAND: brand, KEYZAK: keyzak, ARTID: row.ARTID, KWMENG: qty },
-          searchHits: rows.length,
-        });
-
-        return { PIN: pin, BRAND: brand, KWMENG: qty, KEYZAK: keyzak } satisfies ArmtekCreateOrderItem;
-      }),
-    );
-
-    return { ok: true, orderItems };
-  } catch (e: unknown) {
-    const text = e instanceof Error ? e.message : String(e);
-    userLogger.error('[ArmtekCheckout] Ошибка при search перед заказом', { error: text });
-    return { ok: false, error: text };
-  }
-};
 
 /** Ошибки уровня строки в RESP.ITEMS (не дублируют MESSAGES). */
 const collectLineLevelOrderErrors = (data: ArmtekOrderApiEnvelope): string[] => {
@@ -335,20 +247,25 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
   }
 
   const vkorg = resolveArmtekVkorg();
-  const searchBefore = await buildOrderItemsFromFreshSearch(
-    items,
-    vkorg,
-    KUNRG,
-    userLogger,
-  );
-  if (!searchBefore.ok) {
-    return { success: false, cartItemIds, error: searchBefore.error };
-  }
+  const orderItems: ArmtekCreateOrderItem[] = items.map((item) => {
+    const pin = String(item.article ?? '').trim();
+    const brand = String(item.brand ?? '').trim();
+    // Берем склад из сохраненных данных корзины. Если его нет, передаем пустую строку,
+    // чтобы API искало на основном складе, как было в успешном изолированном тесте.
+    const keyzak = extractSavedArmtekKeyzak(item.rawItemData) || '';
+    const qty = Math.max(1, Math.floor(Number(item.quantity)) || 1);
+
+    if (!pin) {
+      throw new Error('Armtek: в позиции корзины пустой артикул');
+    }
+
+    return { PIN: pin, BRAND: brand, KWMENG: qty, KEYZAK: keyzak };
+  });
 
   const payload: ArmtekCreateOrderPayload = {
     VKORG: vkorg,
-    KUNRG,
-    ITEMS: searchBefore.orderItems,
+    KUNRG,DBTYP:'3',
+    ITEMS: orderItems,
   };
 
   try {
