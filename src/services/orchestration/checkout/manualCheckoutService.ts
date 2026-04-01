@@ -1,12 +1,15 @@
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
-import { submitAbcpOrderHtml } from '../../platforms/abcp/parser/submitAbcpOrderHtml.js';
-import { cartSupplierHandlers } from '../cart/cartHandlers.js';
+import {
+  clearAbcpCartHtml,
+  submitAbcpOrderHtml,
+} from '../../platforms/abcp/parser/submitAbcpOrderHtml.js';
 import {
   CartHandlerResponse,
   CheckoutHandler,
   UnifiedCartRequest,
 } from '../cart/cart.types.js';
+import { cartSupplierHandlers } from '../cart/cartHandlers.js';
 
 const NOTE_SUCCESS =
   'Успешно добавлено в корзину поставщика. Требуется ручное оформление заказа на сайте.';
@@ -35,9 +38,10 @@ const cartItemToUnifiedRequest = (cartItem: ICartItemDocument): UnifiedCartReque
 };
 
 /**
- * HTML-скраперы (mikano, autoImpulse, avtoPartner): добавляем позиции в корзину поставщика
- * через cartSupplierHandlers. Для ABCP (mikano, autoImpulse) затем вызывается автоматическое
- * оформление заказа; для остальных — плейсхолдер MANUAL-ORDER и примечание о ручном шаге.
+ * HTML-скраперы (mikano, autoImpulse, avtoPartner): для ABCP перед добавлением вызывается
+ * clearAbcpCartHtml; затем позиции добавляются через cartSupplierHandlers. Для mikano и
+ * autoImpulse после добавления — автоматическое оформление заказа; для остальных —
+ * плейсхолдер MANUAL-ORDER и примечание о ручном шаге.
  */
 export const manualCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
@@ -68,6 +72,23 @@ export const manualCheckoutHandler: CheckoutHandler = async (
         cartItemIds: ids,
         error: `Нет обработчика удалённой корзины для поставщика «${supplier}».`,
       };
+    }
+
+    if (supplier === 'mikano' || supplier === 'autoImpulse') {
+      const clearRes = await clearAbcpCartHtml(supplier);
+      if (!clearRes.success) {
+        userLogger.error('[ManualCheckout] Не удалось очистить корзину ABCP перед добавлением', {
+          supplier,
+          error: clearRes.error,
+        });
+        return { success: false, cartItemIds: ids, error: clearRes.error };
+      }
+      if (clearRes.removedCount > 0) {
+        userLogger.info('[ManualCheckout] Очищена корзина поставщика ABCP перед добавлением позиций', {
+          supplier,
+          removedCount: clearRes.removedCount,
+        });
+      }
     }
 
     for (const cartItem of groupItems) {

@@ -3,12 +3,12 @@ import { abcpHeaders } from '../../../../constants/headers.js';
 import { cleanArticleString } from '../../../../utils/data/brand/cleanArticleString.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import type {
-  ABCP_API_CartResponse,
-  UnifiedCartPosition,
+    ABCP_API_CartResponse,
+    UnifiedCartPosition,
 } from '../../../orchestration/cart/cart.types.js';
-import { parseCartDataHtml } from './parseCartDataHtml.js';
 import { autoImpulseClient } from '../../../suppliers/autoImpulse/client.js';
 import { mikanoClient } from '../../../suppliers/mikano/client.js';
+import { parseCartDataHtml } from './parseCartDataHtml.js';
 
 type AbcpClient = ReturnType<typeof import('./createHtmlClient.js').createHtmlClient>;
 

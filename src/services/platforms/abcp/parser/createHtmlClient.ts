@@ -28,16 +28,22 @@ export interface AbcpClientConfig {
 }
 
 // Фабричная функция для создания клиента
-export const createHtmlClient = (config: AbcpClientConfig) => {
+export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
   if (
-    !config.credentials.username ||
-    !config.credentials.password ||
-    !config.baseUrl
+    !rawConfig.credentials.username ||
+    !rawConfig.credentials.password ||
+    !rawConfig.baseUrl
   ) {
     throw new Error(
-      `Credentials or baseUrl not found for supplier: ${config.supplierName}`
+      `Credentials or baseUrl not found for supplier: ${rawConfig.supplierName}`
     );
   }
+
+  // Завершающий слэш в MIKANO_LOGIN_URL даёт двойной слэш в путях (`//ajaxRoute`, `//cart`) и 404 на deletePositions
+  const config: AbcpClientConfig = {
+    ...rawConfig,
+    baseUrl: rawConfig.baseUrl.replace(/\/+$/, ''),
+  };
 
   // --- Приватное состояние, инкапсулированное замыканием ---
   const cookieJar = new CookieJar();
@@ -148,8 +154,14 @@ export const createHtmlClient = (config: AbcpClientConfig) => {
       throw error;
     }
 
+    // 302 без тела: проверка loggedInIndicator по пустому HTML дала бы ложный «разлогин»
+    const isRedirectResponse = response.status >= 300 && response.status < 400;
     const isHtmlResponse = typeof response.data === 'string';
-    if (isHtmlResponse && !response.data.includes(config.loggedInIndicator)) {
+    if (
+      !isRedirectResponse &&
+      isHtmlResponse &&
+      !response.data.includes(config.loggedInIndicator)
+    ) {
       logger.info(
         `Session expired for ${config.supplierName}, entering login queue...`
       );

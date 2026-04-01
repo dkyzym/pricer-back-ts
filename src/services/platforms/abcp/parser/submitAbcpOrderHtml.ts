@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { logger } from '../../../../config/logger/index.js';
 import { abcpHeaders } from '../../../../constants/headers.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import { autoImpulseClient } from '../../../suppliers/autoImpulse/client.js';
@@ -8,6 +9,10 @@ type AbcpClient = ReturnType<typeof import('./createHtmlClient.js').createHtmlCl
 
 export type SubmitAbcpOrderResult =
   | { success: true; externalOrderId: string }
+  | { success: false; error: string };
+
+export type ClearAbcpCartHtmlResult =
+  | { success: true; removedCount: number }
   | { success: false; error: string };
 
 /** Маппинг имени поставщика → синглтон-клиент из suppliers/. */
@@ -24,16 +29,112 @@ const resolveClient = (supplierName: string): AbcpClient => {
   return client;
 };
 
+const debugAbcpCart = (message: string, meta?: Record<string, unknown>): void => {
+  if (process.env.DEBUG_ABCP_CART === 'true') {
+    logger.debug(`[ABCP cart] ${message}`, meta ?? {});
+  }
+};
+
+/** Склеивает Location из 302 с origin сайта (ABCP отдаёт относительный путь). */
+const resolveRedirectLocation = (baseUrl: string, location: string): string => {
+  if (location.startsWith('http://') || location.startsWith('https://')) {
+    return location;
+  }
+  const origin = new URL(baseUrl).origin;
+  return `${origin}${location.startsWith('/') ? location : `/${location}`}`;
+};
+
+/** Селектор строк корзины: темы ABCP отличаются (сетка / cartTr / cartItem). */
+const ABCP_CART_ROW_SELECTOR =
+  'div.cartGridTable__row[data-id], div.cartTr[data-id], div.cartItem[data-id]';
+
+/**
+ * Договор оформления: ABCP2 — agreementSelect / #agreementId; тема MAS (autoImpulse) — mas_* или скрытые поля;
+ * в скриптах — activeAgreements: {"18":{....
+ */
 const parseAgreementId = (html: string): string | null => {
-  const match = html.match(/data-agreement-id=["']?(\d+)["']?/i);
-  return match?.[1] ?? null;
+  const $ = cheerio.load(html);
+  const takeDigits = (v: unknown): string | null => {
+    if (v == null) return null;
+    const s = String(v).trim();
+    return /^\d+$/.test(s) ? s : null;
+  };
+
+  const fromIdField = takeDigits($('#agreementId').val());
+  if (fromIdField) return fromIdField;
+
+  const fromAgreementSelect = takeDigits($('input[name="agreementSelect"]').val());
+  if (fromAgreementSelect) return fromAgreementSelect;
+
+  const fromDataAttr = takeDigits($('[data-agreement-id]').first().attr('data-agreement-id'));
+  if (fromDataAttr) return fromDataAttr;
+
+  const fromInput = takeDigits($('input[name="agreementId"]').val());
+  if (fromInput) return fromInput;
+
+  const fromSelect = takeDigits($('select[name="agreementId"]').val());
+  if (fromSelect) return fromSelect;
+
+  // Тема MAS: select с именем вроде mas_agreementId, mas_agreementSelect
+  const masSelectVal = takeDigits(
+    $('select')
+      .filter((_i, el) => ($(el).attr('name') ?? '').toLowerCase().includes('agreement'))
+      .first()
+      .val(),
+  );
+  if (masSelectVal) return masSelectVal;
+
+  const hiddenByName = $('input[type="hidden"]').filter((_i, el) => {
+    const n = ($(el).attr('name') ?? '').toLowerCase();
+    return n.includes('agreement');
+  });
+  for (let i = 0; i < hiddenByName.length; i++) {
+    const v = takeDigits($(hiddenByName[i]).val());
+    if (v) return v;
+  }
+
+  const activeAgreements = html.match(/activeAgreements\s*:\s*\{\s*"(\d+)"/);
+  if (activeAgreements?.[1] && /^\d+$/.test(activeAgreements[1])) {
+    return activeAgreements[1];
+  }
+  const scriptFallback = html.match(
+    /["']agreementId["']\s*:\s*(\d+)|agreementId\s*[=:]\s*["']?(\d+)/i,
+  );
+  const fromScript = scriptFallback?.[1] ?? scriptFallback?.[2];
+  if (fromScript && /^\d+$/.test(fromScript)) return fromScript;
+  const attrMatch = html.match(/data-agreement-id\s*=\s*["']?(\d+)["']?/i);
+  if (attrMatch?.[1]) return attrMatch[1];
+  // MAS: value рядом с именем поля договора в одной строке разметки
+  const masInline = html.match(
+    /name=["'][^"']*agreement[^"']*["'][^>]*\bvalue=["'](\d+)["']/i,
+  );
+  if (masInline?.[1]) return masInline[1];
+  const selectedInScript = html.match(
+    /selectedAgreementId\s*[=:]\s*["']?(\d+)["']?|defaultAgreementId\s*[=:]\s*["']?(\d+)["']?/i,
+  );
+  const sid = selectedInScript?.[1] ?? selectedInScript?.[2];
+  return sid && /^\d+$/.test(sid) ? sid : null;
+};
+
+/**
+ * ID позиций на /cart для разных тем ABCP: сетка, упрощённая вёрстка (cartTr), autoImpulse (cartItem).
+ */
+const extractAbcpCartPositionIds = (html: string): number[] => {
+  const $ = cheerio.load(html);
+  const rows = $(ABCP_CART_ROW_SELECTOR).toArray();
+  const seen = new Set<number>();
+  for (const el of rows) {
+    const id = Number($(el).attr('data-id') ?? NaN);
+    if (Number.isFinite(id) && id > 0 && !seen.has(id)) seen.add(id);
+  }
+  return [...seen];
 };
 
 const parseCartPositions = (
   html: string,
 ): Array<{ id: number; quantity: number }> => {
   const $ = cheerio.load(html);
-  const rows = $('div.cartGridTable__row.cartTr[data-id]').toArray();
+  const rows = $(ABCP_CART_ROW_SELECTOR).toArray();
 
   return rows
     .map((el) => {
@@ -42,8 +143,14 @@ const parseCartPositions = (
       if (!Number.isFinite(id) || id <= 0) return null;
 
       const selectValue = $row.find('select.quantitySelect').val();
-      const inputValue = $row.find('input.quantityInput').val();
-      const rawQty = (selectValue ?? inputValue ?? '1') as string;
+      const inputQuantity = $row.find('input.quantityInput').val();
+      const qtyBracket = $row.find('input[name^="quantity["]').val();
+      const masQty = $row.find('input[name^="mas_quantity["]').val();
+      const rawQty = (selectValue ??
+        inputQuantity ??
+        qtyBracket ??
+        masQty ??
+        '1') as string;
       const quantity = Math.max(1, parseInt(String(rawQty), 10) || 1);
 
       return { id, quantity };
@@ -59,6 +166,111 @@ const parseExternalOrderIdFromHtml = (html: string): string | null => {
 
 const buildDryRunOrderId = (): string =>
   `dryrun-${Date.now()}`;
+
+/** Accept для навигационных GET на /cart (тема MAS / autoImpulse — удаление через removepos). */
+const abcpHtmlNavigationAccept =
+  'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
+
+/**
+ * Удаляет одну позицию: mikano — JSON ajaxRoute; autoImpulse (MAS) — два GET, иначе JSON на их стороне
+ * не снимает позиции и корзина копится при повторном добавлении.
+ */
+const deleteOneAbcpCartPosition = async (
+  supplierName: string,
+  client: AbcpClient,
+  positionId: number,
+  cartUrl: string,
+): Promise<void> => {
+  const { baseUrl } = client.config;
+
+  if (supplierName === 'autoImpulse') {
+    const initiateUrl = `${baseUrl}/cart/?removepos=${encodeURIComponent(String(positionId))}`;
+    const redirectAwareOpts = {
+      headers: {
+        ...abcpHeaders,
+        Accept: abcpHtmlNavigationAccept,
+        Referer: cartUrl,
+      },
+      maxRedirects: 0,
+      validateStatus: (status: number) =>
+        (status >= 200 && status < 300) || (status >= 300 && status < 400),
+    };
+    const res1 = await client.makeRequest(initiateUrl, redirectAwareOpts);
+    debugAbcpCart('autoImpulse removepos', {
+      positionId,
+      status: res1.status,
+      location: res1.headers?.location,
+    });
+    await yieldToEventLoop();
+    const loc = res1.headers?.location;
+    const confirmUrl =
+      res1.status >= 300 && res1.status < 400 && loc
+        ? resolveRedirectLocation(baseUrl, loc)
+        : `${baseUrl}/cart?removePos`;
+    await client.makeRequest(confirmUrl, {
+      headers: {
+        ...abcpHeaders,
+        Accept: abcpHtmlNavigationAccept,
+        Referer: initiateUrl,
+      },
+    });
+    return;
+  }
+
+  const url = `${baseUrl}/ajaxRoute/cart/deletePositions`;
+  await client.makePostRequest(
+    url,
+    { positionIds: [positionId] },
+    {
+      headers: {
+        ...abcpHeaders,
+        Accept: '*/*',
+        'Content-Type': 'application/json; charset=UTF-8',
+        Origin: baseUrl,
+        Referer: cartUrl,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    },
+  );
+};
+
+/**
+ * Полная очистка корзины ABCP перед ручным чекаутом: GET /cart, разбор data-id, по одному удалению на позицию.
+ *
+ * Поток: сессия через тот же HTML-клиент, что и оформление заказа; при пустой корзине — выход без запросов удаления.
+ */
+export const clearAbcpCartHtml = async (
+  supplierName: string,
+): Promise<ClearAbcpCartHtmlResult> => {
+  const client = resolveClient(supplierName);
+  const { baseUrl } = client.config;
+
+  try {
+    const cartUrl = `${baseUrl}/cart`;
+    const cartRes = await client.makeRequest(cartUrl, { headers: abcpHeaders });
+    const cartHtml = String(cartRes.data ?? '');
+
+    await yieldToEventLoop();
+
+    const positionIds = extractAbcpCartPositionIds(cartHtml);
+    debugAbcpCart('clearAbcpCartHtml', { supplier: supplierName, positionCount: positionIds.length });
+    if (positionIds.length === 0) {
+      return { success: true, removedCount: 0 };
+    }
+
+    let removedCount = 0;
+    for (const positionId of positionIds) {
+      await deleteOneAbcpCartPosition(supplierName, client, positionId, cartUrl);
+      removedCount += 1;
+      await yieldToEventLoop();
+    }
+
+    return { success: true, removedCount };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { success: false, error: message };
+  }
+};
 
 /**
  * Финальное оформление заказа на ABCP-сайте (AJAX checkout).
@@ -92,10 +304,19 @@ export const submitAbcpOrderHtml = async (
 
     await yieldToEventLoop();
 
+    debugAbcpCart('submit GET /cart', {
+      supplier: supplierName,
+      htmlLength: cartHtml.length,
+    });
     const agreementId = parseAgreementId(cartHtml);
     if (!agreementId) {
+      debugAbcpCart('agreementId не найден', {
+        supplier: supplierName,
+        agreementSubstrings: (cartHtml.match(/agreement/gi) ?? []).length,
+      });
       return { success: false, error: 'Не найден agreementId на странице /cart' };
     }
+    debugAbcpCart('agreementId', { supplier: supplierName, agreementId });
 
     const cartPositions = parseCartPositions(cartHtml);
     if (cartPositions.length === 0) {

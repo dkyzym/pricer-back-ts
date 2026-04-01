@@ -10,6 +10,9 @@ export interface AbcpRequestOptions {
   params?: Record<string, string | number>;
   headers?: Record<string, string>;
   signal?: AbortSignal;
+  /** Прокидывается в axios (например maxRedirects: 0 для ручного шага после 302 на MAS /cart). */
+  maxRedirects?: number;
+  validateStatus?: (status: number) => boolean;
 }
 
 export interface IAbcpClientWrapper {
