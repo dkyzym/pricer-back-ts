@@ -42,7 +42,7 @@ const ARMTEK_BASE_URL =
 
 /**
  * ТЕСТОВЫЙ endpoint для создания заказа — НЕ создаёт реальных финансовых обязательств.
- * При переходе в прод заменить `createTestOrder` на `createOrder`.
+ * Реальный endpoint включается только через .env (safety lock).
  */
 
 /** Элемент ITEMS для createOrder / createTestOrder (armtek-ws-api.md §3.1). */
@@ -89,9 +89,16 @@ const resolveArmtekKunrg = (): string =>
   process.env.KUNNR?.trim() ||
   process.env.ARMTEK_KUNRG?.trim() ||
   process.env.KUNRG?.trim() ||
-  '43054443';
+  '';
 
 const resolveArmtekVkorg = (): string => process.env.VKORG?.trim() || '4000';
+
+/**
+ * Safety lock: по умолчанию реальный заказ у Armtek НЕ создаём.
+ * Разблокировка только явным флагом в .env.
+ */
+const resolveArmtekRealOrdersEnabled = (): boolean =>
+  process.env.ARMTEK_ENABLE_REAL_ORDERS === 'true';
 
 /** Тексты MESSAGES с TYPE === E (ошибка API при HTTP 200). */
 const collectArmtekErrorTexts = (
@@ -264,13 +271,19 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
 
   const payload: ArmtekCreateOrderPayload = {
     VKORG: vkorg,
-    KUNRG,DBTYP:'3',
+    KUNRG,
+    DBTYP: '3',
     ITEMS: orderItems,
   };
 
   try {
+    const realOrdersEnabled = resolveArmtekRealOrdersEnabled();
+    const orderMethod = realOrdersEnabled ? 'createOrder' : 'createTestOrder';
+    const orderEndpointPath = `/api/ws_order/${orderMethod}?format=json`;
+    const orderEndpointUrl = `${ARMTEK_BASE_URL}${orderEndpointPath}`;
+
     const response = await axios.post<ArmtekOrderApiEnvelope>(
-      `${ARMTEK_BASE_URL}/api/ws_order/createTestOrder?format=json`,
+      orderEndpointUrl,
       payload,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -282,11 +295,12 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
     );
 
     const data = response.data;
-    const createTestOrderUrl = `${ARMTEK_BASE_URL}/api/ws_order/createTestOrder?format=json`;
 
     // Явная трассировка: любой HTTP-ответ от WS (успех/логическая ошибка — одно и то же тело).
-    userLogger.info('[ArmtekCheckout] Полный ответ createTestOrder', {
-      endpoint: createTestOrderUrl,
+    userLogger.info('[ArmtekCheckout] Полный ответ создания заказа', {
+      orderMethod,
+      realOrdersEnabled,
+      endpoint: orderEndpointUrl,
       httpStatus: response.status,
       httpStatusText: response.statusText,
       responseHeaders: { ...response.headers },
