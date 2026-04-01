@@ -7,6 +7,7 @@ import { createAbcpCheckoutHandler } from '../../platforms/abcp/abcpCheckoutServ
 import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
 import { manualCheckoutHandler } from './manualCheckoutService.js';
 import { autosputnikCheckoutHandler } from '../../suppliers/autosputnik/autosputnikCheckoutService.js';
+import { avtoPartnerCheckoutHandler } from '../../suppliers/avtopartner/avtopartnerCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Вспомогательная фабрика «заглушки»
@@ -49,6 +50,11 @@ const notImplemented =
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  AvtoPartner  →  реализация в avtopartnerCheckoutService.ts
+//                   (Drupal Commerce: add-to-cart scraping → /checkout/{orderId} form submit)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Реестр обработчиков checkout (Паттерн «Registry / Strategy»)
 //  Ключи соответствуют значениям поля `supplier` в ICartItemDocument.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,5 +77,7 @@ export const checkoutHandlers: Record<string, CheckoutHandler> = {
   /** HTML-скраперы — ручное оформление на сайте поставщика. */
   mikano: manualCheckoutHandler,
   autoImpulse: manualCheckoutHandler,
-  avtoPartner: manualCheckoutHandler,
+
+  /** Drupal Commerce — автоматическое оформление через scraping checkout-формы. */
+  avtoPartner: avtoPartnerCheckoutHandler,
 };
