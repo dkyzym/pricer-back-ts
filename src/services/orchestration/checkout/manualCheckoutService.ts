@@ -1,9 +1,7 @@
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
-import {
-  clearAbcpCartHtml,
-  submitAbcpOrderHtml,
-} from '../../platforms/abcp/parser/submitAbcpOrderHtml.js';
+import { clearAbcpCartHtml } from '../../platforms/abcp/parser/clearAbcpCartHtml.js';
+import { submitAbcpOrderHtml } from '../../platforms/abcp/parser/submitAbcpOrderHtml.js';
 import {
   CartHandlerResponse,
   CheckoutHandler,

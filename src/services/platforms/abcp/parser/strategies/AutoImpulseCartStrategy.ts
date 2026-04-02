@@ -3,10 +3,10 @@ import * as cheerio from 'cheerio';
 import { abcpHeaders } from '../../../../../constants/headers.js';
 import type { AbcpClient } from '../createHtmlClient.js';
 import { parseExternalOrderIdFromHtml } from '../utils/parseOrderId.js';
-import { parseAbcpAgreementId } from './DefaultAbcpStrategy.js';
-import type { CartPosition, IAbcpCartStrategy } from './types.js';
+import { parseAbcpAgreementId } from './MikanoCartStrategy.js';
+import type { CartPosition, IAbcpCartStrategy } from './abcpStrategy.types.js';
 
-export class MasAbcpStrategy implements IAbcpCartStrategy {
+export class AutoImpulseCartStrategy implements IAbcpCartStrategy {
   parseAgreementId(html: string): string | null {
     return parseAbcpAgreementId(html);
   }

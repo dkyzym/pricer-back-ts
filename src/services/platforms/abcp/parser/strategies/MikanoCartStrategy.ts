@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { abcpHeaders } from '../../../../../constants/headers.js';
 import type { AbcpClient } from '../createHtmlClient.js';
 import { parseExternalOrderIdFromHtml } from '../utils/parseOrderId.js';
-import type { CartPosition, IAbcpCartStrategy } from './types.js';
+import type { CartPosition, IAbcpCartStrategy } from './abcpStrategy.types.js';
 
 /** Стандартные строки корзины ABCP (сетка / упрощённая вёрстка), без темы MAS (cartItem). */
 const DEFAULT_CART_ROW_SELECTOR = 'div.cartGridTable__row[data-id], div.cartTr[data-id]';
@@ -83,7 +83,7 @@ const extractQuantityFromRow = ($row: cheerio.Cheerio<any>): number => {
   return Math.max(1, parseInt(String(rawQty), 10) || 1);
 };
 
-export class DefaultAbcpStrategy implements IAbcpCartStrategy {
+export class MikanoCartStrategy implements IAbcpCartStrategy {
   parseAgreementId(html: string): string | null {
     return parseAbcpAgreementId(html);
   }
