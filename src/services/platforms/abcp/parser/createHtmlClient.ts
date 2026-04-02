@@ -285,3 +285,5 @@ export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
     makePostRequest,
   };
 };
+
+export type AbcpClient = ReturnType<typeof createHtmlClient>;
