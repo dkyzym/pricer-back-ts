@@ -202,7 +202,7 @@ export const actualizeCartItems = async (
   const supplierTasks = Array.from(groups.entries()).map(
     async ([supplier, items]) => {
       if (ABCP_HTML_CART_ACTUALIZE_SUPPLIERS.has(supplier)) {
-        const reports = await actualizeAbcpCart(supplier, items);
+        const reports = await actualizeAbcpCart(supplier, items, userLogger);
         for (const r of reports) {
           reportMap.set(r.cartItemId, r);
         }

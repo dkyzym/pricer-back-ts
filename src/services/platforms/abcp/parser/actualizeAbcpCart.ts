@@ -1,8 +1,12 @@
+import { Logger } from 'winston';
 import { abcpHeaders } from '../../../../constants/headers.js';
 import type { ICartItemDocument } from '../../../../models/CartItem.js';
 import type { ActualizeReportItem } from '../../../cart/actualizeCartItems.js';
+import type { UnifiedCartRequest } from '../../../orchestration/cart/cart.types.js';
+import { cartSupplierHandlers } from '../../../orchestration/cart/cartHandlers.js';
 import { cleanArticleString } from '../../../../utils/data/brand/cleanArticleString.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
+import { clearAbcpCartHtml } from './clearAbcpCartHtml.js';
 import { resolveHtmlClient } from './clientRegistry.js';
 import { getAbcpStrategy } from './strategies/StrategyFactory.js';
 import type { CartPosition } from './strategies/abcpStrategy.types.js';
@@ -49,22 +53,81 @@ const findPositionByNormalizedArticle = (
   return undefined;
 };
 
+/** Собирает UnifiedCartRequest из сохранённого CartItem (rawItemData + поля документа). */
+const buildUnifiedCartRequestFromDocument = (
+  supplierName: string,
+  cartItem: ICartItemDocument,
+): UnifiedCartRequest => {
+  const raw = cartItem.rawItemData;
+  const spread =
+    raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+
+  return {
+    supplier: supplierName,
+    quantity: cartItem.quantity,
+    item: {
+      ...spread,
+      brand: cartItem.brand,
+      article: cartItem.article,
+      name: cartItem.name,
+    },
+  };
+};
+
 /**
- * Актуализация по HTML корзины ABCP (mikano / autoImpulse).
- *
- * Поток: resolveHtmlClient → GET /cart → extractPositions стратегией темы → сопоставление
- * с CartItem по `cleanArticleString(article)` → обновление `currentPrice` и `rawItemData`
- * в переданных документах (сохранение — в вызывающем actualizeCartItems).
+ * Stateful-актуализация ABCP: очистка удалённой корзины → добавление позиций через тот же хендлер,
+ * что и при обычном add-to-cart → GET `/cart` → разбор стратегией → сопоставление по нормализованному артикулу
+ * → в `finally` снова очистка, чтобы не оставлять товары у поставщика.
  */
 export const actualizeAbcpCart = async (
   supplierName: string,
   expectedItems: ICartItemDocument[],
+  userLogger: Logger,
 ): Promise<ActualizeReportItem[]> => {
   if (expectedItems.length === 0) {
     return [];
   }
 
+  await clearAbcpCartHtml(supplierName);
+
+  let reports: ActualizeReportItem[] = [];
+
   try {
+    const addToCart = cartSupplierHandlers[supplierName];
+
+    if (!addToCart) {
+      reports = expectedItems.map((item) =>
+        buildErrorReport(
+          item,
+          `Обработчик добавления в корзину для поставщика «${supplierName}» не найден.`,
+        ),
+      );
+      return reports;
+    }
+
+    for (const cartItem of expectedItems) {
+      try {
+        const unified = buildUnifiedCartRequestFromDocument(
+          supplierName,
+          cartItem,
+        );
+        const addResult = await addToCart(unified);
+        if (!addResult.success) {
+          userLogger.warn(
+            `[Actualize ABCP] Не удалось добавить в корзину поставщика: ${cartItem.article} (${cartItem.brand}) — ${addResult.message}`,
+          );
+        }
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error ? err.message : 'Неизвестная ошибка при добавлении в корзину ABCP.';
+        userLogger.error(
+          `[Actualize ABCP] Ошибка addToCart: ${cartItem.article} (${cartItem.brand}) — ${msg}`,
+        );
+      }
+    }
+
     const client = resolveHtmlClient(supplierName);
     const { baseUrl } = client.config;
     const strategy = getAbcpStrategy(supplierName);
@@ -75,17 +138,20 @@ export const actualizeAbcpCart = async (
 
     await yieldToEventLoop();
 
-    const positions = strategy.extractPositions(cartHtml);
+    const parsedPositions = strategy.extractPositions(cartHtml);
 
-    const reports: ActualizeReportItem[] = [];
+    const built: ActualizeReportItem[] = [];
 
     for (const cartItem of expectedItems) {
       const itemId = cartItem._id.toString();
       const normalizedExpected = cleanArticleString(cartItem.article);
-      const pos = findPositionByNormalizedArticle(positions, normalizedExpected);
+      const pos = findPositionByNormalizedArticle(
+        parsedPositions,
+        normalizedExpected,
+      );
 
       if (!pos) {
-        reports.push({
+        built.push({
           cartItemId: itemId,
           article: cartItem.article,
           brand: cartItem.brand,
@@ -104,7 +170,8 @@ export const actualizeAbcpCart = async (
 
       const newPrice = pos.price;
       const priceChanged = newPrice !== cartItem.initialPrice;
-      const availNum = parseAvailability(pos.quantity);
+      const qtyForAvail: number | string = pos.quantity;
+      const availNum = parseAvailability(qtyForAvail);
       const isAvailable =
         availNum !== null ? availNum >= cartItem.quantity : false;
 
@@ -118,12 +185,12 @@ export const actualizeAbcpCart = async (
         ...prevRecord,
         innerId: String(pos.id),
         price: pos.price,
-        availability: pos.quantity,
+        availability: qtyForAvail,
         article: pos.article,
       };
       cartItem.currentPrice = newPrice;
 
-      reports.push({
+      built.push({
         cartItemId: itemId,
         article: cartItem.article,
         brand: cartItem.brand,
@@ -133,16 +200,20 @@ export const actualizeAbcpCart = async (
         initialPrice: cartItem.initialPrice,
         currentPrice: newPrice,
         priceDiff: +(newPrice - cartItem.initialPrice).toFixed(2),
-        availableQuantity: pos.quantity,
+        availableQuantity: qtyForAvail,
         requestedQuantity: cartItem.quantity,
         isAvailable,
       });
     }
 
-    return reports;
+    reports = built;
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : 'Неизвестная ошибка при запросе корзины ABCP.';
-    return expectedItems.map((item) => buildErrorReport(item, message));
+    reports = expectedItems.map((item) => buildErrorReport(item, message));
+  } finally {
+    await clearAbcpCartHtml(supplierName);
   }
+
+  return reports;
 };
