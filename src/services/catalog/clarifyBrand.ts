@@ -7,7 +7,8 @@ import { getAxiosInstance } from '../../infrastructure/http/apiClient.js';
 import { assortmentSearchArmtek } from '../suppliers/armtek/assortmentSearchArmtek.js';
 import { getItemsListByArticleService } from '../suppliers/profit/getItemsListByArticleService.js';
 
-interface UgBrandData {
+/** Ответ ABCP Public API GET /search/brands/?number=… (UG, NPN и др.) */
+interface AbcpBrandByArticleRow {
   availability: number;
   brand: string;
   description: string;
@@ -36,50 +37,57 @@ interface ClarifyBrandResult {
   message: string;
 }
 
+/**
+ * Бренды по артикулу через ABCP Public API (тот же контракт, что у UG).
+ */
+const fetchAbcpBrandsByArticle = async (
+  supplierKey: 'ug' | 'npn',
+  article: string
+): Promise<ItemAutocompleteRow[]> => {
+  const axiosInstance: AxiosInstance = await getAxiosInstance(supplierKey);
+  try {
+    const response = await axiosInstance.get<{
+      [key: string]: AbcpBrandByArticleRow;
+    }>('/search/brands/', {
+      params: { number: article },
+    });
+
+    return Object.values(response.data).map((item) => ({
+      brand: item.brand,
+      number: item.number,
+      descr: item.description || '',
+      url: '',
+      id: uuidv4(),
+    }));
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{
+        errorCode: number;
+        errorMessage: string;
+      }>;
+
+      if (
+        axiosError.response?.status === 404 &&
+        axiosError.response.data?.errorCode === 301 &&
+        axiosError.response.data.errorMessage === 'No results'
+      ) {
+        return [];
+      }
+    }
+
+    throw error;
+  }
+};
+
 export const clarifyBrand = async (
   query: string,
   userLogger: Logger
 ): Promise<ClarifyBrandResult> => {
-  // Функция для обработки данных от поставщика 'ug'
-  const fetchUgBrands = async (): Promise<ItemAutocompleteRow[]> => {
-    const axiosInstance: AxiosInstance = await getAxiosInstance('ug');
-    try {
-      const response = await axiosInstance.get<{ [key: string]: UgBrandData }>(
-        '/search/brands/',
-        {
-          params: { number: query },
-        }
-      );
+  const fetchUgBrands = async (): Promise<ItemAutocompleteRow[]> =>
+    fetchAbcpBrandsByArticle('ug', query);
 
-      return Object.values(response.data).map((item) => ({
-        brand: item.brand,
-        number: item.number,
-        descr: item.description || '',
-        url: '',
-        id: uuidv4(),
-      }));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-          errorCode: number;
-          errorMessage: string;
-        }>;
-
-        // Проверяем, что это ошибка 404 с специфическим кодом ошибки
-        if (
-          axiosError.response?.status === 404 &&
-          axiosError.response.data?.errorCode === 301 &&
-          axiosError.response.data.errorMessage === 'No results'
-        ) {
-          // Это не ошибка, просто нет данных
-          return [];
-        }
-      }
-
-      // В остальных случаях выбрасываем ошибку дальше
-      throw error;
-    }
-  };
+  const fetchNpnBrands = async (): Promise<ItemAutocompleteRow[]> =>
+    fetchAbcpBrandsByArticle('npn', query);
 
   // Функция для обработки данных от поставщика 'profit'
   const fetchProfitItems = async (): Promise<ItemAutocompleteRow[]> => {
@@ -107,11 +115,13 @@ export const clarifyBrand = async (
     }));
   };
 
-  const [ugResult, profitResult, armtekResult] = await Promise.allSettled([
-    fetchUgBrands(),
-    fetchProfitItems(),
-    fetchArmtekBrands(),
-  ]);
+  const [ugResult, npnResult, profitResult, armtekResult] =
+    await Promise.allSettled([
+      fetchUgBrands(),
+      fetchNpnBrands(),
+      fetchProfitItems(),
+      fetchArmtekBrands(),
+    ]);
 
   const finalBrands: ItemAutocompleteRow[] = [];
   let success = true;
@@ -119,6 +129,7 @@ export const clarifyBrand = async (
 
   const suppliers = [
     { name: 'ug', result: ugResult },
+    { name: 'npn', result: npnResult },
     { name: 'profit', result: profitResult },
     { name: 'armtek', result: armtekResult },
   ];
