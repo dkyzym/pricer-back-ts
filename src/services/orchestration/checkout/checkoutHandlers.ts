@@ -1,31 +1,11 @@
-import { Logger } from 'winston';
-import { ICartItemDocument } from '../../../models/CartItem.js';
-import { CheckoutHandler, CheckoutResult } from '../cart/cart.types.js';
-import { armtekCheckoutHandler } from '../../suppliers/armtek/armtekCheckoutService.js';
-import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsCheckoutService.js';
 import { createAbcpCheckoutHandler } from '../../platforms/abcp/abcpCheckoutService.js';
-import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
-import { manualCheckoutHandler } from './manualCheckoutService.js';
+import { armtekCheckoutHandler } from '../../suppliers/armtek/armtekCheckoutService.js';
 import { autosputnikCheckoutHandler } from '../../suppliers/autosputnik/autosputnikCheckoutService.js';
 import { avtoPartnerCheckoutHandler } from '../../suppliers/avtopartner/avtopartnerCheckoutService.js';
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Вспомогательная фабрика «заглушки»
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Паттерн «Factory» — создаёт именованную заглушку, логирующую вызов. */
-const notImplemented =
-  (supplierKey: string): CheckoutHandler =>
-  async (items: ICartItemDocument[], userLogger: Logger): Promise<CheckoutResult> => {
-    userLogger.warn(`[CheckoutHandler] ${supplierKey}: адаптер не реализован`, {
-      itemCount: items.length,
-    });
-    return {
-      success: false,
-      cartItemIds: items.map((i) => String(i._id)),
-      error: 'Not implemented',
-    };
-  };
+import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
+import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsCheckoutService.js';
+import { CheckoutHandler } from '../cart/cart.types.js';
+import { manualCheckoutHandler } from './manualCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Armtek  →  реализация в armtekCheckoutService.ts (тестовый endpoint)
