@@ -83,6 +83,28 @@ const extractQuantityFromRow = ($row: cheerio.Cheerio<any>): number => {
   return Math.max(1, parseInt(String(rawQty), 10) || 1);
 };
 
+/** Артикул: ссылка в ячейке номера, иначе весь текст ячейки .numberTd. */
+const extractArticleFromMikanoRow = ($row: cheerio.Cheerio<any>): string => {
+  const fromLink = $row.find('.numberTd a').first().text().trim();
+  if (fromLink.length > 0) return fromLink;
+  return $row.find('.numberTd').first().text().trim();
+};
+
+/**
+ * Цена: приоритет data-price у .priceTd; иначе текст ячейки — только цифры и точка (пробелы и валюта отбрасываются).
+ */
+const extractPriceFromMikanoRow = ($row: cheerio.Cheerio<any>): number => {
+  const $priceTd = $row.find('.priceTd').first();
+  const dataPrice = $priceTd.attr('data-price')?.trim();
+  if (dataPrice) {
+    const n = parseFloat(dataPrice);
+    if (Number.isFinite(n)) return n;
+  }
+  const raw = $priceTd.text().replace(/\s/g, '').replace(/[^\d.]/g, '');
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
 export class MikanoCartStrategy implements IAbcpCartStrategy {
   parseAgreementId(html: string): string | null {
     return parseAbcpAgreementId(html);
@@ -99,7 +121,12 @@ export class MikanoCartStrategy implements IAbcpCartStrategy {
         const id = Number($row.attr('data-id') ?? NaN);
         if (!Number.isFinite(id) || id <= 0 || seen.has(id)) return null;
         seen.add(id);
-        return { id, quantity: extractQuantityFromRow($row) };
+        return {
+          id,
+          quantity: extractQuantityFromRow($row),
+          article: extractArticleFromMikanoRow($row),
+          price: extractPriceFromMikanoRow($row),
+        };
       })
       .filter((x): x is CartPosition => x != null);
   }

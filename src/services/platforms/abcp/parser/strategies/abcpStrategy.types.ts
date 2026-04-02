@@ -3,6 +3,8 @@ import type { AbcpClient } from '../createHtmlClient.js';
 export interface CartPosition {
   id: number;
   quantity: number;
+  article: string;
+  price: number;
   /** Опционально, если тема требует удаления по конкретному URL */
   deleteUrl?: string;
 }

@@ -1,5 +1,6 @@
 import { Logger } from 'winston';
 import { CartItem, ICartItemDocument } from '../../models/CartItem.js';
+import { actualizeAbcpCart } from '../platforms/abcp/parser/actualizeAbcpCart.js';
 import { supplierHandlers } from '../../sockets/handlers/supplierHandlers.js';
 import {
   ItemToParallelSearch,
@@ -38,6 +39,9 @@ export interface ActualizeReportItem {
 // =========================================================================
 //  Вспомогательные функции
 // =========================================================================
+
+/** Поставщики с актуализацией по HTML `/cart` (ABCP), а не по сокетному поиску. */
+const ABCP_HTML_CART_ACTUALIZE_SUPPLIERS = new Set(['mikano', 'autoImpulse']);
 
 /** Группирует документы по supplier для пакетных запросов. */
 const groupBySupplier = (
@@ -197,6 +201,14 @@ export const actualizeCartItems = async (
 
   const supplierTasks = Array.from(groups.entries()).map(
     async ([supplier, items]) => {
+      if (ABCP_HTML_CART_ACTUALIZE_SUPPLIERS.has(supplier)) {
+        const reports = await actualizeAbcpCart(supplier, items);
+        for (const r of reports) {
+          reportMap.set(r.cartItemId, r);
+        }
+        return;
+      }
+
       const handler = supplierHandlers[supplier];
 
       if (!handler) {

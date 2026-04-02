@@ -23,17 +23,24 @@ export class AutoImpulseCartStrategy implements IAbcpCartStrategy {
 
       if (match && match[1]) {
         const id = parseInt(match[1], 10);
+        const $tr = $(el).closest('tr');
 
         // В теме MAS количество лежит в input с именем mas_quantity[ID] или quantity
         const masQtyStr = $(`input[name="mas_quantity[${id}]"]`).val();
 
         // Фолбэк на случай, если структура чуть отличается, ищем ближайший инпут quantity
-        const closestQtyStr = $(el).closest('tr').find('input.quantityInput, input[name="quantity"]').val();
+        const closestQtyStr = $tr.find('input.quantityInput, input[name="quantity"]').val();
 
         const rawQty = masQtyStr ?? closestQtyStr ?? '1';
         const quantity = Math.max(1, parseInt(String(rawQty), 10) || 1);
 
-        positions.push({ id, quantity });
+        const article = $tr.find('.brandNumberText').first().text().trim();
+        const priceRaw = $tr.find('.cartPriceCell').first().text().replace(/,/g, '.');
+        const priceCleaned = priceRaw.replace(/[^\d.]/g, '');
+        const priceParsed = parseFloat(priceCleaned);
+        const price = Number.isFinite(priceParsed) ? priceParsed : 0;
+
+        positions.push({ id, quantity, article, price });
       }
     });
 
