@@ -5,6 +5,8 @@ import { SupplierName } from '../../types/common.types';
  * - `maxItems`: Абсолютное максимальное количество позиций для возврата от этого поставщика.
  * - `topPercent`: Пользовательский процент лучших позиций (переопределяет глобальный TOP_PERCENT).
  * - `minProbability`: Пользовательский порог минимальной вероятности (переопределяет глобальный MIN_PROBABILITY).
+ * - `minTopByPriceSlice`: В ветке «top% + fastest» не брать меньше N позиций из отсортированного по цене списка
+ *   (иначе при малом topPercent и 5–9 строках получается ceil(n*0.1)=1 и после дедупа с «быстрой» остаётся одна строка).
  *
  * Все поля опциональны.
  */
@@ -14,6 +16,7 @@ export const SUPPLIER_CONFIG: Record<
     maxItems?: number;
     topPercent?: number;
     minProbability?: number;
+    minTopByPriceSlice?: number;
   }
 > = {
   ug: {
@@ -30,6 +33,7 @@ export const SUPPLIER_CONFIG: Record<
   },
   armtek: {
     maxItems: 3,
+    minTopByPriceSlice: 3,
   },
   autoImpulse: {},
   patriot: {},

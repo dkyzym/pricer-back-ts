@@ -137,7 +137,13 @@ const filterSupplierData = (
   } else {
     // 5. Иначе, берем N% лучших по цене
     const percent = supplierConfig.topPercent ?? TOP_PERCENT;
-    const limitByPercent = Math.ceil(filtered.length * percent);
+    const limitFromPercent = Math.ceil(filtered.length * percent);
+    const minSlice = supplierConfig.minTopByPriceSlice ?? 1;
+    // Не даём проценту «съесть» весь смысл ветки при n=5..9 и topPercent=0.1 (ceil=1).
+    const limitByPercent = Math.min(
+      filtered.length,
+      Math.max(limitFromPercent, minSlice)
+    );
     const topByPrice = filtered.slice(0, limitByPercent);
 
     // 6. Находим самую быструю позицию из всего отфильтрованного списка
