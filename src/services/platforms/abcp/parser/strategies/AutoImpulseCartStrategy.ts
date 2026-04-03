@@ -136,7 +136,7 @@ export class AutoImpulseCartStrategy implements IAbcpCartStrategy {
     agreementId: string | null,
     cartUrl: string,
   ): Promise<{ success: boolean; externalOrderId?: string; error?: string }> {
-    if (process.env.ABCP_ENABLE_REAL_ORDERS !== 'true') {
+    if (process.env.ABCP_ENABLE_REAL_ORDERS_HTML !== 'true') {
       return { success: true, externalOrderId: `dryrun-${Date.now()}` };
     }
 
