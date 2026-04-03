@@ -5,7 +5,7 @@ import { avtoPartnerCheckoutHandler } from '../../suppliers/avtopartner/avtopart
 import { profitCheckoutHandler } from '../../suppliers/profit/profitCheckoutService.js';
 import { turboCarsCheckoutHandler } from '../../suppliers/turboCars/turboCarsCheckoutService.js';
 import { CheckoutHandler } from '../cart/cart.types.js';
-import { manualCheckoutHandler } from './manualCheckoutService.js';
+import { abcpHtmlCheckoutHandler } from './abcpHtmlCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Armtek  →  реализация в armtekCheckoutService.ts (тестовый endpoint)
@@ -55,8 +55,8 @@ export const checkoutHandlers: Record<string, CheckoutHandler> = {
   avtodinamika: createAbcpCheckoutHandler('avtodinamika'),
 
   /** HTML-скраперы — ручное оформление на сайте поставщика. */
-  mikano: manualCheckoutHandler,
-  autoImpulse: manualCheckoutHandler,
+  mikano: abcpHtmlCheckoutHandler,
+  autoImpulse: abcpHtmlCheckoutHandler,
 
   /** Drupal Commerce — автоматическое оформление через scraping checkout-формы. */
   avtoPartner: avtoPartnerCheckoutHandler,
