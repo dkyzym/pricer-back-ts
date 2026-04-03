@@ -1,9 +1,22 @@
 import * as cheerio from 'cheerio';
 
+import { logger } from '../../../../../config/logger/index.js';
 import { abcpHeaders } from '../../../../../constants/headers.js';
 import type { AbcpClient } from '../createHtmlClient.js';
 import { parseExternalOrderIdFromHtml } from '../utils/parseOrderId.js';
 import type { CartPosition, IAbcpCartStrategy } from './abcpStrategy.types.js';
+
+/**
+ * Браузерные хедеры для финального шага подтверждения: сервер Mikano отдаёт HTML
+ * только при обычной навигации (Accept: text/html), а не при AJAX (X-Requested-With).
+ */
+const BROWSER_NAV_HEADERS = {
+  'User-Agent': abcpHeaders['User-Agent'],
+  Accept:
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Encoding': abcpHeaders['Accept-Encoding'],
+  'Accept-Language': abcpHeaders['Accept-Language'],
+};
 
 /** Стандартные строки корзины ABCP (сетка / упрощённая вёрстка), без темы MAS (cartItem). */
 const DEFAULT_CART_ROW_SELECTOR = 'div.cartGridTable__row[data-id], div.cartTr[data-id]';
@@ -103,6 +116,87 @@ const extractPriceFromMikanoRow = ($row: cheerio.Cheerio<any>): number => {
   const raw = $priceTd.text().replace(/\s/g, '').replace(/[^\d.]/g, '');
   const n = parseFloat(raw);
   return Number.isFinite(n) ? n : 0;
+};
+
+const normalizeCheckoutUrl = (baseUrl: string, rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('/')) return `${baseUrl}${trimmed}`;
+  return `${baseUrl}/${trimmed}`;
+};
+
+/**
+ * Извлечение данных о заказе из JSON-ответа createOrder.
+ * Поставщик может отдавать orderId / orderNumber / amount / redirectUrl на разных уровнях вложенности.
+ */
+const extractCreateOrderData = (
+  payload: unknown,
+): { orderId: string | null; amount: string | null; redirectUrl: string | null } => {
+  const result = { orderId: null as string | null, amount: null as string | null, redirectUrl: null as string | null };
+  if (!payload || typeof payload !== 'object') return result;
+
+  const json = JSON.stringify(payload);
+
+  const orderIdMatch = json.match(/"order(?:Number|Id)"\s*:\s*"?(\d+)"?/i);
+  if (orderIdMatch?.[1]) result.orderId = orderIdMatch[1];
+
+  const amountMatch = json.match(/"amount"\s*:\s*"?(\d+(?:\.\d+)?)"?/i);
+  if (amountMatch?.[1]) result.amount = amountMatch[1];
+
+  const allStrings: string[] = [];
+  const walk = (node: unknown, depth: number): void => {
+    if (depth > 10) return;
+    if (typeof node === 'string') { allStrings.push(node); return; }
+    if (Array.isArray(node)) { node.forEach((v) => walk(v, depth + 1)); return; }
+    if (node && typeof node === 'object') Object.values(node).forEach((v) => walk(v, depth + 1));
+  };
+  walk(payload, 0);
+
+  for (const s of allStrings) {
+    if (s.includes('payment_processing') || s.includes('redirectUrl') || s.includes('/cart')) {
+      result.redirectUrl = s;
+      const orderFromUrl = s.match(/[?&]orderId=(\d+)/i)?.[1];
+      if (orderFromUrl && !result.orderId) result.orderId = orderFromUrl;
+      const amountFromUrl = s.match(/[?&]amount=([\d.]+)/i)?.[1];
+      if (amountFromUrl && !result.amount) result.amount = amountFromUrl;
+      break;
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Строит URL подтверждения payment_processing по реальным параметрам Mikano.
+ * Порядок параметров: mode → agreementId → orderId → amount → orderCreated.
+ */
+const buildPaymentProcessingUrl = (
+  baseUrl: string,
+  opts: { agreementId?: string | null; orderId?: string | null; amount?: string | null },
+): string => {
+  const params = new URLSearchParams();
+  params.set('mode', '3');
+  if (opts.agreementId) params.set('agreementId', opts.agreementId);
+  if (opts.orderId) params.set('orderId', opts.orderId);
+  if (opts.amount) params.set('amount', opts.amount);
+  params.set('orderCreated', '1');
+  return `${baseUrl}/payment_processing?${params.toString()}`;
+};
+
+const isConfirmedCheckoutPage = (html: string): boolean => {
+  const hasOrderConfirmed = /оформлен/i.test(html);
+  const hasCheckoutMarkers =
+    /(goToOrderButton|clients_orders|filter%5Bnumber%5D|Перейти в заказ|modeOrderWrapper)/i.test(html);
+  return hasOrderConfirmed && hasCheckoutMarkers;
+};
+
+const extractOrderIdFromHtml = (html: string): string | null => {
+  const fromParser = parseExternalOrderIdFromHtml(html);
+  if (fromParser) return fromParser;
+  const fromTitle = html.match(/Заказ(?:\s|&nbsp;|<[^>]+>)*№\s*(\d+)/i)?.[1];
+  if (fromTitle) return fromTitle;
+  const fromFilter = html.match(/filter%5Bnumber%5D=(\d+)/i)?.[1];
+  return fromFilter ?? null;
 };
 
 export class MikanoCartStrategy implements IAbcpCartStrategy {
@@ -212,39 +306,85 @@ export class MikanoCartStrategy implements IAbcpCartStrategy {
       });
 
       const raw = createRes.data as unknown;
-      const status = (raw as { status?: unknown })?.status;
-      if (status !== 1) {
-        const vendorError = String(
-          (raw as { error?: unknown; message?: unknown })?.error ??
-            (raw as { message?: unknown })?.message ??
-            'Ошибка createOrder',
-        );
+
+      logger.debug('[MikanoCheckout] createOrder raw response', {
+        supplier: client.config.supplierName,
+        responseType: typeof raw,
+        data: typeof raw === 'string' ? raw.slice(0, 500) : raw,
+      });
+
+      if (typeof raw === 'string' && isConfirmedCheckoutPage(raw)) {
+        const orderId = extractOrderIdFromHtml(raw);
+        if (orderId) return { success: true, externalOrderId: orderId };
+      }
+
+      const record = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+      const status = record.status;
+      if (status !== 1 && status !== '1' && status !== true) {
+        const vendorError = String(record.error ?? record.message ?? 'Ошибка createOrder');
         return { success: false, error: vendorError };
       }
 
-      const orderNumber = (raw as { orderNumber?: unknown })?.orderNumber;
-      const redirectUrl = (raw as { redirectUrl?: string })?.redirectUrl;
+      const orderData = extractCreateOrderData(raw);
+      const calculatedAmount = positions
+        .reduce((sum, p) => sum + p.price * p.quantity, 0)
+        .toFixed(2);
 
-      if (orderNumber != null && String(orderNumber).trim().length > 0) {
-        return { success: true, externalOrderId: String(orderNumber) };
+      const confirmationUrls: string[] = [];
+
+      if (orderData.redirectUrl) {
+        confirmationUrls.push(normalizeCheckoutUrl(baseUrl, orderData.redirectUrl));
       }
 
-      if (redirectUrl) {
-        const finalUrl = redirectUrl.startsWith('http')
-          ? redirectUrl
-          : `${baseUrl}${redirectUrl}`;
-        const finalRes = await client.makeRequest(finalUrl, { headers: abcpHeaders });
+      if (orderData.orderId) {
+        confirmationUrls.push(
+          buildPaymentProcessingUrl(baseUrl, {
+            agreementId,
+            orderId: orderData.orderId,
+            amount: orderData.amount ?? calculatedAmount,
+          }),
+        );
+      }
+
+      confirmationUrls.push(
+        buildPaymentProcessingUrl(baseUrl, { agreementId }),
+        `${baseUrl}/payment_processing`,
+        `${baseUrl}/cart`,
+      );
+
+      const uniqueUrls = Array.from(new Set(confirmationUrls));
+
+      logger.debug('[MikanoCheckout] Confirmation URLs to try', {
+        supplier: client.config.supplierName,
+        orderData,
+        calculatedAmount,
+        urls: uniqueUrls,
+      });
+
+      for (const url of uniqueUrls) {
+        const finalRes = await client.makeRequest(url, {
+          headers: { ...BROWSER_NAV_HEADERS, Referer: cartUrl },
+        });
         const finalHtml = String(finalRes.data ?? '');
-        const parsed = parseExternalOrderIdFromHtml(finalHtml);
-        if (parsed) {
-          return { success: true, externalOrderId: parsed };
+
+        logger.debug('[MikanoCheckout] Confirmation page response', {
+          supplier: client.config.supplierName,
+          url,
+          htmlLength: finalHtml.length,
+          hasОформлен: /оформлен/i.test(finalHtml),
+          snippet: finalHtml.slice(0, 300),
+        });
+
+        if (isConfirmedCheckoutPage(finalHtml)) {
+          const orderId = extractOrderIdFromHtml(finalHtml) ?? orderData.orderId;
+          if (orderId) return { success: true, externalOrderId: orderId };
         }
       }
 
       return {
         success: false,
         error:
-          'Заказ отправлен, но номер заказа не найден ни в JSON-ответе, ни на странице подтверждения',
+          'Заказ отправлен (createOrder status=1), но финальное HTML-подтверждение не получено ни по одному URL',
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
