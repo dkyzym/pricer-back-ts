@@ -2,7 +2,10 @@ import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
 import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.types.js';
 import { TurboCarsOrderCreatePosition } from './turboCars.types.js';
-import { createTurboCarsOrder } from './turboCarsApi.js';
+import {
+  createTurboCarsOrder,
+  resolveTurboCarsRealOrdersEnabled,
+} from './turboCarsApi.js';
 
 interface TurboCarsRawItemData {
   turboCars?: {
@@ -33,12 +36,13 @@ const mapCartItemToPosition = (
 };
 
 /**
- * Адаптер оформления заказа TurboCars (тестовый режим, `is_test: 1`).
+ * Адаптер оформления заказа TurboCars.
  *
  * Поток данных:
  *  1. Маппинг ICartItemDocument[] → positions[] (provider_id, price, code, brand, count).
- *  2. POST на /order:create с флагом is_test: 1.
- *  3. Разбор ответа в createTurboCarsOrder (валидация контракта, debug-лог тела): bad_offers → частичный или полный отказ, иначе — success.
+ *  2. POST /order:create: is_test выбирается в createTurboCarsOrder по safety lock
+ *     TURBOCARS_ENABLE_REAL_ORDERS (как ARMTEK_ENABLE_REAL_ORDERS у Armtek).
+ *  3. Разбор ответа: bad_offers → частичный или полный отказ, иначе — success.
  */
 export const turboCarsCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
@@ -74,12 +78,14 @@ export const turboCarsCheckoutHandler: CheckoutHandler = async (
   }
 
   try {
-    userLogger.info('[TurboCarsCheckout] Отправка тестового заказа', {
+    const realOrdersEnabled = resolveTurboCarsRealOrdersEnabled();
+    userLogger.info('[TurboCarsCheckout] Отправка заказа в TurboCars', {
       itemCount: positions.length,
       codes: positions.map((p) => p.code),
+      realOrdersEnabled,
     });
 
-    const response = await createTurboCarsOrder(positions, userLogger, 1);
+    const response = await createTurboCarsOrder(positions, userLogger);
 
     const badOffers = response.bad_offers ?? [];
 
@@ -115,8 +121,9 @@ export const turboCarsCheckoutHandler: CheckoutHandler = async (
       };
     }
 
-    userLogger.info('[TurboCarsCheckout] Тестовый заказ создан', {
+    userLogger.info('[TurboCarsCheckout] Заказ создан', {
       orderNumber: response.order_number,
+      isTest: response.is_test,
     });
 
     return { success: true, cartItemIds, externalOrderIds: [response.order_number] };

@@ -15,6 +15,13 @@ import {
 
 const MAX_TIMEOUT_MS = 60_000;
 
+/**
+ * Safety lock: по умолчанию у TurboCars создаётся тестовый заказ (is_test: 1).
+ * Реальное оформление — только при явном TURBOCARS_ENABLE_REAL_ORDERS=true в .env.
+ */
+export const resolveTurboCarsRealOrdersEnabled = (): boolean =>
+  process.env.TURBOCARS_ENABLE_REAL_ORDERS === 'true';
+
 const createTurboCarsClientConfig = () => {
   const baseUrl = process.env.TURBOCARS_BASE_URL || 'https://turbo-cars.ru/api';
   const token = process.env.TURBOCARS_API_TOKEN;
@@ -236,10 +243,12 @@ const parseOrderCreateSuccessBody = (data: unknown): TurboCarsOrderCreateRespons
 export const createTurboCarsOrder = async (
   positions: TurboCarsOrderCreatePosition[],
   logger: Logger,
-  isTest: 0 | 1 = 0,
 ): Promise<TurboCarsOrderCreateResponse> => {
   const { urlBase, headers } = createTurboCarsClientConfig();
   const url = `${urlBase}/order:create`;
+
+  const realOrdersEnabled = resolveTurboCarsRealOrdersEnabled();
+  const isTest: 0 | 1 = realOrdersEnabled ? 0 : 1;
 
   const body: TurboCarsOrderCreateRequest = {
     is_test: isTest,
@@ -262,6 +271,7 @@ export const createTurboCarsOrder = async (
     }
 
     logger.debug('[turboCars] Ответ поставщика POST /order:create', {
+      realOrdersEnabled,
       responseBody: data,
     });
 
@@ -271,6 +281,7 @@ export const createTurboCarsOrder = async (
       logger.warn('[turboCars] Ответ /order:create: is_test не совпадает с телом запроса', {
         requested: isTest,
         received: parsed.is_test,
+        realOrdersEnabled,
       });
     }
 
