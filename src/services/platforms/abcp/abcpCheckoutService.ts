@@ -148,14 +148,54 @@ const addPositionsToBasket = async (
   return data;
 };
 
+/** Опциональные поля basket/order, задаваемые через env для конкретного alias. */
+interface AbcpCheckoutParamConfig {
+  payment?: string;
+  shipment?: string;
+  address?: string;
+}
+
+/**
+ * Маппинг alias ABCP-поставщика на переменные окружения для payment/shipment/address.
+ * Пустой объект — без дополнительных параметров в теле basket/order.
+ */
+const getAbcpCheckoutConfig = (alias: string): AbcpCheckoutParamConfig => {
+  switch (alias) {
+    case 'ug':
+      return {
+        payment: process.env.UG_PAYMENT_METHOD_ID,
+        shipment: process.env.UG_SHIPMENT_METHOD_ID,
+        address: process.env.UG_SHIPMENT_ADDRESS_ID,
+      };
+    case 'ug_bn':
+      return {
+        payment: process.env.UG_PAYMENT_METHOD_ID_BN,
+        shipment: process.env.UG_SHIPMENT_METHOD_ID_BN,
+      };
+    case 'npn':
+      return { address: process.env.NPN_SHIPMENT_ADDRESS_ID };
+    case 'avtodinamika':
+      return { address: process.env.AVTODINAMIKA_SHIPMENT_ADDRESS_ID };
+    case 'patriot':
+      return {
+        payment: process.env.PATRIOT_PAYMENT_METHOD_ID_BN,
+        address: process.env.PATRIOT_SHIPMENT_ADDRESS_ID,
+      };
+    default:
+      return {};
+  }
+};
+
 const placeOrder = async (
   axiosInstance: AxiosInstance,
   userLogger: Logger,
   supplierAlias: string,
 ): Promise<AbcpOrderResult> => {
+  const config = getAbcpCheckoutConfig(supplierAlias);
   const orderParams = new URLSearchParams();
-  orderParams.set('paymentMethod', process.env.ABCP_PAYMENT_METHOD ?? '0');
-  orderParams.set('shipmentAddress', process.env.ABCP_SHIPMENT_ADDRESS ?? '0');
+  if (config.payment) orderParams.set('paymentMethod', config.payment);
+  if (config.shipment) orderParams.set('shipmentMethod', config.shipment);
+  if (config.address) orderParams.set('shipmentAddress', config.address);
 
   const { data } = await axiosInstance.post<AbcpOrderResult>(
     '/basket/order',
@@ -183,8 +223,8 @@ const placeOrder = async (
  *  1. POST /basket/clear — очистка корзины поставщика.
  *  2. Маппинг ICartItemDocument[] → positions[] и пакетный POST /basket/add.
  *  3. Проверка safety lock (ABCP_ENABLE_REAL_ORDERS).
- *     - false  → dry-run: возвращаем success без оформления.
- *     - true   → POST /basket/order, возвращаем externalOrderIds.
+ *     - false  → dry-run: success + synthetic externalOrderIds для проверки БД-потока.
+ *     - true   → POST /basket/order с условными параметрами из getAbcpCheckoutConfig.
  *
  * Safety lock гарантирует, что реальные заказы не создаются случайно в dev/staging.
  */
@@ -259,7 +299,7 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
             ' (ABCP_ENABLE_REAL_ORDERS !== "true")',
           { addedCount, totalPositions: positions.length },
         );
-        return { success: true, cartItemIds };
+        return { success: true, cartItemIds, externalOrderIds: [`dryrun-${Date.now()}`] };
       }
 
       // ── 4. Оформление заказа ────────────────────────────────────────────
