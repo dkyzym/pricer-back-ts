@@ -29,15 +29,28 @@ export const addToVirtualCartController = async (req: Request, res: Response) =>
     });
   }
 
+  // ug_f — тот же UG: в документе supplier = ug; в rawItemData нужен ключ `ug`, иначе buildCartPosition ищет item[supplier] и не находит item.ug_f.
+  const docSupplier = supplier === 'ug_f' ? 'ug' : supplier;
+  const rawItemData =
+    (supplier === 'ug' || supplier === 'ug_f') && typeof item === 'object' && item !== null
+      ? {
+          ...(item as Record<string, unknown>),
+          supplier: 'ug',
+          ug:
+            (item as { ug?: unknown; ug_f?: unknown }).ug ??
+            (item as { ug_f?: unknown }).ug_f,
+        }
+      : item;
+
   const cartItem = await CartItem.create({
     username,
-    supplier,
+    supplier: docSupplier,
     article,
     brand,
     name,
     quantity,
     initialPrice,
-    rawItemData: item,
+    rawItemData,
   });
 
   return res.status(201).json({
