@@ -8,11 +8,11 @@ import { CheckoutHandler } from '../cart/cart.types.js';
 import { abcpHtmlCheckoutHandler } from './abcpHtmlCheckoutService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Armtek  →  реализация в armtekCheckoutService.ts (тестовый endpoint)
+//  Armtek  →  реализация в armtekCheckoutService.ts 
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  TurboCars  →  реализация в turboCarsCheckoutService.ts (тестовый режим)
+//  TurboCars  →  реализация в turboCarsCheckoutService.ts 
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
