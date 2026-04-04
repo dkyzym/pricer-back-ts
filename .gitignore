@@ -16,5 +16,4 @@ temp
 temp.*
 *.code-workspace
 .cursor/ 
-checkout/
 my-report.json
