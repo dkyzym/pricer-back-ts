@@ -49,7 +49,7 @@ export async function searchArmtekArticle(
 ): Promise<ArmtekSearchResponse<SearchResponseItem>> {
   const {
     VKORG = '4000',
-    KUNNR_RG = '43054443',
+    KUNNR_RG = '43432320',
     PIN,
     BRAND = '',
     QUERY_TYPE = '1',
