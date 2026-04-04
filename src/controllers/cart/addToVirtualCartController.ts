@@ -31,6 +31,8 @@ export const addToVirtualCartController = async (req: Request, res: Response) =>
 
   // ug_f — тот же UG: в документе supplier = ug; в rawItemData нужен ключ `ug`, иначе buildCartPosition ищет item[supplier] и не находит item.ug_f.
   const docSupplier = supplier === 'ug_f' ? 'ug' : supplier;
+
+  // ug_bn — отдельный логин ABCP; вложение должно быть `ug_bn` для extractAbcpFields/checkout. Если пришло только `ug`, дублируем в ug_bn.
   const rawItemData =
     (supplier === 'ug' || supplier === 'ug_f') && typeof item === 'object' && item !== null
       ? {
@@ -40,7 +42,15 @@ export const addToVirtualCartController = async (req: Request, res: Response) =>
             (item as { ug?: unknown; ug_f?: unknown }).ug ??
             (item as { ug_f?: unknown }).ug_f,
         }
-      : item;
+      : supplier === 'ug_bn' && typeof item === 'object' && item !== null
+        ? {
+            ...(item as Record<string, unknown>),
+            supplier: 'ug_bn',
+            ug_bn:
+              (item as { ug_bn?: unknown; ug?: unknown }).ug_bn ??
+              (item as { ug?: unknown }).ug,
+          }
+        : item;
 
   const cartItem = await CartItem.create({
     username,

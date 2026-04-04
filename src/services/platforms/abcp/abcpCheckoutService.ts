@@ -37,8 +37,22 @@ interface AbcpOrderRaw {
 interface AbcpOrderResult {
   status: 0 | 1;
   errorMessage?: string;
-  orders?: AbcpOrderRaw[];
+  /** Часть витрин ABCP отдаёт массив; другие — объект с ключом = номер заказа (см. ug_bn). */
+  orders?: AbcpOrderRaw[] | Record<string, AbcpOrderRaw>;
 }
+
+/**
+ * Приводит поле orders ответа basket/order к массиву заказов.
+ * ABCP в одних ответах шлёт массив, в других — ассоциативный объект по номеру заказа.
+ */
+const normalizeAbcpBasketOrderOrders = (orders: unknown): AbcpOrderRaw[] => {
+  if (orders == null) return [];
+  if (Array.isArray(orders)) return orders as AbcpOrderRaw[];
+  if (typeof orders === 'object') {
+    return Object.values(orders as Record<string, AbcpOrderRaw>);
+  }
+  return [];
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Извлечение itemKey / supplierCode из rawItemData
@@ -52,6 +66,10 @@ interface AbcpRawFields {
 /**
  * rawItemData может храниться как вложенный объект `{ [supplierAlias]: { itemKey, supplierCode, ... } }`
  * или как плоский объект на корневом уровне — обрабатываем оба варианта.
+ *
+ * Дополнительно: маппер ABCP кладёт inner_product_code / warehouse_id на корень строки —
+ * используем их, если вложение по alias потеряно. Для ug_bn пробуем вложения ug / ug_f
+ * (тот же каталог ABCP, иной логин), чтобы не терять checkout из-за формы rawItemData.
  */
 const extractAbcpFields = (
   rawItemData: unknown,
@@ -60,17 +78,38 @@ const extractAbcpFields = (
   const raw = rawItemData as Record<string, unknown> | undefined;
   if (!raw) return {};
 
-  const nested = raw[supplierAlias] as Partial<AbcpArticleSearchResult> | undefined;
-  if (nested?.itemKey != null) {
+  const fromNested = (key: string): AbcpRawFields | null => {
+    const nested = raw[key] as Partial<AbcpArticleSearchResult> | undefined;
+    if (nested?.itemKey == null) return null;
     return {
       itemKey: String(nested.itemKey),
       supplierCode: String(nested.supplierCode ?? ''),
     };
+  };
+
+  const primary = fromNested(supplierAlias);
+  if (primary) return primary;
+
+  if (supplierAlias === 'ug_bn') {
+    const fromUg = fromNested('ug');
+    if (fromUg) return fromUg;
+    const fromUgF = fromNested('ug_f');
+    if (fromUgF) return fromUgF;
   }
 
   return {
-    itemKey: raw.itemKey != null ? String(raw.itemKey) : undefined,
-    supplierCode: raw.supplierCode != null ? String(raw.supplierCode) : undefined,
+    itemKey:
+      raw.itemKey != null
+        ? String(raw.itemKey)
+        : raw.inner_product_code != null
+          ? String(raw.inner_product_code)
+          : undefined,
+    supplierCode:
+      raw.supplierCode != null
+        ? String(raw.supplierCode)
+        : raw.warehouse_id != null
+          ? String(raw.warehouse_id)
+          : undefined,
   };
 };
 
@@ -156,6 +195,17 @@ interface AbcpCheckoutParamConfig {
 }
 
 /**
+ * Опциональные строки из .env: trim, пустая строка → не передаём в basket/order.
+ * Строка «0» для shipmentAddress (самовывоз ABCP) остаётся truthy и уходит в запрос.
+ */
+const checkoutEnvOptional = (name: string): string | undefined => {
+  const v = process.env[name];
+  if (v === undefined || v === null) return undefined;
+  const t = v.trim();
+  return t.length > 0 ? t : undefined;
+};
+
+/**
  * Маппинг alias ABCP-поставщика на переменные окружения для payment/shipment/address.
  * Пустой объект — без дополнительных параметров в теле basket/order.
  */
@@ -163,23 +213,25 @@ const getAbcpCheckoutConfig = (alias: string): AbcpCheckoutParamConfig => {
   switch (alias) {
     case 'ug':
       return {
-        payment: process.env.UG_PAYMENT_METHOD_ID,
-        shipment: process.env.UG_SHIPMENT_METHOD_ID,
-        address: process.env.UG_SHIPMENT_ADDRESS_ID,
+        payment: checkoutEnvOptional('UG_PAYMENT_METHOD_ID'),
+        shipment: checkoutEnvOptional('UG_SHIPMENT_METHOD_ID'),
+        address: checkoutEnvOptional('UG_SHIPMENT_ADDRESS_ID'),
       };
     case 'ug_bn':
       return {
-        payment: process.env.UG_PAYMENT_METHOD_ID_BN,
-        shipment: process.env.UG_SHIPMENT_METHOD_ID_BN,
+        payment: checkoutEnvOptional('UG_PAYMENT_METHOD_ID_BN'),
+        shipment: checkoutEnvOptional('UG_SHIPMENT_METHOD_ID_BN'),
+        /** Обязателен для многих витрин ABCP; id из GET /basket/shipmentAddresses, часто 0 — самовывоз. */
+        address: checkoutEnvOptional('UG_SHIPMENT_ADDRESS_ID_BN'),
       };
     case 'npn':
-      return { address: process.env.NPN_SHIPMENT_ADDRESS_ID };
+      return { address: checkoutEnvOptional('NPN_SHIPMENT_ADDRESS_ID') };
     case 'avtodinamika':
-      return { address: process.env.AVTODINAMIKA_SHIPMENT_ADDRESS_ID };
+      return { address: checkoutEnvOptional('AVTODINAMIKA_SHIPMENT_ADDRESS_ID') };
     case 'patriot':
       return {
-        payment: process.env.PATRIOT_PAYMENT_METHOD_ID_BN,
-        address: process.env.PATRIOT_SHIPMENT_ADDRESS_ID,
+        payment: checkoutEnvOptional('PATRIOT_PAYMENT_METHOD_ID_BN'),
+        address: checkoutEnvOptional('PATRIOT_SHIPMENT_ADDRESS_ID'),
       };
     default:
       return {};
@@ -285,7 +337,12 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
       userLogger.info(`[AbcpCheckout:${supplierAlias}] Добавление позиций в корзину`, {
         articles: positions.map((p) => p.number),
       });
-      const addResult = await addPositionsToBasket(axiosInstance, positions, userLogger, supplierAlias);
+      const addResult = await addPositionsToBasket(
+        axiosInstance,
+        positions,
+        userLogger,
+        supplierAlias,
+      );
 
       const addedCount = (addResult.positions ?? []).filter((p) => p.status === 1).length;
       if (addedCount === 0) {
@@ -306,7 +363,9 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
       userLogger.info(`[AbcpCheckout:${supplierAlias}] Оформление заказа (basket/order)`);
       const orderResult = await placeOrder(axiosInstance, userLogger, supplierAlias);
 
-      if (orderResult.status === 0 && !orderResult.orders?.length) {
+      const ordersList = normalizeAbcpBasketOrderOrders(orderResult.orders);
+
+      if (orderResult.status === 0 && ordersList.length === 0) {
         return {
           success: false,
           cartItemIds,
@@ -314,7 +373,7 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
         };
       }
 
-      const externalOrderIds = (orderResult.orders ?? []).map((o) => o.number);
+      const externalOrderIds = ordersList.map((o) => String(o.number));
 
       userLogger.info(`[AbcpCheckout:${supplierAlias}] Заказ оформлен`, { externalOrderIds });
 
