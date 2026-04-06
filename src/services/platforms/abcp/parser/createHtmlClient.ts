@@ -12,6 +12,7 @@ import {
     SearchResultsParsed,
 } from '../../../../types/search.types.js';
 import { checkIsLoggedIn } from '../../../../utils/auth/checkIsLoggedIn.js';
+import { resolveAbcpHtmlAfterUnpricedRetries } from '../../../../utils/abcp/abcpUnpricedHtmlRetry.js';
 import { transformArticleByBrand } from '../../../../utils/data/brand/transformArticleByBrand.js';
 import { parsePickedABCPresults } from '../../../../utils/parsePickedABCPresults.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
@@ -185,17 +186,23 @@ export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
     );
 
     const searchUrl = `${baseUrl}/search?pcode=${encodeURIComponent(articleToSearch)}`;
+
     const response = await makeRequest(searchUrl, { headers: abcpHeaders });
 
     let finalHtml: string;
+    /** URL для повторной загрузки при «скелетной» таблице без цен (та же страница). */
+    let refetchUrlIfIncomplete: string;
+
+    const firstHasWrapper = response.data.includes('searchResultsTableWrapper');
 
     // Быстрая строковая проверка вместо cheerio.load() для Branch A (самый частый путь).
     // Экономим ~20-80ms синхронной блокировки Event Loop на каждый поиск.
-    if (response.data.includes('searchResultsTableWrapper')) {
+    if (firstHasWrapper) {
       userLogger.info(
         `[${supplier}] DEBUG: Branch A (Direct Page). Passing to parser.`
       );
       finalHtml = response.data;
+      refetchUrlIfIncomplete = searchUrl;
     } else {
       // Branch B/C: нужен DOM-парсинг для проверки data-link атрибутов
       await yieldToEventLoop();
@@ -221,13 +228,27 @@ export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
           headers: abcpHeaders,
         });
         finalHtml = detailResponse.data;
+        refetchUrlIfIncomplete = detailUrl;
       } else {
         userLogger.info(
           `[${supplier}] DEBUG: Branch C (No match). Passing current page to parser.`
         );
         finalHtml = response.data;
+        refetchUrlIfIncomplete = searchUrl;
       }
     }
+
+    finalHtml = await resolveAbcpHtmlAfterUnpricedRetries(
+      String(finalHtml ?? ''),
+      async () =>
+        String(
+          (
+            await makeRequest(refetchUrlIfIncomplete, {
+              headers: abcpHeaders,
+            })
+          ).data ?? ''
+        )
+    );
 
     return parsePickedABCPresults({
       html: finalHtml,

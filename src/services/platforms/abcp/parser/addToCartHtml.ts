@@ -1,5 +1,6 @@
 import { logger } from '../../../../config/logger/index.js';
 import { abcpHeaders } from '../../../../constants/headers.js';
+import { resolveAbcpHtmlAfterUnpricedRetries } from '../../../../utils/abcp/abcpUnpricedHtmlRetry.js';
 import { cleanArticleString } from '../../../../utils/data/brand/cleanArticleString.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import type {
@@ -31,7 +32,7 @@ const resolveClient = (supplierName: string): AbcpClient => {
  *
  * Поток:
  * positions[] → for-of (sequential, rate-limit safe)
- * → GET /search/{brand}/{number}  (получаем HTML с параметрами корзины)
+ * → GET /search/{brand}/{number}  (при «скелетной» таблице без цен — повторный GET, см. resolveAbcpHtmlAfterUnpricedRetries)
  * → parseCartDataHtml             (cheerio → hidden inputs)
  * → POST /?page=addToBasket       (x-www-form-urlencoded)
  * → проверка { status: "ok" }
@@ -51,12 +52,22 @@ export const addToCartHtml = async (
       const cleanUrlNumber = cleanArticleString(position.number);
       const searchUrl = `${baseUrl}/search/${encodeURIComponent(position.brand)}/${encodeURIComponent(cleanUrlNumber)}`;
 
-      const response = await client.makeRequest(searchUrl, { headers: abcpHeaders });
+      const html = await resolveAbcpHtmlAfterUnpricedRetries(
+        String(
+          (await client.makeRequest(searchUrl, { headers: abcpHeaders })).data ??
+            ''
+        ),
+        async () =>
+          String(
+            (await client.makeRequest(searchUrl, { headers: abcpHeaders }))
+              .data ?? ''
+          )
+      );
 
       await yieldToEventLoop();
 
       const parsedData = parseCartDataHtml(
-        response.data,
+        html,
         position.number,
         position.brand,
         position.supplierCode

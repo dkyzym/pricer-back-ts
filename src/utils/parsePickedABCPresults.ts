@@ -199,6 +199,5 @@ export const parsePickedABCPresults = async ({
     return resultsWithDeliveryDate;
   }
 
-  // Если parseData ничего не нашел
   return [];
 };
