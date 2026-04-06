@@ -84,7 +84,8 @@ const parseAvailability = (value: number | string): number | null => {
 /**
  * Ищет точное совпадение в результатах поиска.
  *
- * Из `rawItemData` используются `innerId` и `warehouse_id`. Если в корзине
+ * Из `rawItemData` используются `innerId` и `warehouse_id`. Приведение к строке
+ * страхует от несоответствия типов (Number/String) между БД и ответом API.
  * сохранён `warehouse_id`, кандидат обязан иметь тот же `result.warehouse_id`.
  *
  * Порядок оценки:
@@ -99,6 +100,8 @@ const findExactMatch = (
   results: SearchResultsParsed[],
   cartItem: ICartItemDocument,
 ): SearchResultsParsed | undefined => {
+  if (!Array.isArray(results) || results.length === 0) return undefined;
+
   const raw = cartItem.rawItemData as Partial<SearchResultsParsed> | null;
   if (!raw) return results[0];
 
@@ -110,8 +113,9 @@ const findExactMatch = (
     String(rawWarehouseId).trim() !== '';
 
   let pool = results;
+
   if (warehouseIdRequired) {
-    pool = results.filter((r) => r.warehouse_id === rawWarehouseId);
+    pool = results.filter((r) => String(r.warehouse_id) === String(rawWarehouseId));
     if (!pool.length) return undefined;
   }
 
@@ -120,13 +124,13 @@ const findExactMatch = (
     innerId !== null &&
     String(innerId).trim() !== ''
   ) {
-    const byInnerId = pool.find((r) => r.innerId === innerId);
+    const byInnerId = pool.find((r) => String(r.innerId) === String(innerId));
     if (byInnerId) return byInnerId;
   }
 
   if (warehouseIdRequired) {
     const byWarehouseId = pool.filter(
-      (r) => r.warehouse_id === rawWarehouseId,
+      (r) => String(r.warehouse_id) === String(rawWarehouseId),
     );
     if (byWarehouseId.length === 1) return byWarehouseId[0];
     pool = byWarehouseId;
@@ -174,8 +178,7 @@ const buildErrorReport = (
 // =========================================================================
 
 /**
- * Актуализация позиций виртуальной корзины.
- *
+ * Актуализация позиций виртуальной корзины. *
  * Поток данных:
  *   1. Загрузка CartItem-документов по ID.
  *   2. Группировка по supplier → дедупликация поисковых запросов по article+brand.
@@ -202,9 +205,17 @@ export const actualizeCartItems = async (
   const supplierTasks = Array.from(groups.entries()).map(
     async ([supplier, items]) => {
       if (ABCP_HTML_CART_ACTUALIZE_SUPPLIERS.has(supplier)) {
-        const reports = await actualizeAbcpCart(supplier, items, userLogger);
-        for (const r of reports) {
-          reportMap.set(r.cartItemId, r);
+        try {
+          const reports = await actualizeAbcpCart(supplier, items, userLogger);
+          for (const r of reports) {
+            reportMap.set(r.cartItemId, r);
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : 'Критическая ошибка парсера ABCP';
+          userLogger.error(`[Actualize] Ошибка у ${supplier}: ${msg}`);
+          for (const item of items) {
+            reportMap.set(item._id.toString(), buildErrorReport(item, msg));
+          }
         }
         return;
       }
@@ -248,79 +259,88 @@ export const actualizeCartItems = async (
 
       const searchTasks = Array.from(uniqueSearches.values()).map(
         async ({ searchItem, cartItems: related }) => {
-          let results: SearchResultsParsed[] = [];
-          let searchError: string | undefined;
-
           try {
-            userLogger.info(
-              `[Actualize] ${searchItem.article} (${searchItem.brand}) → ${supplier}`,
-            );
-            results = await handler(
-              { item: searchItem, supplier: supplier as SupplierName },
-              userLogger,
-            );
-          } catch (err: unknown) {
-            searchError =
-              err instanceof Error
-                ? err.message
-                : 'Неизвестная ошибка при поиске.';
-            userLogger.error(
-              `[Actualize] Ошибка у ${supplier}: ${searchError}`,
-            );
-          }
+            let results: SearchResultsParsed[] = [];
+            let searchError: string | undefined;
 
-          for (const cartItem of related) {
-            const itemId = cartItem._id.toString();
-
-            if (searchError) {
-              reportMap.set(itemId, buildErrorReport(cartItem, searchError));
-              continue;
+            try {
+              userLogger.info(
+                `[Actualize] ${searchItem.article} (${searchItem.brand}) → ${supplier}`,
+              );
+              results = await handler(
+                { item: searchItem, supplier: supplier as SupplierName },
+                userLogger,
+              );
+              if (!Array.isArray(results)) results = [];
+            } catch (err: unknown) {
+              searchError =
+                err instanceof Error
+                  ? err.message
+                  : 'Неизвестная ошибка при поиске.';
+              userLogger.error(
+                `[Actualize] Ошибка у ${supplier}: ${searchError}`,
+              );
             }
 
-            const match = findExactMatch(results, cartItem);
+            for (const cartItem of related) {
+              const itemId = cartItem._id.toString();
 
-            if (!match) {
+              if (searchError) {
+                reportMap.set(itemId, buildErrorReport(cartItem, searchError));
+                continue;
+              }
+
+              const match = findExactMatch(results, cartItem);
+
+              if (!match) {
+                reportMap.set(itemId, {
+                  cartItemId: itemId,
+                  article: cartItem.article,
+                  brand: cartItem.brand,
+                  supplier: cartItem.supplier,
+                  name: cartItem.name,
+                  status: 'not_found',
+                  initialPrice: cartItem.initialPrice,
+                  currentPrice: null,
+                  priceDiff: null,
+                  availableQuantity: null,
+                  requestedQuantity: cartItem.quantity,
+                  isAvailable: false,
+                });
+                continue;
+              }
+
+              const newPrice = match.price;
+              const priceChanged = newPrice !== cartItem.initialPrice;
+
+              const availNum = parseAvailability(match.availability);
+              const isAvailable =
+                availNum !== null ? availNum >= cartItem.quantity : false;
+
+              cartItem.rawItemData = match;
+              cartItem.currentPrice = newPrice;
+
               reportMap.set(itemId, {
                 cartItemId: itemId,
                 article: cartItem.article,
                 brand: cartItem.brand,
                 supplier: cartItem.supplier,
                 name: cartItem.name,
-                status: 'not_found',
+                status: priceChanged ? 'price_changed' : 'ok',
                 initialPrice: cartItem.initialPrice,
-                currentPrice: null,
-                priceDiff: null,
-                availableQuantity: null,
+                currentPrice: newPrice,
+                priceDiff: +(newPrice - cartItem.initialPrice).toFixed(2),
+                availableQuantity: match.availability,
                 requestedQuantity: cartItem.quantity,
-                isAvailable: false,
+                isAvailable,
               });
-              continue;
             }
-
-            const newPrice = match.price;
-            const priceChanged = newPrice !== cartItem.initialPrice;
-
-            const availNum = parseAvailability(match.availability);
-            const isAvailable =
-              availNum !== null ? availNum >= cartItem.quantity : false;
-
-            cartItem.rawItemData = match;
-            cartItem.currentPrice = newPrice;
-
-            reportMap.set(itemId, {
-              cartItemId: itemId,
-              article: cartItem.article,
-              brand: cartItem.brand,
-              supplier: cartItem.supplier,
-              name: cartItem.name,
-              status: priceChanged ? 'price_changed' : 'ok',
-              initialPrice: cartItem.initialPrice,
-              currentPrice: newPrice,
-              priceDiff: +(newPrice - cartItem.initialPrice).toFixed(2),
-              availableQuantity: match.availability,
-              requestedQuantity: cartItem.quantity,
-              isAvailable,
-            });
+          } catch (fatalError) {
+            const msg = fatalError instanceof Error ? fatalError.message : 'Фатальная ошибка обработки результатов';
+            userLogger.error(`[Actualize] Сбой сопоставления у ${supplier}: ${msg}`);
+            for (const cartItem of related) {
+              reportMap.set(cartItem._id.toString(), buildErrorReport(cartItem, msg));
+            }
           }
         },
       );
