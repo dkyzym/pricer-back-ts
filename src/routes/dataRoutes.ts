@@ -3,6 +3,7 @@ import { addToCartController } from '@controllers/cart/addToCartController.js';
 import { addToVirtualCartController } from '@controllers/cart/addToVirtualCartController.js';
 import { checkoutCartController } from '@controllers/cart/checkoutCartController.js';
 import { deleteCartItemController } from '@controllers/cart/deleteCartItemController.js';
+import { deleteCartItemsBulkController } from '@controllers/cart/deleteCartItemsBulkController.js';
 import { getCartController } from '@controllers/cart/getCartController.js';
 import { updateCartItemQuantityController } from '@controllers/cart/updateCartItemQuantityController.js';
 import { updateCartItemStatusController } from '@controllers/cart/updateCartItemStatusController.js';
@@ -35,6 +36,11 @@ router.post(
   ctrlWrapper(addToVirtualCartController)
 );
 router.get('/cart', authMiddleware, ctrlWrapper(getCartController));
+router.post(
+  '/cart/bulk-delete',
+  authMiddleware,
+  ctrlWrapper(deleteCartItemsBulkController)
+);
 router.delete(
   '/cart/:id',
   authMiddleware,
