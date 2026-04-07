@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Logger } from 'winston';
+import { ClarifyBrandResult } from '../../types/brand.types.js';
 import { ItemAutocompleteRow } from '../../types/search.types.js';
 import { getAxiosInstance } from '../../infrastructure/http/apiClient.js';
 import { assortmentSearchArmtek } from '../suppliers/armtek/assortmentSearchArmtek.js';
@@ -29,12 +30,6 @@ interface ProfitItem {
   rating: number;
   brand_warranty: string;
   countProducts: number;
-}
-
-interface ClarifyBrandResult {
-  success: boolean;
-  brands: ItemAutocompleteRow[];
-  message: string;
 }
 
 /**
@@ -124,21 +119,23 @@ export const clarifyBrand = async (
     ]);
 
   const finalBrands: ItemAutocompleteRow[] = [];
-  let success = true;
   const messages: string[] = [];
+  const failedSupplierKeys: string[] = [];
 
   const suppliers = [
     { name: 'ug', result: ugResult },
     { name: 'npn', result: npnResult },
     { name: 'profit', result: profitResult },
     { name: 'armtek', result: armtekResult },
-  ];
+  ] as const;
 
+  let successful = 0;
   for (const { name, result } of suppliers) {
     if (result.status === 'fulfilled') {
+      successful += 1;
       finalBrands.push(...result.value);
     } else {
-      success = false;
+      failedSupplierKeys.push(name);
       userLogger.error(
         `Ошибка при получении данных от поставщика ${name}:`,
         result.reason
@@ -146,6 +143,12 @@ export const clarifyBrand = async (
       messages.push(`Ошибка при получении данных от поставщика ${name}.`);
     }
   }
+
+  const supplierStats = {
+    total: suppliers.length,
+    successful,
+    failedSupplierKeys: [...failedSupplierKeys],
+  };
 
   const seen = new Set<string>();
   const brandsDeduplicated: ItemAutocompleteRow[] = [];
@@ -156,19 +159,19 @@ export const clarifyBrand = async (
     brandsDeduplicated.push(row);
   }
 
-  if (success) {
+  if (failedSupplierKeys.length === 0) {
     if (brandsDeduplicated.length > 0) {
-      messages.push('Данные успешно получены от поставщиков.');
+      messages.push('Все источники ответили, варианты брендов собраны.');
     } else {
       messages.push(
-        'Данные успешно получены, но нет результатов от поставщиков.'
+        'Все источники ответили, совпадений по брендам не найдено.'
       );
     }
   }
 
   return {
-    success,
     brands: brandsDeduplicated,
-    message: messages.join(' '),
+    message: messages.join(' ').trim(),
+    supplierStats,
   };
 };

@@ -16,6 +16,11 @@ export const createBrandClarificationHandler = (
       socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
         brands: [],
         message: 'Пустой запрос',
+        supplierStats: {
+          total: 0,
+          successful: 0,
+          failedSupplierKeys: [],
+        },
       });
       return;
     }
@@ -23,20 +28,14 @@ export const createBrandClarificationHandler = (
     try {
       const result: ClarifyBrandResult = await clarifyBrand(query, userLogger);
 
-      if (result.success) {
-        userLogger.info(
-          `BRAND_CLARIFICATION success, found: ${result.brands.length}`
-        );
-        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
-          brands: result.brands,
-          message: result.message,
-        });
-      } else {
-        userLogger.error(`BRAND_CLARIFICATION failed:`, result.message);
-        socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_ERROR, {
-          message: result.message,
-        });
-      }
+      userLogger.info(
+        `BRAND_CLARIFICATION: ${result.supplierStats.successful}/${result.supplierStats.total} источников, вариантов: ${result.brands.length}`
+      );
+      socket.emit(SOCKET_EVENTS.BRAND_CLARIFICATION_RESULTS, {
+        brands: result.brands,
+        message: result.message,
+        supplierStats: result.supplierStats,
+      });
     } catch (error) {
       const errorMessage = `Error clarifying brand: ${(error as Error).message}`;
       userLogger.error('Brand Clarification error:', error);
