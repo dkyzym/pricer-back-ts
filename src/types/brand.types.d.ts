@@ -1,7 +1,7 @@
 import type { ItemAutocompleteRow } from './search.types.js';
 
 /**
- * Сводка по источникам уточнения бренда (ug, npn, profit, armtek).
+ * Сводка по источникам уточнения бренда (ug, npn, patriot, profit, armtek).
  * total совпадает с числом параллельных запросов в clarifyBrand.
  */
 export interface BrandClarificationSupplierStats {

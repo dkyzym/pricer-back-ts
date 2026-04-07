@@ -8,7 +8,7 @@ import { getAxiosInstance } from '../../infrastructure/http/apiClient.js';
 import { assortmentSearchArmtek } from '../suppliers/armtek/assortmentSearchArmtek.js';
 import { getItemsListByArticleService } from '../suppliers/profit/getItemsListByArticleService.js';
 
-/** Ответ ABCP Public API GET /search/brands/?number=… (UG, NPN и др.) */
+/** Ответ ABCP Public API GET /search/brands/?number=… (UG, NPN, Patriot и др.) */
 interface AbcpBrandByArticleRow {
   availability: number;
   brand: string;
@@ -36,7 +36,7 @@ interface ProfitItem {
  * Бренды по артикулу через ABCP Public API (тот же контракт, что у UG).
  */
 const fetchAbcpBrandsByArticle = async (
-  supplierKey: 'ug' | 'npn',
+  supplierKey: 'ug' | 'npn' | 'patriot',
   article: string
 ): Promise<ItemAutocompleteRow[]> => {
   const axiosInstance: AxiosInstance = await getAxiosInstance(supplierKey);
@@ -84,6 +84,9 @@ export const clarifyBrand = async (
   const fetchNpnBrands = async (): Promise<ItemAutocompleteRow[]> =>
     fetchAbcpBrandsByArticle('npn', query);
 
+  const fetchPatriotBrands = async (): Promise<ItemAutocompleteRow[]> =>
+    fetchAbcpBrandsByArticle('patriot', query);
+
   // Функция для обработки данных от поставщика 'profit'
   const fetchProfitItems = async (): Promise<ItemAutocompleteRow[]> => {
     const profitData: ProfitItem[] = await getItemsListByArticleService(query);
@@ -110,10 +113,11 @@ export const clarifyBrand = async (
     }));
   };
 
-  const [ugResult, npnResult, profitResult, armtekResult] =
+  const [ugResult, npnResult, patriotResult, profitResult, armtekResult] =
     await Promise.allSettled([
       fetchUgBrands(),
       fetchNpnBrands(),
+      fetchPatriotBrands(),
       fetchProfitItems(),
       fetchArmtekBrands(),
     ]);
@@ -125,6 +129,7 @@ export const clarifyBrand = async (
   const suppliers = [
     { name: 'ug', result: ugResult },
     { name: 'npn', result: npnResult },
+    { name: 'patriot', result: patriotResult },
     { name: 'profit', result: profitResult },
     { name: 'armtek', result: armtekResult },
   ] as const;
