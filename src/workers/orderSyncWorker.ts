@@ -2,6 +2,7 @@ import axios from 'axios';
 import mongoose from 'mongoose';
 import cron from 'node-cron';
 import { logger } from '../config/logger/index.js';
+import { reconcileVirtualCartStubsForSupplier } from '../infrastructure/db/reconcileVirtualCartStubs.js';
 import { syncOrdersBatch } from '../infrastructure/db/orderSyncRepository.js';
 import { sendRefusedOrdersNotification } from '../infrastructure/notifications/telegram/notifyRefusedOrders.js';
 import { Order } from '../models/Order.js';
@@ -215,6 +216,7 @@ export const startOrderSyncWorker = (): void => {
             ordersCount: orders.length,
           });
 
+          await reconcileVirtualCartStubsForSupplier(supplier, orders);
           await syncOrdersBatch(orders);
 
           logger.info('[orderSyncWorker] Supplier sync success', {
