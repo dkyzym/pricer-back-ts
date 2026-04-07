@@ -266,6 +266,7 @@ const extractConfirmedOrderId = (html: string): string | null => {
 export const avtoPartnerCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
   userLogger: Logger,
+  _options?,
 ): Promise<CheckoutResult> => {
   const cartItemIds = items.map((i) => String(i._id));
 
