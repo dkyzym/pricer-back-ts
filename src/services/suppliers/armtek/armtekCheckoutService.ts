@@ -236,6 +236,7 @@ const safeJsonStringify = (value: unknown): string => {
 export const armtekCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
   userLogger: Logger,
+  _options?,
 ): Promise<CheckoutResult> => {
   const cartItemIds = items.map((i) => String(i._id));
 

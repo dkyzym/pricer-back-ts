@@ -43,6 +43,7 @@ const cartItemToUnifiedRequest = (cartItem: ICartItemDocument): UnifiedCartReque
 export const abcpHtmlCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
   userLogger: Logger,
+  _options?,
 ) => {
   const ids = items.map((i) => String(i._id));
 

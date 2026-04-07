@@ -83,6 +83,14 @@ export interface CheckoutResult {
   note?: string;
 }
 
+/** Форма оплаты Patriot: безнал — PATRIOT_PAYMENT_METHOD_ID_BN, наличные — PATRIOT_PAYMENT_METHOD_ID */
+export type PatriotPaymentForm = 'non_cash' | 'cash';
+
+/** Опции чекаута с фронтенда (расширяем по мере необходимости). */
+export interface CartCheckoutOptions {
+  patriotPaymentForm?: PatriotPaymentForm;
+}
+
 /**
  * Контракт адаптера оформления заказа (checkout) у конкретного поставщика.
  * Принимает массив позиций корзины (уже отфильтрованных по поставщику)
@@ -90,5 +98,6 @@ export interface CheckoutResult {
  */
 export type CheckoutHandler = (
   items: ICartItemDocument[],
-  userLogger: Logger
+  userLogger: Logger,
+  options?: CartCheckoutOptions,
 ) => Promise<CheckoutResult>;

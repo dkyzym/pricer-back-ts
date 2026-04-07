@@ -2,7 +2,11 @@ import { AxiosError, AxiosInstance } from 'axios';
 import { Logger } from 'winston';
 import { ICartItemDocument } from '../../../models/CartItem.js';
 import { getAxiosInstance } from '../../../infrastructure/http/apiClient.js';
-import { CheckoutHandler, CheckoutResult } from '../../orchestration/cart/cart.types.js';
+import {
+  CartCheckoutOptions,
+  CheckoutHandler,
+  CheckoutResult,
+} from '../../orchestration/cart/cart.types.js';
 import { SupplierName } from '../../../types/common.types.js';
 import { AbcpArticleSearchResult } from './abcpPlatform.types.js';
 
@@ -208,8 +212,13 @@ const checkoutEnvOptional = (name: string): string | undefined => {
 /**
  * Маппинг alias ABCP-поставщика на переменные окружения для payment/shipment/address.
  * Пустой объект — без дополнительных параметров в теле basket/order.
+ *
+ * Patriot: форма оплаты задаётся с фронта (`patriotPaymentForm`); по умолчанию безнал.
  */
-const getAbcpCheckoutConfig = (alias: string): AbcpCheckoutParamConfig => {
+const getAbcpCheckoutConfig = (
+  alias: string,
+  options?: CartCheckoutOptions,
+): AbcpCheckoutParamConfig => {
   switch (alias) {
     case 'ug':
       return {
@@ -228,11 +237,17 @@ const getAbcpCheckoutConfig = (alias: string): AbcpCheckoutParamConfig => {
       return { address: checkoutEnvOptional('NPN_SHIPMENT_ADDRESS_ID') };
     case 'avtodinamika':
       return { address: checkoutEnvOptional('AVTODINAMIKA_SHIPMENT_ADDRESS_ID') };
-    case 'patriot':
+    case 'patriot': {
+      const form = options?.patriotPaymentForm ?? 'non_cash';
+      const payment =
+        form === 'cash'
+          ? checkoutEnvOptional('PATRIOT_PAYMENT_METHOD_ID')
+          : checkoutEnvOptional('PATRIOT_PAYMENT_METHOD_ID_BN');
       return {
-        payment: checkoutEnvOptional('PATRIOT_PAYMENT_METHOD_ID_BN'),
+        payment,
         address: checkoutEnvOptional('PATRIOT_SHIPMENT_ADDRESS_ID'),
       };
+    }
     default:
       return {};
   }
@@ -242,8 +257,9 @@ const placeOrder = async (
   axiosInstance: AxiosInstance,
   userLogger: Logger,
   supplierAlias: string,
+  options?: CartCheckoutOptions,
 ): Promise<AbcpOrderResult> => {
-  const config = getAbcpCheckoutConfig(supplierAlias);
+  const config = getAbcpCheckoutConfig(supplierAlias, options);
   const orderParams = new URLSearchParams();
   if (config.payment) orderParams.set('paymentMethod', config.payment);
   if (config.shipment) orderParams.set('shipmentMethod', config.shipment);
@@ -281,7 +297,11 @@ const placeOrder = async (
  * Safety lock гарантирует, что реальные заказы не создаются случайно в dev/staging.
  */
 export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandler =>
-  async (items: ICartItemDocument[], userLogger: Logger): Promise<CheckoutResult> => {
+  async (
+    items: ICartItemDocument[],
+    userLogger: Logger,
+    options?: CartCheckoutOptions,
+  ): Promise<CheckoutResult> => {
     const cartItemIds = items.map((i) => String(i._id));
 
     if (items.length === 0) {
@@ -361,7 +381,7 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
 
       // ── 4. Оформление заказа ────────────────────────────────────────────
       userLogger.info(`[AbcpCheckout:${supplierAlias}] Оформление заказа (basket/order)`);
-      const orderResult = await placeOrder(axiosInstance, userLogger, supplierAlias);
+      const orderResult = await placeOrder(axiosInstance, userLogger, supplierAlias, options);
 
       const ordersList = normalizeAbcpBasketOrderOrders(orderResult.orders);
 

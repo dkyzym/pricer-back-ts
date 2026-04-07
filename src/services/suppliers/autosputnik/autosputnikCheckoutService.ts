@@ -216,6 +216,7 @@ const authedPost = async <T>(
 export const autosputnikCheckoutHandler: CheckoutHandler = async (
   items: ICartItemDocument[],
   userLogger: Logger,
+  _options?,
 ): Promise<CheckoutResult> => {
   const cartItemIds = items.map((i) => String(i._id));
 

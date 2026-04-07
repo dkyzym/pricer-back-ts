@@ -1,7 +1,7 @@
 import { Logger } from 'winston';
 import { CartItem, ICartItemDocument } from '../../models/CartItem.js';
 import { Order } from '../../models/Order.js';
-import type { CheckoutResult } from '../orchestration/cart/cart.types.js';
+import type { CartCheckoutOptions, CheckoutResult } from '../orchestration/cart/cart.types.js';
 import { checkoutHandlers } from '../orchestration/checkout/checkoutHandlers.js';
 
 // =========================================================================
@@ -124,6 +124,7 @@ const buildOrderDocs = (
 export const checkoutCartItems = async (
   cartItemIds: string[],
   userLogger: Logger,
+  options?: CartCheckoutOptions,
 ): Promise<CheckoutReport> => {
   const cartItems = await CartItem.find({
     _id: { $in: cartItemIds },
@@ -159,7 +160,7 @@ export const checkoutCartItems = async (
 
       let checkoutResult: CheckoutResult;
       try {
-        checkoutResult = await checkoutHandler(items, userLogger);
+        checkoutResult = await checkoutHandler(items, userLogger, options);
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : 'Неизвестная ошибка обработчика.';
