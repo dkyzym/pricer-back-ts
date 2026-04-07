@@ -3,11 +3,19 @@ import mongoose, { Document, Schema } from 'mongoose';
 /** Допустимые статусы позиции виртуальной корзины (жизненный цикл до оформления заказа). */
 export type CartItemStatus = 'draft' | 'approved' | 'ordered' | 'cancelled';
 
+/** Единый набор литералов статуса для сравнений и схемы Mongoose (без «магических строк» в коде). */
+export const CART_ITEM_STATUS = {
+  DRAFT: 'draft',
+  APPROVED: 'approved',
+  ORDERED: 'ordered',
+  CANCELLED: 'cancelled',
+} as const satisfies Record<string, CartItemStatus>;
+
 const CART_ITEM_STATUS_VALUES: CartItemStatus[] = [
-  'draft',
-  'approved',
-  'ordered',
-  'cancelled',
+  CART_ITEM_STATUS.DRAFT,
+  CART_ITEM_STATUS.APPROVED,
+  CART_ITEM_STATUS.ORDERED,
+  CART_ITEM_STATUS.CANCELLED,
 ];
 
 /**
@@ -52,7 +60,10 @@ const cartItemSchema = new Schema<ICartItemDocument>(
   { timestamps: true }
 );
 
-cartItemSchema.index({ username: 1 });
+/** Список корзины пользователя: фильтр по username + сортировка по дате (skip/limit). */
+cartItemSchema.index({ username: 1, createdAt: -1 });
+/** Админский список всех позиций с сортировкой по createdAt (пустой фильтр в запросе). */
+cartItemSchema.index({ createdAt: -1, _id: -1 });
 cartItemSchema.index({ status: 1 });
 
 export const CartItem = mongoose.model<ICartItemDocument>('CartItem', cartItemSchema);

@@ -1,4 +1,5 @@
 import { Logger } from 'winston';
+import { toVirtualCartOrderId } from '../../constants/virtualCartOrder.js';
 import { CartItem, ICartItemDocument } from '../../models/CartItem.js';
 import { Order } from '../../models/Order.js';
 import type { CartCheckoutOptions, CheckoutResult } from '../orchestration/cart/cart.types.js';
@@ -86,7 +87,7 @@ const buildOrderDocs = (
     }
 
     return {
-      id: `cart_${String(item._id)}`,
+      id: toVirtualCartOrderId(String(item._id)),
       orderId,
       ...(externalOrderId !== undefined ? { externalOrderId } : {}),
       supplier: item.supplier,
