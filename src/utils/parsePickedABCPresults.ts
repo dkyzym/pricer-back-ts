@@ -16,6 +16,10 @@ import { yieldToEventLoop } from './yieldToEventLoop.js';
  */
 const YIELD_EVERY_N_ROWS = 50;
 
+/** Схлопывание пробелов для сравнения подписи «Ожид. срок» с разметкой ABCP. */
+const normalizeAbcpDeadlineLabel = (raw: string): string =>
+  raw.replace(/\s+/g, ' ').trim().toLowerCase();
+
 // Обновленный интерфейс, включающий артикул, который реально искали
 interface ParseParams extends ParallelSearchParams {
   html: string;
@@ -95,9 +99,17 @@ export const parseData = async (
       const deadlineTextRaw = deadlineElement.length
         ? deadlineElement.text().trim()
         : '';
+      const normalizedDeadlineLabel = normalizeAbcpDeadlineLabel(deadlineTextRaw);
+      if (
+        supplier === 'autoImpulse' &&
+        normalizedDeadlineLabel !== 'на складе'
+      ) {
+        continue;
+      }
+
       let deadline = 12;
       let deadLineMax = 24;
-      if (deadlineTextRaw.toLowerCase() !== 'на складе') {
+      if (normalizedDeadlineLabel !== 'на складе') {
         deadline = parseInt($row.attr('data-deadline') || '12', 10);
         deadLineMax = parseInt(
           $row.attr('data-deadline-max') || String(deadline + 12),
