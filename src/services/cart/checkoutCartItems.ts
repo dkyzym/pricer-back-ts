@@ -1,7 +1,9 @@
 import { Logger } from 'winston';
+import { USER_ROLE } from '../../constants/userRoles.js';
 import { toVirtualCartOrderId } from '../../constants/virtualCartOrder.js';
 import { CartItem, ICartItemDocument } from '../../models/CartItem.js';
 import { Order } from '../../models/Order.js';
+import { NotFoundError, ValidationError } from '../../utils/errors.js';
 import type { CartCheckoutOptions, CheckoutResult } from '../orchestration/cart/cart.types.js';
 import { checkoutHandlers } from '../orchestration/checkout/checkoutHandlers.js';
 
@@ -25,9 +27,30 @@ export interface CheckoutReport {
   suppliers: CheckoutSupplierReport[];
 }
 
+/** JWT-контекст для фильтрации корзины по владельцу (не-админ). */
+export interface CheckoutCartUserCtx {
+  username: string;
+  role: string;
+}
+
 // =========================================================================
 //  Вспомогательные функции
 // =========================================================================
+
+/** Непустая строка из process.env (trim; пустая строка считается отсутствием). */
+const envNonEmpty = (name: string): string | undefined => {
+  const v = process.env[name];
+  if (v === undefined || v === null) return undefined;
+  const t = v.trim();
+  return t.length > 0 ? t : undefined;
+};
+
+/**
+ * Lean-документы CartItem совместимы с обработчиками: используются только поля,
+ * без методов инстанса Mongoose.
+ */
+const asCartItemsForCheckout = (docs: unknown[]): ICartItemDocument[] =>
+  docs as ICartItemDocument[];
 
 /** Группирует документы по supplier. */
 const groupBySupplier = (
@@ -114,27 +137,49 @@ const buildOrderDocs = (
  * Оформление заказов из виртуальной корзины.
  *
  * Поток данных:
- *   1. Загрузка CartItem-документов по ID (status: draft или approved).
- *   2. Группировка по supplier.
- *   3. Для каждой группы — получение CheckoutHandler из реестра checkoutHandlers.
- *      Если обработчик отсутствует, группа помечается как failed.
- *   4. Параллельный запуск всех обработчиков через Promise.allSettled.
- *   5. Для успешных: обновление статуса CartItem → 'ordered', создание Order-документов.
- *   6. Формирование сводного отчёта для фронтенда.
+ *   1. Один запрос CartItem.find().lean() с фильтром по статусу и (для не-админа) username.
+ *   2. Сверка числа документов с запрошенными id; при расхождении — NotFoundError.
+ *   3. При наличии Patriot — проверка env до вызова обработчиков.
+ *   4. Группировка по supplier, checkoutHandlers, updateMany + insertMany по успеху.
  */
 export const checkoutCartItems = async (
   cartItemIds: string[],
+  ctx: CheckoutCartUserCtx,
   userLogger: Logger,
   options?: CartCheckoutOptions,
 ): Promise<CheckoutReport> => {
-  const cartItems = await CartItem.find({
+  if (cartItemIds.length === 0) {
+    userLogger.warn('[Checkout] Пустой список идентификаторов.');
+    return { totalItems: 0, successfulItems: 0, failedItems: 0, suppliers: [] };
+  }
+
+  const filter: Record<string, unknown> = {
     _id: { $in: cartItemIds },
     status: { $in: ['draft', 'approved'] },
-  });
+  };
+  if (ctx.role !== USER_ROLE.ADMIN) {
+    filter.username = ctx.username;
+  }
 
-  if (!cartItems.length) {
-    userLogger.warn('[Checkout] Нет позиций со статусом draft/approved для оформления.');
-    return { totalItems: 0, successfulItems: 0, failedItems: 0, suppliers: [] };
+  const rawDocs = await CartItem.find(filter).lean();
+  const cartItems = asCartItemsForCheckout(rawDocs);
+
+  if (cartItems.length !== cartItemIds.length) {
+    throw new NotFoundError('Не все позиции найдены или недоступны');
+  }
+
+  if (cartItems.some((d) => d.supplier === 'patriot')) {
+    const form = options?.patriotPaymentForm ?? 'non_cash';
+    if (form === 'cash' && !envNonEmpty('PATRIOT_PAYMENT_METHOD_ID')) {
+      throw new ValidationError(
+        'Для оформления Patriot наличными задайте PATRIOT_PAYMENT_METHOD_ID в окружении сервера.',
+      );
+    }
+    if (form === 'non_cash' && !envNonEmpty('PATRIOT_PAYMENT_METHOD_ID_BN')) {
+      throw new ValidationError(
+        'Для оформления Patriot безналом задайте PATRIOT_PAYMENT_METHOD_ID_BN в окружении сервера.',
+      );
+    }
   }
 
   const groups = groupBySupplier(cartItems);
