@@ -6,6 +6,8 @@ import { mapAutosputnikOrdersToUnified } from '../../suppliers/autosputnik/order
 import { fetchAutosputnikOrders } from '../../suppliers/autosputnik/orders/fetchAutosputnikOrders.js';
 import { fetchProfitOrders } from '../../suppliers/profit/orders/fetchProfitOrders.js';
 import { mapProfitOrdersToUnified } from '../../suppliers/profit/orders/profitMapper.js';
+import { fetchArmtekOrders } from '../../suppliers/armtek/armtekOrderSyncService.js';
+import { mapArmtekOrdersToUnified } from '../../suppliers/armtek/armtekOrderSyncMapper.js';
 import { fetchTurboCarsOrders } from '../../suppliers/turboCars/fetchTurboCarsOrders.js';
 import { mapTurboCarsOrdersToUnified } from '../../suppliers/turboCars/turboCarsMapper.js';
 import { UnifiedOrderItem } from './orders.types.js';
@@ -165,6 +167,13 @@ const createTurboCars = () =>
     (data) => mapTurboCarsOrdersToUnified(data, 'turboCars')
   );
 
+const createArmtek = () =>
+  createApiHandler(
+    'armtek',
+    (logger, targetSyncDate, signal) => fetchArmtekOrders(logger, targetSyncDate, signal),
+    (data) => mapArmtekOrdersToUnified(data, 'armtek')
+  );
+
 // Parsing Handlers
 const mikanoHandler = createParserHandler({
   alias: 'mikano',
@@ -210,6 +219,7 @@ export const orderHandlers: Record<string, OrderHandler> = {
   autosputnik_bn: createAutosputnik('autosputnik_bn'),
   profit: createProfit(),
   turboCars: createTurboCars(),
+  armtek: createArmtek(),
 
   // HTML Parsers
   mikano: mikanoHandler,
