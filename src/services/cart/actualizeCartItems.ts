@@ -7,6 +7,7 @@ import {
   SearchResultsParsed,
 } from '../../types/search.types.js';
 import { SupplierName } from '../../types/common.types.js';
+import { parseAvailability } from '../../utils/parseAvailability.js';
 
 // =========================================================================
 //  Типы отчёта
@@ -68,18 +69,6 @@ const reconstructSearchItem = (
   description: cartItem.name,
   dataUrl: '',
 });
-
-/**
- * Парсит `availability` (число или строка вроде "10", "10+", ">100")
- * в числовое значение. Возвращает `null`, если разбор невозможен.
- */
-const parseAvailability = (value: number | string): number | null => {
-  if (typeof value === 'number') return value;
-  const parsed = parseInt(value, 10);
-  if (!isNaN(parsed)) return parsed;
-  const digits = value.replace(/\D/g, '');
-  return digits ? parseInt(digits, 10) : null;
-};
 
 /**
  * Ищет точное совпадение в результатах поиска.

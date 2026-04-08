@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { CartItem } from '../../models/CartItem.js';
+import { parseAvailability } from '../../utils/parseAvailability.js';
 
 /**
  * Изменение количества по позиции виртуальной корзины.
@@ -47,6 +48,18 @@ export const updateCartItemQuantityController = async (
       success: false,
       message: 'Можно менять количество только у своих позиций в статусе draft.',
     });
+  }
+
+  const raw = item.rawItemData as Record<string, unknown> | null | undefined;
+  const availabilityRaw = raw?.availability;
+  if (typeof availabilityRaw === 'number' || typeof availabilityRaw === 'string') {
+    const availNum = parseAvailability(availabilityRaw);
+    if (availNum !== null && quantity > availNum) {
+      return res.status(400).json({
+        success: false,
+        message: `Запрошенное количество превышает остаток по данным последней актуализации (${availNum} шт.).`,
+      });
+    }
   }
 
   item.quantity = quantity;
