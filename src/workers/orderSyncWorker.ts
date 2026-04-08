@@ -102,22 +102,21 @@ const computeTargetSyncDate = async (supplier: string): Promise<Date> => {
   return targetSyncDate;
 };
 
-export const startOrderSyncWorker = (): void => {
-  /**
-   * Мьютекс цикла через AbortController: позволяет не только отслеживать,
-   * запущен ли цикл, но и физически прервать все его in-flight HTTP-запросы
-   * через signal propagation (cycle → supplier → axios).
-   * null — цикл свободен.
-   */
-  let activeCycleController: AbortController | null = null;
-  let runStartedAt: number | null = null;
+/**
+ * Мьютекс цикла через AbortController: позволяет не только отслеживать,
+ * запущен ли цикл, но и физически прервать все его in-flight HTTP-запросы
+ * через signal propagation (cycle → supplier → axios).
+ * null — цикл свободен.
+ * На уровне модуля — общий для cron и ручного вызова runOrderSyncCycleOnce.
+ */
+let activeCycleController: AbortController | null = null;
+let runStartedAt: number | null = null;
 
-  logger.info('[orderSyncWorker] Worker started', {
-    schedule: SCHEDULE,
-    maxRandomDelayMs: MAX_RANDOM_DELAY_MS,
-  });
-
-  const runSyncCycle = async () => {
+/**
+ * Один полный проход по всем поставщикам из orderHandlers (без ожидания cron).
+ * Использует тот же мьютекс, что и планировщик.
+ */
+export const runOrderSyncCycleOnce = async (): Promise<void> => {
     /* ───── Мьютекс: проверка и abort stale-цикла ───── */
     if (runStartedAt !== null) {
       const elapsedMs = Date.now() - runStartedAt;
@@ -286,11 +285,17 @@ export const startOrderSyncWorker = (): void => {
         runStartedAt = null;
       }
     }
-  };
+};
 
-  runSyncCycle().catch((err) =>
+export const startOrderSyncWorker = (): void => {
+  logger.info('[orderSyncWorker] Worker started', {
+    schedule: SCHEDULE,
+    maxRandomDelayMs: MAX_RANDOM_DELAY_MS,
+  });
+
+  runOrderSyncCycleOnce().catch((err) =>
     logger.error('[orderSyncWorker] Initial run error', { error: err })
   );
 
-  cron.schedule(SCHEDULE, runSyncCycle);
+  cron.schedule(SCHEDULE, runOrderSyncCycleOnce);
 };

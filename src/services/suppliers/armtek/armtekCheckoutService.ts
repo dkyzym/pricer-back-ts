@@ -37,8 +37,7 @@ const extractSavedArmtekArtid = (raw: unknown): string | undefined => {
 const pricesRoughlyEqual = (a: number, b: number, eps = 0.02): boolean =>
   Math.abs(a - b) <= eps;
 
-const ARMTEK_BASE_URL =
-  process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '');
+const ARMTEK_BASE_URL = process.env.ARMTEK_BASE_URL?.trim().replace(/\/+$/, '') || '';
 
 /**
  * ТЕСТОВЫЙ endpoint для создания заказа — НЕ создаёт реальных финансовых обязательств.
@@ -82,16 +81,6 @@ interface ArmtekOrderApiEnvelope {
   MESSAGES?: { TYPE: string; TEXT: string }[];
   RESP: ArmtekCreateOrderRespBody | null;
 }
-
-/** KUNRG / KUNNR: значение из .env как в Armtek (без padStart — иначе другой контрагент). */
-const resolveArmtekKunrg = (): string =>
-  process.env.ARMTEK_KUNNR?.trim() ||
-  process.env.KUNNR?.trim() ||
-  process.env.ARMTEK_KUNRG?.trim() ||
-  process.env.KUNRG?.trim() ||
-  '';
-
-const resolveArmtekVkorg = (): string => process.env.VKORG?.trim() || '4000';
 
 /**
  * Safety lock: по умолчанию реальный заказ у Armtek НЕ создаём.
@@ -244,7 +233,12 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
     return { success: true, cartItemIds, externalOrderIds: [] };
   }
 
-  const KUNRG = resolveArmtekKunrg();
+  const KUNRG =
+    process.env.ARMTEK_KUNNR?.trim() ||
+    process.env.KUNNR?.trim() ||
+    process.env.ARMTEK_KUNRG?.trim() ||
+    process.env.KUNRG?.trim() ||
+    '';
   if (!KUNRG) {
     userLogger.error('[ArmtekCheckout] Не задан номер покупателя (KUNNR / ARMTEK_KUNNR / KUNRG в .env)');
     return {
@@ -254,7 +248,7 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
     };
   }
 
-  const vkorg = resolveArmtekVkorg();
+  const vkorg = process.env.VKORG?.trim() || '4000';
   const orderItems: ArmtekCreateOrderItem[] = items.map((item) => {
     const pin = String(item.article ?? '').trim();
     const brand = String(item.brand ?? '').trim();
