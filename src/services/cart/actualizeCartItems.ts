@@ -8,6 +8,13 @@ import {
 } from '../../types/search.types.js';
 import { SupplierName } from '../../types/common.types.js';
 import { parseAvailability } from '../../utils/parseAvailability.js';
+import {
+  type ActualizePriceDirection,
+  type ActualizeStockStatus,
+  computeActualizePriceDirection,
+  computeActualizeStockStatus,
+  resolvePriceComparisonBaseline,
+} from './actualizeCartReportUtils.js';
 
 // =========================================================================
 //  Типы отчёта
@@ -19,6 +26,8 @@ export type ActualizeStatus =
   | 'price_changed'
   | 'not_found'
   | 'error';
+
+export type { ActualizePriceDirection, ActualizeStockStatus };
 
 /** Строка отчёта — старое состояние vs. новое. */
 export interface ActualizeReportItem {
@@ -34,6 +43,8 @@ export interface ActualizeReportItem {
   availableQuantity: number | string | null;
   requestedQuantity: number;
   isAvailable: boolean;
+  priceDirection: ActualizePriceDirection;
+  stockStatus: ActualizeStockStatus;
   error?: string;
 }
 
@@ -159,6 +170,8 @@ const buildErrorReport = (
   availableQuantity: null,
   requestedQuantity: cartItem.quantity,
   isAvailable: false,
+  priceDirection: null,
+  stockStatus: 'unknown',
   error,
 });
 
@@ -295,16 +308,32 @@ export const actualizeCartItems = async (
                   availableQuantity: null,
                   requestedQuantity: cartItem.quantity,
                   isAvailable: false,
+                  priceDirection: null,
+                  stockStatus: 'unknown',
                 });
                 continue;
               }
 
+              const baseline = resolvePriceComparisonBaseline(cartItem);
               const newPrice = match.price;
-              const priceChanged = newPrice !== cartItem.initialPrice;
-
+              const priceDirection = computeActualizePriceDirection(
+                baseline,
+                newPrice,
+              );
               const availNum = parseAvailability(match.availability);
-              const isAvailable =
-                availNum !== null ? availNum >= cartItem.quantity : false;
+              const stockStatus = computeActualizeStockStatus(
+                availNum,
+                cartItem.quantity,
+              );
+              const isAvailable = stockStatus === 'sufficient';
+              const status: ActualizeStatus =
+                priceDirection === 'up' || priceDirection === 'down'
+                  ? 'price_changed'
+                  : 'ok';
+              const priceDiff =
+                baseline !== null
+                  ? +(newPrice - baseline).toFixed(2)
+                  : null;
 
               cartItem.rawItemData = match;
               cartItem.currentPrice = newPrice;
@@ -315,13 +344,15 @@ export const actualizeCartItems = async (
                 brand: cartItem.brand,
                 supplier: cartItem.supplier,
                 name: cartItem.name,
-                status: priceChanged ? 'price_changed' : 'ok',
+                status,
                 initialPrice: cartItem.initialPrice,
                 currentPrice: newPrice,
-                priceDiff: +(newPrice - cartItem.initialPrice).toFixed(2),
+                priceDiff,
                 availableQuantity: match.availability,
                 requestedQuantity: cartItem.quantity,
                 isAvailable,
+                priceDirection,
+                stockStatus,
               });
             }
           } catch (fatalError) {

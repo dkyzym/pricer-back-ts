@@ -1,26 +1,24 @@
 import { Logger } from 'winston';
 import { abcpHeaders } from '../../../../constants/headers.js';
 import type { ICartItemDocument } from '../../../../models/CartItem.js';
-import type { ActualizeReportItem } from '../../../cart/actualizeCartItems.js';
+import type {
+  ActualizeReportItem,
+  ActualizeStatus,
+} from '../../../cart/actualizeCartItems.js';
+import {
+  computeActualizePriceDirection,
+  computeActualizeStockStatus,
+  resolvePriceComparisonBaseline,
+} from '../../../cart/actualizeCartReportUtils.js';
 import type { UnifiedCartRequest } from '../../../orchestration/cart/cart.types.js';
 import { cartSupplierHandlers } from '../../../orchestration/cart/cartHandlers.js';
 import { cleanArticleString } from '../../../../utils/data/brand/cleanArticleString.js';
+import { parseAvailability } from '../../../../utils/parseAvailability.js';
 import { yieldToEventLoop } from '../../../../utils/yieldToEventLoop.js';
 import { clearAbcpCartHtml } from './clearAbcpCartHtml.js';
 import { resolveHtmlClient } from './clientRegistry.js';
 import { getAbcpStrategy } from './strategies/StrategyFactory.js';
 import type { CartPosition } from './strategies/abcpStrategy.types.js';
-
-/**
- * Парсит `availability` так же, как в actualizeCartItems: число или строка с цифрами.
- */
-const parseAvailability = (value: number | string): number | null => {
-  if (typeof value === 'number') return value;
-  const parsed = parseInt(value, 10);
-  if (!isNaN(parsed)) return parsed;
-  const digits = value.replace(/\D/g, '');
-  return digits ? parseInt(digits, 10) : null;
-};
 
 const buildErrorReport = (
   cartItem: ICartItemDocument,
@@ -38,6 +36,8 @@ const buildErrorReport = (
   availableQuantity: null,
   requestedQuantity: cartItem.quantity,
   isAvailable: false,
+  priceDirection: null,
+  stockStatus: 'unknown',
   error,
 });
 
@@ -164,16 +164,25 @@ export const actualizeAbcpCart = async (
           availableQuantity: null,
           requestedQuantity: cartItem.quantity,
           isAvailable: false,
+          priceDirection: null,
+          stockStatus: 'unknown',
         });
         continue;
       }
 
+      const baseline = resolvePriceComparisonBaseline(cartItem);
       const newPrice = pos.price;
-      const priceChanged = newPrice !== cartItem.initialPrice;
+      const priceDirection = computeActualizePriceDirection(baseline, newPrice);
       const qtyForAvail: number | string = pos.quantity;
       const availNum = parseAvailability(qtyForAvail);
-      const isAvailable =
-        availNum !== null ? availNum >= cartItem.quantity : false;
+      const stockStatus = computeActualizeStockStatus(availNum, cartItem.quantity);
+      const isAvailable = stockStatus === 'sufficient';
+      const status: ActualizeStatus =
+        priceDirection === 'up' || priceDirection === 'down'
+          ? 'price_changed'
+          : 'ok';
+      const priceDiff =
+        baseline !== null ? +(newPrice - baseline).toFixed(2) : null;
 
       const prev = cartItem.rawItemData;
       const prevRecord =
@@ -196,13 +205,15 @@ export const actualizeAbcpCart = async (
         brand: cartItem.brand,
         supplier: cartItem.supplier,
         name: cartItem.name,
-        status: priceChanged ? 'price_changed' : 'ok',
+        status,
         initialPrice: cartItem.initialPrice,
         currentPrice: newPrice,
-        priceDiff: +(newPrice - cartItem.initialPrice).toFixed(2),
+        priceDiff,
         availableQuantity: qtyForAvail,
         requestedQuantity: cartItem.quantity,
         isAvailable,
+        priceDirection,
+        stockStatus,
       });
     }
 
