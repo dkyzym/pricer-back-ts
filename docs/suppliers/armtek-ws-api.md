@@ -1,937 +1,2186 @@
-# ARMTEK REST API — документация для JavaScript/TypeScript
+# Описание WS Status строк заказа подробно V2 ver. 1.1.7 (с примерами TypeScript)
 
-Версия API: **1.1.7**  
-Базовый URL: `http://ws.armtek.ru`  
-Формат ответа: **JSON** (`?format=json`)
+## Оглавление
 
----
-
-## 1. Авторизация и общий формат ответа
-
-### 1.1 Basic Authentication
-
-Все запросы выполняются с заголовком Basic Auth. В JS/Node:
-
-```ts
-const BASE_URL = 'http://ws.armtek.ru';
-const credentials = Buffer.from(`${login}:${password}`).toString('base64');
-
-const response = await fetch(`${BASE_URL}/api/ws_order/getOrder?VKORG=4000&KUNRG=...&ORDER=...&format=json`, {
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-});
-```
-
-### 1.2 Структура ответа (все методы)
-
-Каждый ответ обёрнут в общую оболочку:
-
-```ts
-/** Коды HTTP, возвращаемые в STATUS */
-const HTTP_OK = 200;
-const HTTP_BAD_REQUEST = 400;
-const HTTP_UNAUTHORIZED = 401;
-const HTTP_NOT_FOUND = 404;
-const HTTP_INTERNAL_SERVER_ERROR = 500;
-
-/** Типы сообщений в MESSAGES[].TYPE */
-type MessageType = 'A' | 'E' | 'S' | 'W' | 'I';
-// A — критическая ошибка, E — ошибка, S — успех, W — предупреждение, I — информация
-
-interface ArmtekApiMessage {
-  TYPE: MessageType;
-  TEXT: string;
-  DATE: string; // дата сообщения
-}
-
-interface ArmtekApiResponse<T> {
-  STATUS: number;      // HTTP-код (200 = успех)
-  MESSAGES: ArmtekApiMessage[];
-  RESP: T;             // тело ответа метода (описано ниже по каждому сервису)
-}
-```
-
-Проверка успешности:
-
-```ts
-const data = await response.json() as ArmtekApiResponse<YourRespType>;
-if (data.STATUS !== 200) {
-  const errors = data.MESSAGES?.filter(m => m.TYPE === 'A' || m.TYPE === 'E') ?? [];
-  throw new Error(errors.map(e => e.TEXT).join('; ') || `HTTP ${data.STATUS}`);
-}
-const payload = data.RESP;
-```
+1. [Описание сервиса](#описание-сервиса)
+2. [Входные параметры](#входные-параметры)
+3. [Структуры данных TypeScript](#структуры-данных-typescript)
+4. [Ответ сервиса](#ответ-сервиса)
+5. [Режимы работы](#режимы-работы)
+6. [Примеры использования](#примеры-использования)
+7. [Обработка ошибок](#обработка-ошибок)
+8. [Типичные сценарии](#типичные-сценарии)
 
 ---
 
-## 2. Формат дат
+## Описание сервиса
 
-Во всех полях дат используется строка: **`YYYYMMDDHHIISS`** (год, месяц, день, часы, минуты, секунды).
+Сервис **`getOrder2`** (Подробная информация по номеру заказа, версия 2) предоставляет детализированную информацию по заказам и статусам строк заказа с поддержкой расшифровки статусов позиций.
 
-Пример парсинга в JS:
+### Основные отличия версии V2
 
-```ts
-function parseArmtekDate(s: string): Date | null {
-  if (!s || s.length < 14) return null;
-  const y = +s.slice(0, 4), m = +s.slice(4, 6) - 1, d = +s.slice(6, 8);
-  const h = +s.slice(8, 10), min = +s.slice(10, 12), sec = +s.slice(12, 14);
-  return new Date(y, m, d, h, min, sec);
-}
-
-function formatArmtekDate(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-}
-```
+- Добавлен параметр `STATUS` для получения расшифровки статусов
+- Новая структура `STATUSES` с вложенными массивами для детализации статусов позиций
+- Поддержка работы в двух режимах: базовом и с расшифровкой статусов
 
 ---
 
-## 3. Сервисы по работе с заказами (ws_order)
+## Входные параметры
 
-Базовый путь: `/api/ws_order/<method>?format=json`
+### Таблица параметров запроса
 
-### 3.1 Создание заказа — createOrder
-
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_order/createOrder?format=json`
-
-**Тело запроса (JSON):**
-
-```ts
-interface CreateOrderItem {
-  PIN: string;        // артикул, макс. 40
-  BRAND: string;       // бренд, макс. 18
-  KWMENG: number;      // количество
-  KEYZAK?: string;     // код склада (из search) — рекомендуется всегда передавать
-  PRICEMAX?: string;
-  DATEMAX?: string;    // YYYYMMDDHHIISS
-  COMMENT?: string;
-  COMPL_DLV?: '0' | '1'; // 1 — полная поставка
-}
-
-interface CreateOrderRequest {
-  VKORG: string;      // сбытовая организация, макс. 4 символа (обяз.)
-  KUNRG: string;      // покупатель, макс. 10 символов (обяз.; передавать как в ответе API, без искусственных ведущих нулей)
-  KUNWE?: string;     // грузополучатель
-  KUNZA?: string;     // адрес доставки / пункт выдачи
-  INCOTERMS?: '0' | '1'; // 1 — самовывоз
-  PARNR?: string;     // контактное лицо
-  VBELN?: string;     // договор
-  TEXT_ORD?: string;  // комментарий по заказу, макс. 100
-  TEXT_EXP?: string;  // комментарий к экспедиции, макс. 100
-  DBTYP?: '1' | '2' | '3'; // 1/пусто — только основной склад; 2 — все склады АРМТЕК; 3 — + партнёры
-  ITEMS: CreateOrderItem[];
-}
-```
-
-**Ответ (RESP):**
-
-```ts
-interface CreateOrderResultItem {
-  PIN?: string;
-  BRAND?: string;
-  KEYZAK?: string;
-  KWMENG?: number;
-  PRICEMAX?: string;
-  DATEMAX?: string;
-  COMMENT?: string;
-  COMPL_DLV?: string;
-  ARTID?: string;
-  REMAIN?: number;     // 0 — позиция заказана полностью
-  ERROR?: string;
-  ERROR_MESSAGE?: string;
-  RESULT?: Array<{
-    POSID?: string;
-    POSNR?: string;
-    KEYZAK?: string;
-    NUM_ZAK?: string;
-    KWMENG?: number;
-    PRICE?: string;
-    WAERS?: string;
-    DLVDT?: string;
-    VBELN?: string;    // номер созданного заказа
-    BLOCK?: 'A' | 'B' | 'C' | 'D'; // A — не блокирован, B — блокирован, C — закрыт, D — деблокирован
-    ERROR?: string;
-  }>;
-}
-
-interface CreateOrderResponse {
-  ITEMS?: CreateOrderResultItem[];
-}
-```
-
-**Пример вызова:**
-
-```ts
-const body: CreateOrderRequest = {
-  VKORG: '4000',
-  KUNRG: '48376950',
-  ITEMS: [
-    { PIN: '12345', BRAND: 'BRAND', KWMENG: 2, KEYZAK: '01' },
-  ],
-};
-const res = await fetch(`${BASE_URL}/api/ws_order/createOrder?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(body),
-});
-const data = await res.json() as ArmtekApiResponse<CreateOrderResponse>;
-```
+| Параметр | Наименование | Тип | Обязательный | Примечание |
+|----------|--------------|-----|--------------|-----------|
+| VKORG | Сбытовая организация | строка (4) | Да | Настройка находится в "Сервис получения сбытовых организаций клиента". Пример: `4000` |
+| KUNRG | Покупатель | строка (10) | Да | Доступные значения из "Сервис получения структуры клиента", таблица `RG_TAB-KUNNR`. Пример: `00000000` |
+| ORDER | Номер заказа | строка (10) | Да | Номер созданного заказа |
+| STATUS | Расшифровка статусов | 0, 1 или пустая строка | Нет | Если `STATUS = 1`, в результат добавляется полное описание статусов по позиции |
 
 ---
 
-### 3.2 Создание тестового заказа — createTestOrder
+## Структуры данных TypeScript
 
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_order/createTestOrder?format=json`
+### Основные интерфейсы запроса
 
-Параметры и структура ответа аналогичны **createOrder** (те же типы `CreateOrderRequest` / `CreateOrderResponse`).
-
----
-
-### 3.3 Подробная информация по заказу — getOrder
-
-- **Метод:** `GET`
-- **URL:** `http://ws.armtek.ru/api/ws_order/getOrder?VKORG=...&KUNRG=...&ORDER=...&format=json`
-
-**Query-параметры:**
-
-| Параметр | Тип    | Обязательный | Описание |
-|----------|--------|--------------|----------|
-| VKORG    | string, макс. 4 | Да        | Сбытовая организация |
-| KUNRG    | string, макс. 10 | Да       | Покупатель |
-| ORDER    | string, макс. 10 | Да       | Номер заказа |
-| EDIT     | '0' \| '1' | Нет     | Для изменения |
-
-**Ответ (RESP):**
-
-```ts
-interface GetOrderHeader {
-  ORDER?: string;
-  ORDER_TYPE?: string;
-  ORDER_STATUS?: string;  // Создан | В работе | Закрыт | Отклонен
-  ORDER_DATE?: string;
-  ORDER_SUM?: string;
-  CURRENCY?: string;
-  KUNRG?: string;
-  NAMERG?: string;
-  KUNWE?: string;
-  NAMEWE?: string;
-  KUNZA?: string;
-  NAMEZA?: string;
-  ADDRZA?: string;
-  PARNRAP?: string;
-  NAMEAP?: string;
-  PARNRZP?: string;
-  NAMEZP?: string;
-  ETDAT?: string;
-  VDATU?: string;
-  DOC_NUM?: string;
-  DOC_DATE?: string;
-  NUMDOG?: string;
-  COMPL_DLV?: '0' | '1';
-  COMMENT?: string;
-  COMMENT_EXP?: string;
-  INCOTERMS_TXT?: string;
-  VSTELT?: string;
+```typescript
+/**
+ * Параметры запроса к сервису getOrder2
+ */
+interface GetOrder2Request {
+  /** Сбытовая организация (код, например: 4000) */
+  vkorg: string;
+  
+  /** Код покупателя (например: 00000001) */
+  kunrg: string;
+  
+  /** Номер заказа */
+  order: string;
+  
+  /** Флаг расшифровки статусов (0, 1 или пусто) */
+  status?: '0' | '1' | '';
 }
 
-interface GetOrderItem {
-  POSNR?: string;
-  BRAND?: string;
-  PIN?: string;
-  NAME?: string;
-  KWMENG?: string;
-  KWMENG_REQ?: string;
-  KWMENG_PROC?: string;
-  KWMENG_L?: string;
-  KWMENG_REJ_P?: string;
-  KWMENG_WAYIN?: string;
-  KWMENG_P?: string;
-  KWMENG_R?: string;
-  KWMENG_REJ?: string;
-  PRICE?: string;
-  SUMMA?: string;
-  CURRENCY?: string;
-  STATUS?: string;
-  NOTE?: string;
-  DLVRD?: string;
-  WRNTD?: string;
-  ABGRU_TXT?: string;
-  MATNR?: string;
-  COMPL_DLV?: string;
-  POSEX?: string;
-  POSROOT?: string;
-  CHARG?: string;
-  CHARG_BLK?: boolean;
-}
-
-interface GetOrderAbgruItem {
-  ABGRU?: string;
-  BEZEI?: string;
-  DEFAULT?: string;
-}
-
-interface GetOrderResponse {
-  HEADER?: GetOrderHeader[];
-  ITEMS?: GetOrderItem[];
-  ABGRU_ITEMS?: GetOrderAbgruItem[];
+/**
+ * Параметры запроса со значениями по умолчанию
+ */
+interface GetOrder2RequestConfig extends GetOrder2Request {
+  /** Базовый URL API */
+  baseUrl: string;
+  
+  /** Timeout запроса в миллисекундах */
+  timeout?: number;
+  
+  /** Флаг для трассировки запросов */
+  debug?: boolean;
 }
 ```
 
-**Пример:**
+### Интерфейсы ответа - Заголовок заказа (HEADER)
 
-```ts
-const params = new URLSearchParams({
-  VKORG: '4000',
-  KUNRG: '48376950',
-  ORDER: '1234567890',
-  format: 'json',
-});
-const res = await fetch(`${BASE_URL}/api/ws_order/getOrder?${params}`, {
-  headers: { Authorization: `Basic ${credentials}` },
-});
-const data = await res.json() as ArmtekApiResponse<GetOrderResponse>;
-const header = data.RESP?.HEADER?.[0];
-const items = data.RESP?.ITEMS ?? [];
+```typescript
+/**
+ * Информация о заголовке заказа
+ */
+interface OrderHeader {
+  /** Номер заказа */
+  order?: string;
+  
+  /** Тип заказа */
+  orderType?: OrderType;
+  
+  /** Статус заказа */
+  orderStatus?: OrderStatus;
+  
+  /** Дата заказа (формат: YYYYMMDDHHMMSS) */
+  orderDate?: string;
+  
+  /** Сумма заказа */
+  orderSum?: string;
+  
+  /** Валюта (примеры: RUB, USD, EUR) */
+  currency?: string;
+  
+  /** Код покупателя */
+  kunrg?: string;
+  
+  /** Наименование покупателя */
+  nameRg?: string;
+  
+  /** Код грузополучателя */
+  kunwe?: string;
+  
+  /** Наименование грузополучателя */
+  nameWe?: string;
+  
+  /** Адрес доставки / Пункт выдачи (код) */
+  kunza?: string;
+  
+  /** Адрес доставки / Пункт выдачи (наименование) */
+  nameZa?: string;
+  
+  /** Полный адрес доставки */
+  addrZa?: string;
+  
+  /** Код создателя заказа */
+  parNrAp?: string;
+  
+  /** Наименование создателя заказа */
+  nameAp?: string;
+  
+  /** Код контактного лица */
+  parNrZp?: string;
+  
+  /** Наименование контактного лица */
+  nameZp?: string;
+  
+  /** Дата начала поставки (формат: YYYYMMDDHHMMSS) */
+  etdat?: string;
+  
+  /** Дата окончания поставки (формат: YYYYMMDDHHMMSS) */
+  vdatu?: string;
+  
+  /** Номер заказа в учетной системе клиента */
+  docNum?: string;
+  
+  /** Дата заказа в учетной системе клиента */
+  docDate?: string;
+  
+  /** Номер договора */
+  numdog?: string;
+  
+  /** Полная поставка (1 - да, 0 - нет) */
+  complDlv?: '0' | '1';
+  
+  /** Комментарий по заказу */
+  comment?: string;
+  
+  /** Комментарий к экспедиции */
+  commentExp?: string;
+  
+  /** Вид доставки */
+  incotermsTxt?: DeliveryType;
+  
+  /** Наименование пункта выдачи */
+  vstelName?: string;
+}
+
+/**
+ * Тип заказа
+ */
+type OrderType = 
+  | 'Отгрузка с ОСНОВНЫХ складов АРМТЕК'
+  | 'Доставка с БЛИЖНИХ складов АРМТЕК'
+  | 'Доставка с ДАЛЬНИХ складов АРМТЕК'
+  | 'Доставка с ЦЗ';
+
+/**
+ * Статус заказа
+ */
+type OrderStatus = 
+  | 'Создан'
+  | 'В работе'
+  | 'Закрыт'
+  | 'Отклонен';
+
+/**
+ * Вид доставки
+ */
+type DeliveryType = 
+  | 'Доставка до Клиента'
+  | 'Самовывоз';
 ```
 
----
+### Интерфейсы ответа - Позиции заказа (ITEMS)
 
-### 3.4 Подробная информация по заказу (v2) — getOrder2
-
-- **Метод:** `GET`
-- **URL:** `http://ws.armtek.ru/api/ws_order/getOrder2?VKORG=...&KUNRG=...&ORDER=...&format=json`
-
-**Доп. параметр:** `STATUS=1` — в ответ добавляется расшифровка статусов по позициям (вложенные массивы `STATUSES` с полями Processing, Ready, Delivered и т.д.).
-
-Структура ответа совпадает с getOrder, плюс при `STATUS=1` в ответе появляется массив **STATUSES** с элементами:
-
-- **ORDER**, **POSNR**, **QUAN**, **VSTELNAME**
-- **Processing** — в обработке (подробности по складам/партнёрам)
-- **Ready** — готово к отгрузке (массив с DeliveryNum, DeliveryPos, DeliveryTime, DeliveryQuan, WarehouseQuan, DateDelNew)
-- **Delivered** — отгружено (массив с InvoiceNum, InvoicePos, PrintNum, Waybill, CreateTime, Quan, Unit, Cost, Currency, DeliveryNum)
-
-Для статуса **Processing** при расшифровке используются **SubStatus**: WayQuan, Planned, Waiting, Confirmed, Shipped (и поля Werks, WerksName, LsegETP, Quan, Bldat, Cputm, Unit, DateDelNew).
-
-Подробное описание полей — в разделе «Описание WS Статус строк заказа подробно V2» (ниже).
-
----
-
-### 3.5 Подробная информация по возврату — getRefund
-
-- **Метод:** `GET`
-- **URL:** `http://ws.armtek.ru/api/ws_order/getRefund?VKORG=...&KUNRG=...&RETURN=...&format=json`
-
-**Query:** VKORG, KUNRG, RETURN (номер возврата) — все обязательные.
-
-**RESP:** `HEADER` (аналогично getOrder), `ITEMS` (позиции возврата).
-
----
-
-### 3.6 Редактирование заказа — editOrder
-
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_order/editOrder?format=json`
-
-**Тело запроса:**
-
-```ts
-interface EditOrderPositionInput {
-  POSNR: string;   // номер позиции
-  KWMENG: number;  // количество
-  ABGRU: string;   // код причины отклонения (из ABGRU_ITEMS getOrder)
-  NOTE?: string;
+```typescript
+/**
+ * Информация о позиции заказа
+ */
+interface OrderItem {
+  /** Номер позиции в заказе */
+  posnr?: string;
+  
+  /** Бренд */
+  brand?: string;
+  
+  /** Номер артикула (ПИН) */
+  pin?: string;
+  
+  /** Наименование артикула */
+  name?: string;
+  
+  /** Количество в заказе */
+  kwmeng?: string;
+  
+  /** Количество к поставке (в getOrder_get заменен на READY или ReadyToIssue) */
+  kwmengP?: string;
+  
+  /** Отгруженное количество (в getOrder_get заменен на Issued) */
+  kwmengR?: string;
+  
+  /** Отклоненное количество (в getOrder_get заменен на REJECTED или REJ_MENGE) */
+  kwmengRej?: string;
+  
+  /** Цена за единицу */
+  price?: string;
+  
+  /** Сумма позиции */
+  summa?: string;
+  
+  /** Валюта */
+  currency?: string;
+  
+  /** Статус позиции */
+  status?: ItemStatus;
+  
+  /** Примечание к позиции */
+  note?: string;
+  
+  /** Ожидаемая дата поставки (формат: YYYYMMDDHHMMSS) */
+  dlvrd?: string;
+  
+  /** Гарантированная дата поставки (формат: YYYYMMDDHHMMSS) */
+  wrntd?: string;
+  
+  /** Причина отклонения (если позиция отклонена) */
+  abgruTxt?: string;
+  
+  /** Код материала */
+  matnr?: string;
+  
+  /** Полная поставка (1 - да, 0 - нет) */
+  complDlv?: '0' | '1';
+  
+  /** Ссылка на родительскую позицию */
+  posex?: string;
+  
+  /** Ссылка на корневую позицию */
+  posroot?: string;
+  
+  /** Признак некондиции */
+  charg?: string;
+  
+  /** Признак блокировки некондиции к отгрузке */
+  chargBlk?: boolean;
+  
+  /** Код склада партнера АРМТЕК (при заказе с ЦЗ) */
+  supplier?: number;
+  
+  /** Изначально заказанное количество */
+  zzKwmeng?: string;
+  
+  /** Суммарно отклоненное количество */
+  rejected?: string;
+  
+  /** Количество в работе */
+  processing?: string;
+  
+  /** Количество готово к отгрузке */
+  ready?: string;
+  
+  /** Количество от которого отказался клиент */
+  rejMenge?: string;
+  
+  /** Готово к выдаче (для самовывоза) */
+  readyToIssue?: string;
+  
+  /** Выдано (для самовывоза) */
+  issued?: string;
 }
 
-interface EditOrderRequest {
-  VKORG: string;   // макс. 4 символа
-  KUNRG: string;   // макс. 10 символов
-  ORDER: string;   // макс. 10 символов
-  POSITION_INPUT: EditOrderPositionInput[];
-}
+/**
+ * Статус позиции заказа
+ */
+type ItemStatus = 
+  | '' // пустое значение
+  | 'позиция полностью поставлена'
+  | 'позиция частично поставлена'
+  | 'позиция частично отклонена'
+  | 'позиция полностью отклонена';
 ```
 
-**Пример:**
+### Интерфейсы ответа - Расшифровка статусов
 
-```ts
-const body: EditOrderRequest = {
-  VKORG: '4000',
-  KUNRG: '48376950',
-  ORDER: '1234567890',
-  POSITION_INPUT: [
-    { POSNR: '000010', KWMENG: 1, ABGRU: '001' },
-  ],
-};
-await fetch(`${BASE_URL}/api/ws_order/editOrder?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(body),
-});
-```
-
----
-
-## 4. Сервисы поиска (ws_search)
-
-Базовый путь: `/api/ws_search/<method>?format=json`
-
-### 4.1 Поиск по ассортименту — assortment_search
-
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_search/assortment_search?format=json`
-
-**Тело запроса:**
-
-```ts
-interface AssortmentSearchRequest {
-  VKORG: string;   // макс. 4 символа, обяз.
-  PIN: string;     // артикул, макс. 40, обяз.
-  PROGRAM?: 'LP' | 'GP'; // LP — легковая, GP — грузовая
-}
-```
-
-**Ответ (RESP):**
-
-```ts
-interface AssortmentSearchItem {
-  PIN?: string;
-  BRAND?: string;
-  NAME?: string;
+```typescript
+/**
+ * Полный ответ сервиса getOrder2
+ */
+interface GetOrder2Response {
+  /** Информация о заголовке заказа */
+  header?: OrderHeader;
+  
+  /** Список позиций заказа */
+  items?: OrderItem[];
+  
+  /** Расшифровка статусов (только если STATUS = 1) */
+  statuses?: OrderStatusDetail[];
 }
 
-interface AssortmentSearchResponse {
-  ARRAY?: AssortmentSearchItem[];
-}
-```
-
----
-
-### 4.2 Поиск (остатки, цены, аналоги) — search
-
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_search/search?format=json`
-
-**Тело запроса:**
-
-```ts
-interface SearchRequest {
-  VKORG: string;      // обяз.
-  KUNNR_RG: string;   // покупатель, обяз., макс. 10 символов (как KUNRG; без лишних ведущих нулей)
-  PIN: string;        // артикул, обяз.
-  BRAND?: string;     // рекомендуется всегда заполнять
-  QUERY_TYPE?: '1' | '2'; // 1 — без аналогов, 2 — с аналогами (при пустом BRAND лучше 1)
-  PROGRAM?: 'LP' | 'GP';
-  KUNNR_ZA?: string;  // адрес доставки / пункт выдачи
-  INCOTERMS?: '0' | '1';
-  VBELN?: string;     // договор
-}
-```
-
-**Ответ (RESP):**
-
-```ts
-interface SearchResponseItem {
-  PIN?: string;
-  BRAND?: string;
-  NAME?: string;
-  ARTID?: string;
-  PARNR?: string;
-  KEYZAK?: string;    // код склада — передавать в createOrder ITEMS[].KEYZAK
-  RVALUE?: string;   // доступное количество
-  RETDAYS?: number;
-  RDPRF?: string;
-  MINBM?: string;
-  VENSL?: string;
-  PRICE?: string;
-  WAERS?: string;
-  DLVDT?: string;    // YYYYMMDDHHIISS
-  WRNTDT?: string;
-  ANALOG?: string;
-  TYPEB?: string;    // I | IP | PP (импорт/производитель, РБ)
-  DSPEC?: string;
-  RCOST?: string;
-  MRKBY?: string;
-  PNOTE?: string;
-  IMP_ADD?: string;
-  SELLP?: string;
-  REST_ADD?: string;
-  REST_ADD_P?: string;
+/**
+ * Деталь статуса позиции заказа
+ */
+interface OrderStatusDetail {
+  /** Номер заказа */
+  order: string;
+  
+  /** Номер позиции */
+  posnr: string;
+  
+  /** Общее количество */
+  quan: string;
+  
+  /** Наименование пункта выдачи */
+  vstelName: string;
+  
+  /** Детали по статусу "В обработке" */
+  processing?: StatusDetailProcessing[];
+  
+  /** Детали по статусу "Готово к отгрузке" */
+  ready?: StatusDetailReady[];
+  
+  /** Детали по статусу "Отгружено" */
+  delivered?: StatusDetailDelivered[];
 }
 
-interface SearchResponse {
-  ARRAY?: SearchResponseItem[];
+/**
+ * Детали статуса "В обработке" (Processing)
+ */
+interface StatusDetailProcessing {
+  /** Субстатус */
+  subStatus: SubStatusType;
+  
+  /** Код склада АРМТЕК */
+  werks?: string;
+  
+  /** Наименование склада АРМТЕК */
+  werksName?: string;
+  
+  /** Описание/пояснение статуса */
+  lsegEtp?: string;
+  
+  /** Количество в данном статусе */
+  quan: string;
+  
+  /** Дата последнего события (формат: YYYYMMDD) */
+  bldat?: string;
+  
+  /** Время последнего события (формат: HHMMSS) */
+  cputm?: string;
+  
+  /** Единица измерения */
+  unit: string;
+  
+  /** Расчетная дата получения (формат: YYYYMMDDHHMMSS) */
+  dateDelNew?: string;
 }
-```
 
-**Пример:** перед созданием заказа вызвать search, взять `KEYZAK` из нужной строки и передать в `createOrder` в каждый элемент `ITEMS`, иначе поиск остатков только на основном складе.
-
----
-
-## 5. Сервисы настроек пользователя (ws_user)
-
-Базовый путь: `/api/ws_user/<method>?format=json`
-
-### 5.1 Получение сбытовых организаций клиента — getUserVkorgList
-
-- **Метод:** `GET`
-- **URL:** `http://ws.armtek.ru/api/ws_user/getUserVkorgList?format=json`
-
-**Входные параметры:** отсутствуют (список пуст)
-
-**Ответ (RESP):**
-
-```ts
-interface GetUserVkorgListItem {
-  VKORG?: string;         // Сбытовая организация (макс. 4 символа)
-  PROGRAM_NAME?: string;  // Наименование программы (макс. 100 символов)
+/**
+ * Детали статуса "Готово к отгрузке" (Ready)
+ */
+interface StatusDetailReady {
+  /** Номер документа поставки */
+  deliveryNum?: string;
+  
+  /** Номер позиции в поставке */
+  deliveryPos?: string;
+  
+  /** Дата и время создания поставки (формат: YYYYMMDDHHMMSS) */
+  deliveryTime?: string;
+  
+  /** Количество в позиции поставки */
+  deliveryQuan?: string;
+  
+  /** Единица измерения */
+  deliveryUnit?: string;
+  
+  /** Количество на складе отгрузки */
+  warehouseQuan?: string;
+  
+  /** Расчетная дата получения (формат: YYYYMMDDHHMMSS) */
+  dateDelNew?: string;
 }
 
-interface GetUserVkorgListResponse {
-  ARRAY?: GetUserVkorgListItem[];
+/**
+ * Детали статуса "Отгружено" (Delivered)
+ */
+interface StatusDetailDelivered {
+  /** Номер фактуры */
+  invoiceNum: string;
+  
+  /** Номер позиции в фактуре */
+  invoicePos: string;
+  
+  /** Печатный номер фактуры (УПД/Товарный чек) */
+  printNum: string;
+  
+  /** Номер ТН/ТТН */
+  waybill?: string;
+  
+  /** Дата и время создания фактуры (формат: YYYYMMDDHHMMSS) */
+  createTime: string;
+  
+  /** Отгруженное количество */
+  quan: string;
+  
+  /** Единица измерения */
+  unit: string;
+  
+  /** Стоимость по строке */
+  cost: string;
+  
+  /** Валюта */
+  currency: string;
+  
+  /** Номер поставки */
+  deliveryNum: string;
 }
-```
 
-**Описание полей:**
-- **VKORG** — код сбытовой организации (4-значный код, например: 4000)
-- **PROGRAM_NAME** — наименование программы снабжения
-
-**Пример:**
-
-```ts
-const res = await fetch(`${BASE_URL}/api/ws_user/getUserVkorgList?format=json`, {
-  headers: { Authorization: `Basic ${credentials}` },
-});
-const data = await res.json() as ArmtekApiResponse<GetUserVkorgListResponse>;
-const vkorgList = data.RESP?.ARRAY ?? [];
-// Использовать VKORG в качестве параметра для других сервисов
+/**
+ * Субстатус обработки
+ */
+type SubStatusType = 
+  | 'WayQuan'      // товар в пути между пунктами логистической цепочки
+  | 'Planned'      // запланировано к закупке
+  | 'Waiting'      // ожидание подтверждения от партнера
+  | 'Confirmed'    // партнер подтвердил готовность отгрузить
+  | 'Shipped';     // партнер отгрузил товар в адрес АРМТЕК
 ```
 
 ---
 
-### 5.2 Получение структуры клиента — getUserInfo
+## Ответ сервиса
 
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_user/getUserInfo?format=json`
+### Таблица HEADER (Заголовок заказа)
 
-**Входные параметры:**
+| Параметр | Наименование | Тип | Примечание |
+|----------|--------------|-----|-----------|
+| ORDER | Номер заказа | строка (10) | Номер созданного заказа |
+| ORDER_TYPE | Тип заказа | строка (100) | Зависит от места отгрузки |
+| ORDER_STATUS | Статус заказа | строка (100) | Создан / В работе / Закрыт / Отклонен |
+| ORDER_DATE | Дата заказа | строка (20) | Формат: YYYYMMDDHHMMSS |
+| ORDER_SUM | Сумма заказа | строка (20) | Сумма всего заказа |
+| CURRENCY | Валюта | строка (4) | RUB, USD, EUR и т.д. |
+| KUNRG | Покупатель | строка (10) | Код покупателя |
+| KUNWE | Грузополучатель | строка (10) | Код грузополучателя |
+| KUNZA | Адрес доставки | строка (10) | Код адреса или пункта выдачи |
+| COMPL_DLV | Полная поставка | 0 / 1 | 1 - да, 0 - нет |
+| COMMENT | Комментарий по заказу | строка (100) | Произвольный комментарий |
+| INCOTERMS_TXT | Вид доставки | строка (100) | Доставка до Клиента / Самовывоз |
 
-| Параметр | Тип | Обязательный | Описание |
-|----------|-----|--------------|----------|
-| VKORG | string, макс. 4 | Да | Сбытовая организация (из getUserVkorgList) |
-| STRUCTURE | '0' \| '1' \| '' | Нет | 1 — получить структуру; 0 — не получать |
+### Таблица ITEMS (Позиции заказа)
 
-**Ответ (RESP):**
+| Параметр | Наименование | Тип | Примечание |
+|----------|--------------|-----|-----------|
+| POSNR | Номер позиции | строка (10) | Порядковый номер позиции |
+| BRAND | Бренд | строка (18) | Наименование бренда |
+| PIN | Номер артикула | строка (40) | ПИН (строка поиска) |
+| NAME | Наименование | строка (100) | Описание товара |
+| KWMENG | Количество в заказе | строка (20) | Заказанное количество |
+| PRICE | Цена за единицу | строка (20) | Цена товара |
+| STATUS | Статус позиции | строка (100) | Статус доставки позиции |
+| READY | Готово к отгрузке | строка (20) | Количество готовое к отгрузке |
+| PROCESSING | В работе | строка (20) | Количество в обработке |
+| REJECTED | Отклонено | строка (20) | Общее отклоненное количество |
+| DLVRD | Ожидаемая дата | строка (20) | Формат: YYYYMMDDHHMMSS |
+| CHARG | Признак некондиции | строка (10) | Признак дефектного товара |
+| SUPPLIER | Код склада партнера | число (10) | Для товара с ЦЗ |
 
-```ts
-interface GetUserInfoScaleItem {
-  SUMMA?: string;   // Сумма
-  DISCOUNT?: string; // Процент скидки
-}
+---
 
-interface GetUserInfoContact {
-  PARNR?: string;   // Контактное лицо
-  DEFAULT?: string; // Признак установки по умолчанию (0 или 1)
-  FNAME?: string;   // Полное наименование
-  LNAME?: string;   // Фамилия
-  MNAME?: string;   // Отчество
-  PHONE?: string;   // Контактный телефон
-  EMAIL?: string;   // Email
-}
+## Режимы работы
 
-interface GetUserInfoContract {
-  VBELN?: string;        // Договор
-  BSTKD?: string;        // Номер договора
-  BSTKDT?: string;       // Спец. условия договора
-  BSTDK?: string;        // Дата договора (YYYYMMDDHHIISS)
-  DATBI?: string;        // Дата действия договора (YYYYMMDDHHIISS)
-  DEFAULT?: string;      // Признак установки по умолчанию
-  AUART?: string;        // Вид договора
-  KLIMK?: string;        // Кредит
-  KLIMKU?: string;       // Кредитный остаток
-  OEIKW?: string;        // Зарезервировано товара (заказы+поставки)
-  WAERS?: string;        // Валюта (макс. 4 символа)
-  ZTERM?: string;        // Условия платежа (отсрочка)
-  SCALE_TAB?: GetUserInfoScaleItem[]; // Таблица шкалы скидок
-}
+### Режим 1: Базовый (STATUS = 0 или пусто)
 
-interface GetUserInfoWarehouse {
-  KUNNR?: string;   // Идентификатор
-  DEFAULT?: string; // Признак установки по умолчанию
-  SNAME?: string;   // Краткое наименование
-  FNAME?: string;   // Полное наименование
-  ADRESS?: string;  // Адрес
-  PHONE?: string;   // Контактный телефон
-}
+Возвращает информацию о статусах строк заказа, соответствующих отображению в ЭТП на странице "Заказ подробно".
 
-interface GetUserInfoPickup {
-  ID?: string;   // Уникальный номер
-  NAME?: string; // Наименование (артикула или пункта самовывоза)
-}
+**Структура ответа:**
 
-interface GetUserInfoBuyer {
-  KUNAG?: string;
-  VKORG?: string;
-  SNAME?: string;      // Краткое наименование
-  FNAME?: string;      // Полное наименование
-  ADRESS?: string;     // Адрес
-  PHONE?: string;      // Контактный телефон
-  RG_TAB?: GetUserInfoWarehouse[]; // Таблица доступных покупателей
-  WE_TAB?: GetUserInfoWarehouse[]; // Таблица доступных грузополучателей
-  ZA_TAB?: GetUserInfoWarehouse[]; // Таблица доступных адресов доставки
-  EXW_TAB?: GetUserInfoPickup[];    // Таблица доступных адресов самовывоза
-  DOGOVOR_TAB?: GetUserInfoContract[]; // Таблица доступных договоров
-  CONTACT_TAB?: GetUserInfoContact[]; // Таблица доступных контактных лиц
-}
-
-interface GetUserInfoResponse {
-  STRUCTURE?: GetUserInfoBuyer[];
+```
+{
+  "header": { ... },
+  "items": [ ... ]
 }
 ```
 
-**Описание ключевых групп:**
-- **RG_TAB** — доступные покупатели (для параметра KUNRG в методах заказа)
-- **WE_TAB** — доступные грузополучатели (для параметра KUNWE)
-- **ZA_TAB** — доступные адреса доставки / пункты выдачи (для параметра KUNZA)
-- **EXW_TAB** — доступные адреса самовывоза (для параметра INCOTERMS=1)
-- **DOGOVOR_TAB** — доступные договоры (для параметра VBELN), включая шкалы скидок в SCALE_TAB
-- **CONTACT_TAB** — доступные контактные лица (для параметра PARNR)
+### Режим 2: С расшифровкой статусов (STATUS = 1)
 
-**Пример использования:**
+Возвращает детальную расшифровку статусов позиций с информацией:
 
-```ts
-const body = {
-  VKORG: '4000',
-  STRUCTURE: '1'
-};
-const res = await fetch(`${BASE_URL}/api/ws_user/getUserInfo?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(body),
-});
-const data = await res.json() as ArmtekApiResponse<GetUserInfoResponse>;
-const structure = data.RESP?.STRUCTURE?.[0];
-// structure содержит все доступные покупатели, договоры, контакты и т.д.
+- По статусу "В обработке" (Processing) - с субстатусами и движением товара
+- По статусу "Готово к отгрузке" (Ready) - с номерами поставок
+- По статусу "Отгружено" (Delivered) - с номерами фактур и доставок
 
-// Пример: получить список доступных контактных лиц
-const contacts = structure?.CONTACT_TAB ?? [];
-const defaultContact = contacts.find(c => c.DEFAULT === '1');
+**Структура ответа:**
+
+```
+{
+  "header": { ... },
+  "items": [ ... ],
+  "statuses": [
+    {
+      "order": "...",
+      "posnr": "...",
+      "processing": [ ... ],
+      "ready": [ ... ],
+      "delivered": [ ... ]
+    }
+  ]
+}
 ```
 
 ---
 
-### 5.3 Получение списка брендов — getBrandList
+## Примеры использования
 
-- **Метод:** `GET`
-- **URL:** `http://ws.armtek.ru/api/ws_user/getBrandList?format=json`
+### Пример 1: Простой запрос информации о заказе
 
-**Входные параметры:** отсутствуют (список пуст)
+```typescript
+import axios from 'axios';
 
-**Ответ (RESP):**
-
-```ts
-interface GetBrandListItem {
-  BRAND?: string; // Наименование бренда (макс. 100 символов)
+interface GetOrder2Request {
+  vkorg: string;
+  kunrg: string;
+  order: string;
+  status?: '0' | '1' | '';
 }
 
-interface GetBrandListResponse {
-  ARRAY?: GetBrandListItem[];
-}
-```
-
-**Пример:**
-
-```ts
-const res = await fetch(`${BASE_URL}/api/ws_user/getBrandList?format=json`, {
-  headers: { Authorization: `Basic ${credentials}` },
-});
-const data = await res.json() as ArmtekApiResponse<GetBrandListResponse>;
-const brands = data.RESP?.ARRAY?.map(b => b.BRAND) ?? [];
-// Использовать в качестве справочника брендов при поиске и заказе
-```
-
----
-
-### 5.4 Получение списка складов — getStoreList
-
-- **Метод:** `POST`
-- **URL:** `http://ws.armtek.ru/api/ws_user/getStoreList?format=json`
-
-**Входные параметры:**
-
-| Параметр | Тип | Обязательный | Описание |
-|----------|-----|--------------|----------|
-| VKORG | string, макс. 4 | Да | Сбытовая организация (из getUserVkorgList) |
-
-**Ответ (RESP):**
-
-```ts
-interface GetStoreListItem {
-  KEYZAK?: string;  // Код склада (макс. 10 символов)
-  SKLCODE?: string; // Технический идентификатор склада (макс. 10 символов)
-  SKLNAME?: string; // Наименование склада (макс. 100 символов)
+interface GetOrder2Response {
+  header?: Record<string, any>;
+  items?: Record<string, any>[];
 }
 
-interface GetStoreListResponse {
-  ARRAY?: GetStoreListItem[];
-}
-```
-
-**Описание полей:**
-- **KEYZAK** — основной код склада (использовать в методах поиска и заказа)
-- **SKLCODE** — технический идентификатор
-- **SKLNAME** — человеко-читаемое имя склада
-
-**Пример:**
-
-```ts
-const body = { VKORG: '4000' };
-const res = await fetch(`${BASE_URL}/api/ws_user/getStoreList?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(body),
-});
-const data = await res.json() as ArmtekApiResponse<GetStoreListResponse>;
-const stores = data.RESP?.ARRAY ?? [];
-// Использовать KEYZAK при поиске остатков и создании заказа
-```
-
----
-
-## 6. Справочник кодов ответа (STATUS)
-
-Используются стандартные HTTP-коды, например:
-
-- 100–226 — информационные и успешные (200 — OK)
-- 300–308 — перенаправления
-- 400 — Bad Request, 401 — Unauthorized, 403 — Forbidden, 404 — Not Found, 405 — Method Not Allowed, 408 — Request Timeout, 409 — Conflict
-- 500 — Internal Server Error, 501–511 — ошибки сервера/шлюза
-
-Проверять успех: `data.STATUS === 200`.
-
----
-
-## 7. Поля перезаказа и некондиции (v1.1.7)
-
-В ответах getOrder / getOrder2 по позициям (ITEMS) могут быть:
-
-| Поле      | Описание |
-|-----------|----------|
-| POSEX     | Ссылка на родительскую позицию (перезаказ/некондиция) |
-| POSROOT   | Ссылка на корневую позицию |
-| CHARG     | Признак некондиции (если не пусто) |
-| CHARG_BLK | Блокировка некондиции к отгрузке (true — нужна разблокировка в ЭТП или у менеджера) |
-
----
-
-## 8. getOrder2: расшифровка статусов (STATUS=1)
-
-При вызове getOrder2 с параметром **STATUS=1** в ответ добавляется массив **STATUSES**. Каждый элемент привязан к позиции заказа (ORDER, POSNR) и содержит:
-
-- **QUAN** — количество для расшифровки  
-- **VSTELNAME** — пункт выдачи  
-- **Processing** — массив подстатусов (SubStatus: WayQuan, Planned, Waiting, Confirmed, Shipped; поля Werks, WerksName, LsegETP, Quan, Bldat, Cputm, Unit, DateDelNew)  
-- **Ready** — массив (DeliveryNum, DeliveryPos, DeliveryTime, DeliveryQuan, WarehouseQuan, DateDelNew)  
-- **Delivered** — массив (InvoiceNum, InvoicePos, PrintNum, Waybill, CreateTime, Quan, Unit, Cost, Currency, DeliveryNum)
-
-SubStatus для **Processing**:
-
-- **WayQuan** — товар в пути между складами  
-- **Planned** — запланировано к закупке у партнёра  
-- **Waiting** — ожидание подтверждения от партнёра  
-- **Confirmed** — партнёр подтвердил  
-- **Shipped** — партнёр отгрузил в адрес АРМТЕК  
-
-Если Werks/WerksName пусты — субстатус относится к складу партнёра.
-
----
-
----
-
-*Документация собрана из официальных материалов ws.armtek.ru (возвращаемый ответ, заказы, поиск, описание getOrder2) и адаптирована для использования в JavaScript/TypeScript.*
-
----
-
-## Приложение: Типичный поток работы с API
-
-### Инициализация и получение справочников
-
-```ts
-// 1. Получить доступные сбытовые организации
-const vkorgRes = await fetch(`${BASE_URL}/api/ws_user/getUserVkorgList?format=json`, {
-  headers: { Authorization: `Basic ${credentials}` },
-});
-const vkorgData = await vkorgRes.json() as ArmtekApiResponse<GetUserVkorgListResponse>;
-const VKORG = vkorgData.RESP?.ARRAY?.[0]?.VKORG || '4000';
-
-// 2. Получить структуру клиента, договоры, контакты
-const userInfoRes = await fetch(`${BASE_URL}/api/ws_user/getUserInfo?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ VKORG, STRUCTURE: '1' }),
-});
-const userInfoData = await userInfoRes.json() as ArmtekApiResponse<GetUserInfoResponse>;
-const structure = userInfoData.RESP?.STRUCTURE?.[0];
-const KUNRG = structure?.RG_TAB?.[0]?.KUNNR;    // покупатель по умолчанию
-const VBELN = structure?.DOGOVOR_TAB?.[0]?.VBELN; // договор по умолчанию
-
-// 3. Получить список брендов (справочник)
-const brandsRes = await fetch(`${BASE_URL}/api/ws_user/getBrandList?format=json`, {
-  headers: { Authorization: `Basic ${credentials}` },
-});
-const brandsData = await brandsRes.json() as ArmtekApiResponse<GetBrandListResponse>;
-const BRANDS = brandsData.RESP?.ARRAY?.map(b => b.BRAND) ?? [];
-
-// 4. Получить доступные склады
-const storesRes = await fetch(`${BASE_URL}/api/ws_user/getStoreList?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ VKORG }),
-});
-const storesData = await storesRes.json() as ArmtekApiResponse<GetStoreListResponse>;
-const STORES = storesData.RESP?.ARRAY ?? [];
-```
-
-### Поиск товара и создание заказа
-
-```ts
-// 5. Поиск товара по артикулу
-const searchRes = await fetch(`${BASE_URL}/api/ws_search/search?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    VKORG,
-    KUNNR_RG: KUNRG,
-    PIN: '12345',           // артикул, который ищем
-    BRAND: BRANDS[0],       // выбранный бренд
-    QUERY_TYPE: '1',        // без аналогов
-  }),
-});
-const searchData = await searchRes.json() as ArmtekApiResponse<SearchResponse>;
-const searchItem = searchData.RESP?.ARRAY?.[0];
-const KEYZAK = searchItem?.KEYZAK; // код склада с товаром
-
-// 6. Создать заказ
-const createOrderRes = await fetch(`${BASE_URL}/api/ws_order/createOrder?format=json`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Basic ${credentials}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    VKORG,
-    KUNRG,
-    VBELN,                       // договор
-    ITEMS: [
-      {
-        PIN: '12345',
-        BRAND: BRANDS[0],
-        KWMENG: 2,
-        KEYZAK,                  // важно указать, иначе ищет только в основном складе
+async function getOrderInfo(
+  baseUrl: string,
+  vkorg: string,
+  kunrg: string,
+  order: string
+): Promise<GetOrder2Response> {
+  try {
+    const response = await axios.get(`${baseUrl}/getOrder2`, {
+      params: {
+        vkorg,
+        kunrg,
+        order,
+        status: '0'
       },
-    ],
-  } as CreateOrderRequest),
-});
-const createData = await createOrderRes.json() as ArmtekApiResponse<CreateOrderResponse>;
-const ORDER = createData.RESP?.ITEMS?.[0]?.RESULT?.[0]?.VBELN;
+      timeout: 10000
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при получении информации о заказе:', error);
+    throw error;
+  }
+}
+
+// Использование
+(async () => {
+  const orderData = await getOrderInfo(
+    'https://api.armtek.ru',
+    '4000',
+    '00000001',
+    '0000000123'
+  );
+
+  console.log('Информация о заказе:', orderData.header);
+  console.log('Позиции:', orderData.items);
+})();
 ```
 
-### Отслеживание статуса заказа
+### Пример 2: Запрос с расшифровкой статусов
 
-```ts
-// 7. Получить полную информацию по заказу с детализированными статусами
-const getOrderRes = await fetch(
-  `${BASE_URL}/api/ws_order/getOrder2?${new URLSearchParams({
-    VKORG,
-    KUNRG,
-    ORDER: ORDER || '1234567890',
-    STATUS: '1',                // запросить детализацию статусов
-    format: 'json',
-  })}`,
-  { headers: { Authorization: `Basic ${credentials}` } }
-);
-const orderData = await getOrderRes.json() as ArmtekApiResponse<GetOrderResponse>;
-const orderHeader = orderData.RESP?.HEADER?.[0];
-const orderItems = orderData.RESP?.ITEMS ?? [];
+```typescript
+async function getOrderWithStatusDetails(
+  baseUrl: string,
+  vkorg: string,
+  kunrg: string,
+  order: string
+): Promise<GetOrder2Response> {
+  try {
+    const response = await axios.get(`${baseUrl}/getOrder2`, {
+      params: {
+        vkorg,
+        kunrg,
+        order,
+        status: '1'  // Запрос с расшифровкой
+      },
+      timeout: 10000
+    });
 
-// Проверить статус позиций (если в ответе STATUSES)
-const statusesArray = (orderData.RESP as any)?.STATUSES ?? [];
-for (const status of statusesArray) {
-  if (status.Processing?.length) {
-    console.log(`Позиция ${status.POSNR}: в обработке`);
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при получении статусов:', error);
+    throw error;
   }
-  if (status.Ready?.length) {
-    console.log(`Позиция ${status.POSNR}: готово к отгрузке`);
+}
+
+// Использование с расшифровкой
+(async () => {
+  const orderData = await getOrderWithStatusDetails(
+    'https://api.armtek.ru',
+    '4000',
+    '00000001',
+    '0000000123'
+  );
+
+  // Обработка расшифровки статусов
+  if (orderData.statuses) {
+    orderData.statuses.forEach(status => {
+      console.log(`\nПозиция ${status.posnr}:`);
+      
+      if (status.processing) {
+        console.log('Статус "В обработке":');
+        status.processing.forEach(proc => {
+          console.log(
+            `  - ${proc.subStatus} (${proc.quan} шт) ${
+              proc.werksName || 'склад партнера'
+            }`
+          );
+        });
+      }
+
+      if (status.ready) {
+        console.log('Готово к отгрузке:');
+        status.ready.forEach(rdy => {
+          console.log(
+            `  - Поставка ${rdy.deliveryNum}: ${
+              rdy.deliveryQuan || rdy.warehouseQuan
+            } шт`
+          );
+        });
+      }
+
+      if (status.delivered) {
+        console.log('Отгружено:');
+        status.delivered.forEach(dlv => {
+          console.log(
+            `  - Фактура ${dlv.printNum}: ${dlv.quan} ${dlv.unit}`
+          );
+        });
+      }
+    });
   }
-  if (status.Delivered?.length) {
-    console.log(`Позиция ${status.POSNR}: отгружено`);
+})();
+```
+
+### Пример 3: Класс-обертка для работы с API
+
+```typescript
+class ArmtekOrderService {
+  private baseUrl: string;
+  private vkorg: string;
+  private timeout: number;
+
+  constructor(
+    baseUrl: string,
+    vkorg: string,
+    timeout: number = 10000
+  ) {
+    this.baseUrl = baseUrl;
+    this.vkorg = vkorg;
+    this.timeout = timeout;
+  }
+
+  /**
+   * Получить информацию о заказе без расшифровки статусов
+   */
+  async getOrder(
+    kunrg: string,
+    orderNumber: string
+  ): Promise<GetOrder2Response> {
+    return this.fetchOrder(kunrg, orderNumber, '0');
+  }
+
+  /**
+   * Получить информацию о заказе с расшифровкой статусов
+   */
+  async getOrderWithDetails(
+    kunrg: string,
+    orderNumber: string
+  ): Promise<GetOrder2Response> {
+    return this.fetchOrder(kunrg, orderNumber, '1');
+  }
+
+  /**
+   * Получить статус конкретной позиции
+   */
+  async getItemStatus(
+    kunrg: string,
+    orderNumber: string,
+    positionNumber: string
+  ): Promise<{item?: Record<string, any>; statuses?: any}> {
+    const order = await this.getOrderWithDetails(kunrg, orderNumber);
+
+    const item = order.items?.find(
+      it => it.posnr === positionNumber
+    );
+    const statuses = order.statuses?.find(
+      st => st.posnr === positionNumber
+    );
+
+    return {item, statuses};
+  }
+
+  /**
+   * Получить количество, готовое к отгрузке по всем позициям
+   */
+  async getTotalReadyQuantity(
+    kunrg: string,
+    orderNumber: string
+  ): Promise<number> {
+    const order = await this.getOrder(kunrg, orderNumber);
+
+    return (order.items || []).reduce((sum, item) => {
+      const ready = parseInt(item.ready || '0', 10);
+      return sum + ready;
+    }, 0);
+  }
+
+  /**
+   * Получить обработанное количество по позиции
+   */
+  async getProcessingQuantity(
+    kunrg: string,
+    orderNumber: string,
+    positionNumber: string
+  ): Promise<{processing: number; ready: number}> {
+    const order = await this.getOrder(kunrg, orderNumber);
+    const item = order.items?.find(it => it.posnr === positionNumber);
+
+    return {
+      processing: parseInt(item?.processing || '0', 10),
+      ready: parseInt(item?.ready || '0', 10)
+    };
+  }
+
+  /**
+   * Проверить, отклонена ли позиция
+   */
+  isItemRejected(item: Record<string, any>): boolean {
+    return item.status?.includes('отклонена') || false;
+  }
+
+  /**
+   * Получить причину отклонения позиции
+   */
+  getRejectionReason(item: Record<string, any>): string | null {
+    return item.abgruTxt || null;
+  }
+
+  private async fetchOrder(
+    kunrg: string,
+    orderNumber: string,
+    statusFlag: '0' | '1'
+  ): Promise<GetOrder2Response> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/getOrder2`, {
+        params: {
+          vkorg: this.vkorg,
+          kunrg,
+          order: orderNumber,
+          status: statusFlag
+        },
+        timeout: this.timeout
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Ошибка при получении заказа ${orderNumber}:`,
+        error
+      );
+      throw error;
+    }
+  }
+}
+
+// Использование класса
+(async () => {
+  const service = new ArmtekOrderService('https://api.armtek.ru', '4000');
+
+  try {
+    // Получить заказ
+    const order = await service.getOrder('00000001', '0000000123');
+    console.log('Заказ:', order);
+
+    // Получить статус конкретной позиции
+    const positionStatus = await service.getItemStatus(
+      '00000001',
+      '0000000123',
+      '10'
+    );
+    console.log('Статус позиции 10:', positionStatus);
+
+    // Получить общее готовое количество
+    const readyQty = await service.getTotalReadyQuantity(
+      '00000001',
+      '0000000123'
+    );
+    console.log('Готово к отгрузке:', readyQty);
+
+  } catch (error) {
+    console.error('Ошибка:', error);
+  }
+})();
+```
+
+### Пример 4: Обработка дат и форматирование
+
+```typescript
+/**
+ * Парсер дат для ARMTEK API
+ */
+class DateParser {
+  /**
+   * Парсить дату в формате YYYYMMDDHHMMSS
+   */
+  static parseDateTime(dateStr: string): Date | null {
+    if (!dateStr || dateStr.length !== 14) {
+      return null;
+    }
+
+    const year = parseInt(dateStr.substring(0, 4), 10);
+    const month = parseInt(dateStr.substring(4, 6), 10);
+    const day = parseInt(dateStr.substring(6, 8), 10);
+    const hours = parseInt(dateStr.substring(8, 10), 10);
+    const minutes = parseInt(dateStr.substring(10, 12), 10);
+    const seconds = parseInt(dateStr.substring(12, 14), 10);
+
+    return new Date(year, month - 1, day, hours, minutes, seconds);
+  }
+
+  /**
+   * Парсить дату в формате YYYYMMDD
+   */
+  static parseDate(dateStr: string): Date | null {
+    if (!dateStr || dateStr.length !== 8) {
+      return null;
+    }
+
+    const year = parseInt(dateStr.substring(0, 4), 10);
+    const month = parseInt(dateStr.substring(4, 6), 10);
+    const day = parseInt(dateStr.substring(6, 8), 10);
+
+    return new Date(year, month - 1, day);
+  }
+
+  /**
+   * Форматировать дату в YYYYMMDDHHMMSS
+   */
+  static formatDateTime(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      pad(date.getSeconds())
+    );
+  }
+
+  /**
+   * Форматировать дату в YYYYMMDD
+   */
+  static formatDate(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate())
+    );
+  }
+}
+
+// Использование
+const dateStr = '20240315143000';
+const parsedDate = DateParser.parseDateTime(dateStr);
+console.log('Распарсена дата:', parsedDate);
+console.log('Отформатирована обратно:', DateParser.formatDateTime(parsedDate!));
+```
+
+---
+
+## Обработка ошибок
+
+### Типичные ошибки и решения
+
+```typescript
+/**
+ * Типы ошибок API
+ */
+enum ArmtekErrorCode {
+  INVALID_VKORG = 'INVALID_VKORG',           // Неверный код организации
+  INVALID_KUNRG = 'INVALID_KUNRG',           // Неверный код покупателя
+  ORDER_NOT_FOUND = 'ORDER_NOT_FOUND',       // Заказ не найден
+  INVALID_STATUS_PARAM = 'INVALID_STATUS_PARAM', // Неверный параметр STATUS
+  TIMEOUT = 'TIMEOUT',                       // Превышено время ожидания
+  NETWORK_ERROR = 'NETWORK_ERROR',           // Ошибка сети
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR'            // Неизвестная ошибка
+}
+
+/**
+ * Пользовательская ошибка API
+ */
+class ArmtekApiError extends Error {
+  code: ArmtekErrorCode;
+  status?: number;
+  originalError?: any;
+
+  constructor(
+    code: ArmtekErrorCode,
+    message: string,
+    status?: number,
+    originalError?: any
+  ) {
+    super(message);
+    this.code = code;
+    this.status = status;
+    this.originalError = originalError;
+    this.name = 'ArmtekApiError';
+  }
+}
+
+/**
+ * Обработчик ошибок
+ */
+class ErrorHandler {
+  static handle(error: any): ArmtekApiError {
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        return new ArmtekApiError(
+          ArmtekErrorCode.TIMEOUT,
+          'Превышено время ожидания ответа от сервера',
+          undefined,
+          error
+        );
+      }
+
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        switch (status) {
+          case 400:
+            if (data?.message?.includes('VKORG')) {
+              return new ArmtekApiError(
+                ArmtekErrorCode.INVALID_VKORG,
+                'Неверный код сбытовой организации (VKORG)',
+                status,
+                error
+              );
+            }
+            if (data?.message?.includes('KUNRG')) {
+              return new ArmtekApiError(
+                ArmtekErrorCode.INVALID_KUNRG,
+                'Неверный код покупателя (KUNRG)',
+                status,
+                error
+              );
+            }
+            if (data?.message?.includes('STATUS')) {
+              return new ArmtekApiError(
+                ArmtekErrorCode.INVALID_STATUS_PARAM,
+                'Неверный параметр STATUS (должен быть 0, 1 или пусто)',
+                status,
+                error
+              );
+            }
+            break;
+
+          case 404:
+            return new ArmtekApiError(
+              ArmtekErrorCode.ORDER_NOT_FOUND,
+              `Заказ не найден. Проверьте номер заказа и код покупателя`,
+              status,
+              error
+            );
+
+          case 500:
+          case 502:
+          case 503:
+            return new ArmtekApiError(
+              ArmtekErrorCode.UNKNOWN_ERROR,
+              'Ошибка сервера. Попробуйте позже',
+              status,
+              error
+            );
+        }
+      }
+
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        return new ArmtekApiError(
+          ArmtekErrorCode.NETWORK_ERROR,
+          'Ошибка сети. Проверьте подключение и адрес сервера',
+          undefined,
+          error
+        );
+      }
+    }
+
+    return new ArmtekApiError(
+      ArmtekErrorCode.UNKNOWN_ERROR,
+      'Неизвестная ошибка при работе с API',
+      undefined,
+      error
+    );
+  }
+}
+
+// Использование
+async function safeGetOrder(
+  service: ArmtekOrderService,
+  kunrg: string,
+  order: string
+) {
+  try {
+    return await service.getOrder(kunrg, order);
+  } catch (error) {
+    const apiError = ErrorHandler.handle(error);
+    console.error(`[${apiError.code}] ${apiError.message}`);
+
+    switch (apiError.code) {
+      case ArmtekErrorCode.ORDER_NOT_FOUND:
+        console.log('Повторите проверку номера заказа');
+        break;
+      case ArmtekErrorCode.TIMEOUT:
+        console.log('Попробуйте запрос позже');
+        break;
+      case ArmtekErrorCode.NETWORK_ERROR:
+        console.log('Проверьте подключение к интернету');
+        break;
+    }
+
+    throw apiError;
   }
 }
 ```
 
-### Обработка ошибок
+---
 
-```ts
-// Вспомогательная функция для обработки ответов
-async function makeApiRequest<T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Basic ${credentials}`,
-    },
+## Типичные сценарии
+
+### Сценарий 1: Отслеживание статуса доставки заказа
+
+```typescript
+/**
+ * Сценарий: Клиент хочет узнать статус доставки заказа
+ */
+async function trackOrderDelivery(
+  service: ArmtekOrderService,
+  kunrg: string,
+  orderNumber: string
+): Promise<void> {
+  try {
+    const order = await service.getOrderWithDetails(kunrg, orderNumber);
+
+    console.log(`\n=== Отслеживание заказа ${order.header?.order} ===`);
+    console.log(`Статус: ${order.header?.orderStatus}`);
+    console.log(`Дата заказа: ${order.header?.orderDate}`);
+    console.log(`Вид доставки: ${order.header?.incotermsTxt}`);
+
+    if (order.statuses) {
+      order.statuses.forEach(status => {
+        console.log(`\n--- Позиция ${status.posnr} ---`);
+
+        if (status.delivered && status.delivered.length > 0) {
+          console.log('✓ Отгружено');
+          status.delivered.forEach(dlv => {
+            const createDate = DateParser.parseDateTime(dlv.createTime);
+            console.log(
+              `  Фактура: ${dlv.printNum} от ${
+                createDate?.toLocaleDateString('ru-RU')
+              }`
+            );
+            console.log(`  Количество: ${dlv.quan} ${dlv.unit}`);
+            if (dlv.waybill) {
+              console.log(`  ТН/ТТН: ${dlv.waybill}`);
+            }
+          });
+        } else if (status.ready && status.ready.length > 0) {
+          console.log('▶ Готово к отгрузке');
+          status.ready.forEach(rdy => {
+            const dlvDate = DateParser.parseDateTime(rdy.dateDelNew);
+            console.log(`  Поставка: ${rdy.deliveryNum}`);
+            console.log(`  Количество: ${rdy.deliveryQuan || rdy.warehouseQuan}`);
+            if (dlvDate) {
+              console.log(
+                `  Ожидаемая дата: ${dlvDate.toLocaleDateString('ru-RU')}`
+              );
+            }
+          });
+        } else if (status.processing && status.processing.length > 0) {
+          console.log('⏳ В обработке');
+          status.processing.forEach(proc => {
+            const date = DateParser.parseDateTime(proc.dateDelNew);
+            console.log(
+              `  ${proc.subStatus} (${proc.werksName || 'у партнера'})`
+            );
+            console.log(`  Количество: ${proc.quan}`);
+            if (date) {
+              console.log(
+                `  Ожидаемая дата: ${date.toLocaleDateString('ru-RU')}`
+              );
+            }
+          });
+        }
+      });
+    }
+  } catch (error) {
+    const apiError = ErrorHandler.handle(error);
+    console.error(`Ошибка: ${apiError.message}`);
+  }
+}
+```
+
+### Сценарий 2: Проверка наличия дефектных товаров
+
+```typescript
+/**
+ * Сценарий: Проверить, есть ли в заказе товары с признаком некондиции
+ */
+async function checkDefectiveItems(
+  service: ArmtekOrderService,
+  kunrg: string,
+  orderNumber: string
+): Promise<void> {
+  try {
+    const order = await service.getOrder(kunrg, orderNumber);
+
+    const defectiveItems = (order.items || []).filter(
+      item => item.charg && item.charg !== ''
+    );
+
+    if (defectiveItems.length === 0) {
+      console.log('✓ В заказе нет товаров с признаком некондиции');
+      return;
+    }
+
+    console.log(`\n⚠ Обнаружено товаров с дефектами: ${defectiveItems.length}`);
+
+    defectiveItems.forEach(item => {
+      console.log(`\n Позиция ${item.posnr}: ${item.name}`);
+      console.log(`  ПИН: ${item.pin}`);
+      console.log(`  Дефект: ${item.charg}`);
+
+      if (item.chargBlk) {
+        console.log(
+          `  ⛔ БЛОКИРОВАНА К ОТГРУЗКЕ - требуется принять решение`
+        );
+        console.log(`     Отгружать или отказать от товара?`);
+      } else {
+        console.log(`  ✓ Разблокирована, можно отгружать`);
+      }
+    });
+
+  } catch (error) {
+    const apiError = ErrorHandler.handle(error);
+    console.error(`Ошибка: ${apiError.message}`);
+  }
+}
+```
+
+### Сценарий 3: Выявление отклоненных позиций
+
+```typescript
+/**
+ * Сценарий: Выявить отклоненные позиции и причины отклонения
+ */
+async function analyzeRejections(
+  service: ArmtekOrderService,
+  kunrg: string,
+  orderNumber: string
+): Promise<void> {
+  try {
+    const order = await service.getOrder(kunrg, orderNumber);
+
+    const rejectedItems = (order.items || []).filter(
+      item => 
+        item.status?.includes('отклонена') ||
+        (item.rejected && parseInt(item.rejected, 10) > 0)
+    );
+
+    if (rejectedItems.length === 0) {
+      console.log('✓ Отклоненных позиций не найдено');
+      return;
+    }
+
+    console.log(`\n❌ Отклоненных позиций: ${rejectedItems.length}`);
+
+    let totalRejected = 0;
+
+    rejectedItems.forEach(item => {
+      const rejected = parseInt(item.rejected || '0', 10);
+      const ordered = parseInt(item.kwmeng || '0', 10);
+      const percentage = ((rejected / ordered) * 100).toFixed(1);
+
+      totalRejected += rejected;
+
+      console.log(`\n Позиция ${item.posnr}: ${item.name}`);
+      console.log(
+        `  Отклонено: ${rejected} из ${ordered} (${percentage}%)`
+      );
+
+      if (item.abgruTxt) {
+        console.log(`  Причина: ${item.abgruTxt}`);
+      }
+
+      if (item.note) {
+        console.log(`  Примечание: ${item.note}`);
+      }
+    });
+
+    console.log(`\n📊 Итого отклонено: ${totalRejected} единиц товара`);
+
+  } catch (error) {
+    const apiError = ErrorHandler.handle(error);
+    console.error(`Ошибка: ${apiError.message}`);
+  }
+}
+```
+
+### Сценарий 4: Мониторинг сроков доставки
+
+```typescript
+/**
+ * Сценарий: Проверить, не просрочены ли сроки доставки
+ */
+async function checkDeliveryDeadlines(
+  service: ArmtekOrderService,
+  kunrg: string,
+  orderNumber: string
+): Promise<void> {
+  try {
+    const order = await service.getOrderWithDetails(kunrg, orderNumber);
+    const today = new Date();
+
+    console.log(`\n=== Проверка сроков доставки ===`);
+    console.log(`Дата проверки: ${today.toLocaleDateString('ru-RU')}`);
+
+    const overdueItems: any[] = [];
+    const upcomingItems: any[] = [];
+
+    if (order.statuses) {
+      order.statuses.forEach(status => {
+        const item = order.items?.find(it => it.posnr === status.posnr);
+
+        // Проверить ожидаемую дату (DLVRD)
+        const dlvrd = item?.dlvrd
+          ? DateParser.parseDateTime(item.dlvrd)
+          : null;
+
+        if (dlvrd && dlvrd < today) {
+          overdueItems.push({
+            posnr: status.posnr,
+            name: item?.name,
+            dueDate: dlvrd,
+            daysOverdue: Math.floor(
+              (today.getTime() - dlvrd.getTime()) / (1000 * 60 * 60 * 24)
+            )
+          });
+        } else if (dlvrd && dlvrd < new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+          upcomingItems.push({
+            posnr: status.posnr,
+            name: item?.name,
+            dueDate: dlvrd,
+            daysUntil: Math.ceil(
+              (dlvrd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            )
+          });
+        }
+      });
+    }
+
+    if (overdueItems.length > 0) {
+      console.log(`\n❌ ПРОСРОЧЕННЫЕ (${overdueItems.length}):`);
+      overdueItems.forEach(item => {
+        console.log(
+          `  Позиция ${item.posnr}: ${item.name} (просрочена на ${
+            item.daysOverdue
+          } дней)`
+        );
+      });
+    }
+
+    if (upcomingItems.length > 0) {
+      console.log(`\n⚠ ГОТОВЯТСЯ К ПРОСРОЧКЕ (${upcomingItems.length}):`);
+      upcomingItems.forEach(item => {
+        console.log(
+          `  Позиция ${item.posnr}: ${item.name} (${
+            item.daysUntil
+          } дней до срока)`
+        );
+      });
+    }
+
+    if (overdueItems.length === 0 && upcomingItems.length === 0) {
+      console.log('\n✓ Все сроки доставки в норме');
+    }
+
+  } catch (error) {
+    const apiError = ErrorHandler.handle(error);
+    console.error(`Ошибка: ${apiError.message}`);
+  }
+}
+```
+
+---
+
+## Сервис getOrderReportByDate - Отчет по заказам за интервал времени
+
+Сервис **`getOrderReportByDate`** предоставляет отчет по заказам за определенный период времени с поддержкой различных фильтров и типов заказов.
+
+### Характеристики сервиса
+
+- **Метод:** POST
+- **Формат:** JSON
+- **URL:** `http://ws.armtek.ru/api/ws_reports/getOrderReportByDate?format=json`
+
+---
+
+## Входные параметры getOrderReportByDate
+
+### Таблица параметров
+
+| Параметр | Наименование | Тип | Обязательный | Примечание |
+|----------|--------------|-----|--------------|-----------|
+| VKORG | Сбытовая организация | строка (4) | Да | Пример: `4000` |
+| KUNNR_RG | Покупатель | строка (10) | Да | Пример: `00000000` |
+| SCRDATE | Дата создания С | строка (10) | Нет | Формат: YYYYMMDD. По умолчанию - текущая дата |
+| ECRDATE | Дата создания ПО | строка (10) | Нет | Формат: YYYYMMDD. По умолчанию - текущая дата |
+| SDLDATE | Поставка товара С | строка (10) | Нет | Формат: YYYYMMDD |
+| EDLDATE | Поставка товара ПО | строка (10) | Нет | Формат: YYYYMMDD |
+| TYPEZK_SALE | Продажи | 0, 1 или пусто | Нет | Включить продажные заказы |
+| TYPEZK_RETN | Возвраты и Количественные разницы | 0, 1 или пусто | Нет | Включить возвраты и разницы |
+| KURR_LOGIN | Текущий логин | 0, 1 или пусто | Нет | Фильтрация по текущему логину |
+
+---
+
+## TypeScript интерфейсы для getOrderReportByDate
+
+```typescript
+/**
+ * Параметры запроса к сервису getOrderReportByDate
+ */
+interface GetOrderReportByDateRequest {
+  /** Сбытовая организация */
+  vkorg: string;
+  
+  /** Код покупателя */
+  kunrRg: string;
+  
+  /** Дата создания заказа С (формат: YYYYMMDD) */
+  scrdate?: string;
+  
+  /** Дата создания заказа ПО (формат: YYYYMMDD) */
+  ecrdate?: string;
+  
+  /** Дата поставки товара С (формат: YYYYMMDD) */
+  sdldate?: string;
+  
+  /** Дата поставки товара ПО (формат: YYYYMMDD) */
+  edldate?: string;
+  
+  /** Включить продажные заказы (0 или 1) */
+  typeskSale?: '0' | '1';
+  
+  /** Включить возвраты (0 или 1) */
+  typeskRetn?: '0' | '1';
+  
+  /** Фильтровать по текущему логину (0 или 1) */
+  kurrLogin?: '0' | '1';
+}
+
+/**
+ * Конфигурация запроса с дополнительными параметрами
+ */
+interface GetOrderReportByDateRequestConfig extends GetOrderReportByDateRequest {
+  baseUrl: string;
+  timeout?: number;
+  debug?: boolean;
+}
+
+/**
+ * Строка отчета по заказам
+ */
+interface OrderReportItem {
+  /** Номер заказа */
+  order?: string;
+  
+  /** Тип заказа */
+  orderType?: OrderType;
+  
+  /** Дата заказа (формат: YYYYMMDDHHMMSS) */
+  orderDate?: string;
+  
+  /** Статус заказа */
+  orderStatus?: OrderStatus;
+  
+  /** Сумма заказа */
+  orderSum?: string;
+  
+  /** Валюта */
+  currency?: string;
+  
+  /** Номер поставки */
+  delivery?: string;
+  
+  /** Номер фактуры */
+  invoice?: string;
+  
+  /** Статус по кредиту */
+  statCred?: CreditStatus;
+  
+  /** Статус МинСум (минимальная сумма) */
+  minSum?: MinSumStatus;
+  
+  /** Поставлять товар С (формат: YYYYMMDDHHMMSS) */
+  etdat?: string;
+  
+  /** Поставлять товар По (формат: YYYYMMDDHHMMSS) */
+  vdatu?: string;
+  
+  /** Вид доставки */
+  incotermsTxt?: DeliveryType;
+  
+  /** Номер договора */
+  numdog?: string;
+  
+  /** Комментарий по заказу */
+  comment?: string;
+  
+  /** Комментарий к экспедиции */
+  commentExp?: string;
+}
+
+/**
+ * Суммарная информация по результатам запроса
+ */
+interface OrderReportSummary {
+  /** Общая сумма по заказам */
+  sum?: string;
+  
+  /** Валюта */
+  currency?: string;
+  
+  /** Количество уникальных номеров заказов */
+  num?: string;
+}
+
+/**
+ * Полный ответ сервиса getOrderReportByDate
+ */
+interface GetOrderReportByDateResponse {
+  /** Таблица результатов поиска */
+  data?: OrderReportItem[];
+  
+  /** Суммарная информация */
+  inf?: OrderReportSummary;
+}
+
+/**
+ * Статус по кредиту
+ */
+type CreditStatus = 
+  | 'Проверен'
+  | 'Блокирован'
+  | 'Деблокирован';
+
+/**
+ * Статус по минимальной сумме
+ */
+type MinSumStatus = 
+  | 'Не блокирован'
+  | 'Блокирован'
+  | 'Деблокирован';
+```
+
+---
+
+## Примеры использования getOrderReportByDate
+
+### Пример 1: Простой отчет по заказам за месяц
+
+```typescript
+/**
+ * Получить отчет по заказам за определенный месяц
+ */
+async function getOrderReportByMonth(
+  baseUrl: string,
+  vkorg: string,
+  kunrRg: string,
+  year: number,
+  month: number
+): Promise<GetOrderReportByDateResponse> {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  
+  const scrdate = `${year}${pad(month)}01`;
+  const ecrdate = `${year}${pad(month)}${new Date(
+    year,
+    month,
+    0
+  ).getDate()}`;
+
+  try {
+    const response = await axios.post(
+      `${baseUrl}/api/ws_reports/getOrderReportByDate`,
+      {
+        vkorg,
+        kunrRg,
+        scrdate,
+        ecrdate,
+        format: 'json'
+      },
+      { timeout: 15000 }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при получении отчета:', error);
+    throw error;
+  }
+}
+
+// Использование
+(async () => {
+  const report = await getOrderReportByMonth(
+    'https://ws.armtek.ru',
+    '4000',
+    '00000001',
+    2024,
+    3 // Март 2024
+  );
+
+  console.log(`Количество заказов: ${report.inf?.num}`);
+  console.log(`Общая сумма: ${report.inf?.sum} ${report.inf?.currency}`);
+  console.log(`Заказов в отчете: ${report.data?.length}`);
+})();
+```
+
+### Пример 2: Расширенный отчет с фильтрацией
+
+```typescript
+/**
+ * Получить отчет с различными фильтрами
+ */
+async function getDetailedOrderReport(
+  baseUrl: string,
+  vkorg: string,
+  kunrRg: string,
+  filters: {
+    dateFrom: Date;
+    dateTo: Date;
+    includeSales?: boolean;
+    includeReturns?: boolean;
+    filterByLogin?: boolean;
+  }
+): Promise<GetOrderReportByDateResponse> {
+  const formatDate = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate())
+    );
+  };
+
+  try {
+    const params = {
+      vkorg,
+      kunrRg,
+      scrdate: formatDate(filters.dateFrom),
+      ecrdate: formatDate(filters.dateTo),
+      typeskSale: filters.includeSales ? '1' : '0',
+      typeskRetn: filters.includeReturns ? '1' : '0',
+      kurrLogin: filters.filterByLogin ? '1' : '0',
+      format: 'json'
+    };
+
+    const response = await axios.post(
+      `${baseUrl}/api/ws_reports/getOrderReportByDate`,
+      params,
+      { timeout: 15000 }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при получении расширенного отчета:', error);
+    throw error;
+  }
+}
+
+// Использование
+(async () => {
+  const report = await getDetailedOrderReport(
+    'https://ws.armtek.ru',
+    '4000',
+    '00000001',
+    {
+      dateFrom: new Date('2024-01-01'),
+      dateTo: new Date('2024-03-31'),
+      includeSales: true,
+      includeReturns: true,
+      filterByLogin: false
+    }
+  );
+
+  console.log('Отчет получен успешно');
+  console.log(`Сумма: ${report.inf?.sum} ${report.inf?.currency}`);
+})();
+```
+
+### Пример 3: Класс для работы с отчетами
+
+```typescript
+/**
+ * Сервис для работы с отчетами по заказам
+ */
+class ArmtekReportService {
+  private baseUrl: string;
+  private vkorg: string;
+
+  constructor(baseUrl: string, vkorg: string) {
+    this.baseUrl = baseUrl;
+    this.vkorg = vkorg;
+  }
+
+  /**
+   * Получить отчет по заказам
+   */
+  async getOrderReport(
+    kunrRg: string,
+    dateFrom: Date,
+    dateTo: Date,
+    options?: {
+      includeSales?: boolean;
+      includeReturns?: boolean;
+      byDeliveryDate?: boolean;
+    }
+  ): Promise<GetOrderReportByDateResponse> {
+    const formatDate = (date: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return (
+        date.getFullYear() +
+        pad(date.getMonth() + 1) +
+        pad(date.getDate())
+      );
+    };
+
+    const params: Record<string, any> = {
+      vkorg: this.vkorg,
+      kunrRg,
+      format: 'json'
+    };
+
+    if (options?.byDeliveryDate) {
+      params.sdldate = formatDate(dateFrom);
+      params.edldate = formatDate(dateTo);
+    } else {
+      params.scrdate = formatDate(dateFrom);
+      params.ecrdate = formatDate(dateTo);
+    }
+
+    if (options?.includeSales !== undefined) {
+      params.typeskSale = options.includeSales ? '1' : '0';
+    }
+
+    if (options?.includeReturns !== undefined) {
+      params.typeskRetn = options.includeReturns ? '1' : '0';
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/api/ws_reports/getOrderReportByDate`,
+        params,
+        { timeout: 15000 }
+      );
+
+      return response.data;
+    } catch (error) {
+      throw ErrorHandler.handle(error);
+    }
+  }
+
+  /**
+   * Получить отчет по статусам кредита
+   */
+  getCreditStatusBreakdown(
+    report: GetOrderReportByDateResponse
+  ): Record<string, number> {
+    const breakdown: Record<string, number> = {};
+
+    (report.data || []).forEach(item => {
+      const status = item.statCred || 'Не определен';
+      breakdown[status] = (breakdown[status] || 0) + 1;
+    });
+
+    return breakdown;
+  }
+
+  /**
+   * Получить отчет по типам доставки
+   */
+  getDeliveryTypeBreakdown(
+    report: GetOrderReportByDateResponse
+  ): Record<string, number> {
+    const breakdown: Record<string, number> = {};
+
+    (report.data || []).forEach(item => {
+      const type = item.incotermsTxt || 'Не определено';
+      breakdown[type] = (breakdown[type] || 0) + 1;
+    });
+
+    return breakdown;
+  }
+
+  /**
+   * Получить заказы с заблокированным кредитом
+   */
+  getBlockedCreditOrders(
+    report: GetOrderReportByDateResponse
+  ): OrderReportItem[] {
+    return (report.data || []).filter(
+      item => item.statCred === 'Блокирован'
+    );
+  }
+
+  /**
+   * Получить заказы с заблокированной минимальной суммой
+   */
+  getBlockedMinSumOrders(
+    report: GetOrderReportByDateResponse
+  ): OrderReportItem[] {
+    return (report.data || []).filter(
+      item => item.minSum === 'Блокирован'
+    );
+  }
+
+  /**
+   * Получить статистику по статусам заказов
+   */
+  getOrderStatusStatistics(
+    report: GetOrderReportByDateResponse
+  ): Record<OrderStatus, number> {
+    const stats: Record<OrderStatus, number> = {
+      'Создан': 0,
+      'В работе': 0,
+      'Закрыт': 0,
+      'Отклонен': 0
+    };
+
+    (report.data || []).forEach(item => {
+      const status = item.orderStatus as OrderStatus;
+      if (status && status in stats) {
+        stats[status]++;
+      }
+    });
+
+    return stats;
+  }
+
+  /**
+   * Получить средний размер заказа
+   */
+  getAverageOrderSum(report: GetOrderReportByDateResponse): number {
+    if (!report.inf?.num || !report.inf?.sum) {
+      return 0;
+    }
+
+    const totalSum = parseFloat(report.inf.sum);
+    const orderCount = parseInt(report.inf.num, 10);
+
+    return orderCount > 0 ? totalSum / orderCount : 0;
+  }
+
+  /**
+   * Группировать заказы по типам
+   */
+  groupByOrderType(
+    report: GetOrderReportByDateResponse
+  ): Record<string, OrderReportItem[]> {
+    const grouped: Record<string, OrderReportItem[]> = {};
+
+    (report.data || []).forEach(item => {
+      const type = item.orderType || 'Не определен';
+      if (!grouped[type]) {
+        grouped[type] = [];
+      }
+      grouped[type].push(item);
+    });
+
+    return grouped;
+  }
+}
+
+// Использование сервиса
+(async () => {
+  const reportService = new ArmtekReportService(
+    'https://ws.armtek.ru',
+    '4000'
+  );
+
+  const report = await reportService.getOrderReport(
+    '00000001',
+    new Date('2024-01-01'),
+    new Date('2024-03-31'),
+    {
+      includeSales: true,
+      includeReturns: true
+    }
+  );
+
+  // Получить статистику
+  const statusStats = reportService.getOrderStatusStatistics(report);
+  console.log('Статистика по статусам:', statusStats);
+
+  // Получить заказы с проблемами кредита
+  const blockedCredit = reportService.getBlockedCreditOrders(report);
+  console.log(`Заказов с блокированным кредитом: ${blockedCredit.length}`);
+
+  // Получить среднюю сумму заказа
+  const avgSum = reportService.getAverageOrderSum(report);
+  console.log(`Средняя сумма заказа: ${avgSum.toFixed(2)}`);
+
+  // Группировка по типам
+  const byType = reportService.groupByOrderType(report);
+  Object.entries(byType).forEach(([type, orders]) => {
+    console.log(`${type}: ${orders.length} заказов`);
+  });
+})();
+```
+
+### Пример 4: Анализ отчета и экспорт в CSV
+
+```typescript
+/**
+ * Экспортер отчетов в различные форматы
+ */
+class ReportExporter {
+  /**
+   * Экспортировать отчет в CSV
+   */
+  static exportToCSV(report: GetOrderReportByDateResponse): string {
+    const headers = [
+      'Номер заказа',
+      'Тип заказа',
+      'Дата заказа',
+      'Статус',
+      'Сумма',
+      'Валюта',
+      'Поставка',
+      'Фактура',
+      'Статус кредита',
+      'МинСум',
+      'Доставка с',
+      'Доставка по',
+      'Вид доставки',
+      'Договор',
+      'Комментарий'
+    ];
+
+    const rows = (report.data || []).map(item => [
+      item.order || '',
+      item.orderType || '',
+      item.orderDate || '',
+      item.orderStatus || '',
+      item.orderSum || '',
+      item.currency || '',
+      item.delivery || '',
+      item.invoice || '',
+      item.statCred || '',
+      item.minSum || '',
+      item.etdat || '',
+      item.vdatu || '',
+      item.incotermsTxt || '',
+      item.numdog || '',
+      item.comment || ''
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    return csv;
+  }
+
+  /**
+   * Экспортировать в JSON
+   */
+  static exportToJSON(report: GetOrderReportByDateResponse): string {
+    return JSON.stringify(report, null, 2);
+  }
+
+  /**
+   * Создать HTML таблицу
+   */
+  static exportToHTML(report: GetOrderReportByDateResponse): string {
+    let html = '<table border="1" cellpadding="5">\n';
+    html += '<thead>\n<tr>\n';
+    html +=
+      '<th>Заказ</th><th>Тип</th><th>Дата</th><th>Статус</th>' +
+      '<th>Сумма</th><th>Поставка</th><th>Кредит</th>\n';
+    html += '</tr>\n</thead>\n<tbody>\n';
+
+    (report.data || []).forEach(item => {
+      html += '<tr>\n';
+      html += `<td>${item.order || '-'}</td>\n`;
+      html += `<td>${item.orderType || '-'}</td>\n`;
+      html += `<td>${item.orderDate || '-'}</td>\n`;
+      html += `<td>${item.orderStatus || '-'}</td>\n`;
+      html += `<td>${item.orderSum} ${item.currency}</td>\n`;
+      html += `<td>${item.delivery || '-'}</td>\n`;
+      html += `<td>${item.statCred || '-'}</td>\n`;
+      html += '</tr>\n';
+    });
+
+    html += '</tbody>\n</table>\n';
+    return html;
+  }
+}
+
+// Использование экспортера
+(async () => {
+  const reportService = new ArmtekReportService(
+    'https://ws.armtek.ru',
+    '4000'
+  );
+
+  const report = await reportService.getOrderReport(
+    '00000001',
+    new Date('2024-01-01'),
+    new Date('2024-03-31')
+  );
+
+  // Экспортировать в CSV
+  const csv = ReportExporter.exportToCSV(report);
+  console.log(csv);
+
+  // Экспортировать в JSON
+  const json = ReportExporter.exportToJSON(report);
+  console.log(json);
+
+  // Создать HTML
+  const html = ReportExporter.exportToHTML(report);
+  console.log(html);
+})();
+```
+
+---
+
+## Важные особенности getOrderReportByDate
+
+### ⚠️ Особенность 1: Повторяющиеся строки при частичных поставках
+
+Если заказ поставляется несколькими поставками:
+
+- В отчете будет несколько строк с одним номером заказа
+- "Сумма заказа" (ORDER_SUM) будет одинакова во всех строках
+- Каждая поставка будет в отдельной строке с собственным номером DELIVERY
+
+```typescript
+// Пример обработки
+const uniqueOrders = Array.from(
+  new Set((report.data || []).map(item => item.order))
+);
+console.log(`Уникальных заказов: ${uniqueOrders.length}`);
+console.log(`Всего строк в отчете: ${report.data?.length}`);
+```
+
+### ⚠️ Особенность 2: Объединение нескольких поставок в одну фактуру
+
+Несколько поставок и заказов могут объединяться в одну фактуру:
+
+- Номер фактуры (INVOICE) может появиться в разных строках
+- С разными номерами заказов и поставок
+
+```typescript
+// Пример группировки по фактурам
+const groupByInvoice = (report: GetOrderReportByDateResponse) => {
+  const invoices: Record<string, OrderReportItem[]> = {};
+  
+  (report.data || []).forEach(item => {
+    const inv = item.invoice || 'Без фактуры';
+    if (!invoices[inv]) {
+      invoices[inv] = [];
+    }
+    invoices[inv].push(item);
+  });
+  
+  return invoices;
+};
+```
+
+### ⚠️ Особенность 3: Количество заказов vs количество строк
+
+Поле NUM в INF содержит количество **уникальных** номеров заказов:
+
+- Может быть меньше чем количество строк в таблице DATA
+- Если заказ разбит на несколько поставок
+
+```typescript
+const summary = report.inf;
+console.log(`Уникальных заказов (NUM): ${summary?.num}`);
+console.log(`Строк в отчете: ${report.data?.length}`);
+```
+
+---
+
+## Типичные сценарии использования getOrderReportByDate
+
+### Сценарий 1: Ежемесячный отчет продаж
+
+```typescript
+async function getMonthlySalesReport(
+  baseUrl: string,
+  vkorg: string,
+  kunrRg: string,
+  month: number,
+  year: number
+): Promise<void> {
+  const service = new ArmtekReportService(baseUrl, vkorg);
+
+  const report = await service.getOrderReport(
+    kunrRg,
+    new Date(year, month - 1, 1),
+    new Date(year, month, 0),
+    { includeSales: true, includeReturns: false }
+  );
+
+  console.log(`\n=== Отчет продаж ${month}/${year} ===`);
+  console.log(`Количество заказов: ${report.inf?.num}`);
+  console.log(`Сумма продаж: ${report.inf?.sum} ${report.inf?.currency}`);
+
+  const stats = service.getOrderStatusStatistics(report);
+  console.log('\nРаспределение по статусам:');
+  Object.entries(stats).forEach(([status, count]) => {
+    if (count > 0) {
+      console.log(`  ${status}: ${count}`);
+    }
   });
 
-  const data = (await response.json()) as ArmtekApiResponse<T>;
+  const avg = service.getAverageOrderSum(report);
+  console.log(`\nСредняя сумма заказа: ${avg.toFixed(2)}`);
+}
+```
 
-  if (data.STATUS !== 200) {
-    const errors = data.MESSAGES?.filter(
-      m => m.TYPE === 'A' || m.TYPE === 'E'
-    ) ?? [];
-    const errorMessage = errors.map(e => e.TEXT).join('; ') || `HTTP ${data.STATUS}`;
-    throw new Error(errorMessage);
+### Сценарий 2: Анализ проблемных заказов
+
+```typescript
+async function analyzeProblematicOrders(
+  baseUrl: string,
+  vkorg: string,
+  kunrRg: string
+): Promise<void> {
+  const service = new ArmtekReportService(baseUrl, vkorg);
+
+  const report = await service.getOrderReport(
+    kunrRg,
+    new Date(new Date().setDate(new Date().getDate() - 30)),
+    new Date()
+  );
+
+  console.log('\n=== Анализ проблемных заказов ===');
+
+  // Заказы с блокированным кредитом
+  const blockedCredit = service.getBlockedCreditOrders(report);
+  if (blockedCredit.length > 0) {
+    console.log(`\n⛔ Заказы с блокированным кредитом (${blockedCredit.length}):`);
+    blockedCredit.forEach(order => {
+      console.log(`  ${order.order}: ${order.orderSum} ${order.currency}`);
+    });
   }
 
-  return data.RESP as T;
-}
+  // Заказы с блокированной МинСум
+  const blockedMinSum = service.getBlockedMinSumOrders(report);
+  if (blockedMinSum.length > 0) {
+    console.log(
+      `\n⚠️ Заказы с блокированной МинСум (${blockedMinSum.length}):`
+    );
+    blockedMinSum.forEach(order => {
+      console.log(`  ${order.order}: ${order.orderSum} ${order.currency}`);
+    });
+  }
 
-// Использование:
-try {
-  const payload = await makeApiRequest<GetUserVkorgListResponse>(
-    `${BASE_URL}/api/ws_user/getUserVkorgList?format=json`
+  // Отклоненные заказы
+  const rejected = (report.data || []).filter(
+    item => item.orderStatus === 'Отклонен'
   );
-  console.log('Сбытовые организации:', payload.ARRAY);
-} catch (error) {
-  console.error('Ошибка при получении сбытовых организаций:', error.message);
+  if (rejected.length > 0) {
+    console.log(`\n❌ Отклоненные заказы (${rejected.length}):`);
+    rejected.forEach(order => {
+      console.log(
+        `  ${order.order}: ${order.orderSum} ${order.currency}`
+      );
+    });
+  }
+}
+```
+
+### Сценарий 3: Сравнение периодов
+
+```typescript
+async function compareOrderPeriods(
+  baseUrl: string,
+  vkorg: string,
+  kunrRg: string,
+  month1: number,
+  month2: number,
+  year: number
+): Promise<void> {
+  const service = new ArmtekReportService(baseUrl, vkorg);
+
+  const report1 = await service.getOrderReport(
+    kunrRg,
+    new Date(year, month1 - 1, 1),
+    new Date(year, month1, 0)
+  );
+
+  const report2 = await service.getOrderReport(
+    kunrRg,
+    new Date(year, month2 - 1, 1),
+    new Date(year, month2, 0)
+  );
+
+  const sum1 = parseFloat(report1.inf?.sum || '0');
+  const sum2 = parseFloat(report2.inf?.sum || '0');
+  const num1 = parseInt(report1.inf?.num || '0', 10);
+  const num2 = parseInt(report2.inf?.num || '0', 10);
+
+  const sumChange = ((sum2 - sum1) / sum1) * 100;
+  const numChange = ((num2 - num1) / num1) * 100;
+
+  console.log(`\n=== Сравнение ${month1}/${year} и ${month2}/${year} ===`);
+  console.log(`\nСумма заказов:`);
+  console.log(`  ${month1}/${year}: ${sum1.toFixed(2)} ${report1.inf?.currency}`);
+  console.log(`  ${month2}/${year}: ${sum2.toFixed(2)} ${report2.inf?.currency}`);
+  console.log(`  Изменение: ${sumChange > 0 ? '+' : ''}${sumChange.toFixed(1)}%`);
+
+  console.log(`\nКоличество заказов:`);
+  console.log(`  ${month1}/${year}: ${num1}`);
+  console.log(`  ${month2}/${year}: ${num2}`);
+  console.log(`  Изменение: ${numChange > 0 ? '+' : ''}${numChange.toFixed(1)}%`);
 }
 ```
 
 ---
 
-*Документация собрана из официальных материалов ws.armtek.ru (возвращаемый ответ, заказы, поиск, описание getOrder2) и адаптирована для использования в JavaScript/TypeScript.*
+## Заключение
+
+Документация описывает полную работу с WS-сервисами ARMTEK API:
+
+- **getOrder2** - подробная информация по конкретному заказу
+- **getOrderReportByDate** - отчет по заказам за интервал времени
+
+**Ключевые моменты:**
+
+- Используйте TypeScript интерфейсы для типизации данных
+- Всегда обрабатывайте ошибки с помощью `try-catch` блоков
+- Для детальной информации о статусах используйте параметр `STATUS = 1`
+- Помните о различных форматах дат (YYYYMMDDHHMMSS и YYYYMMDD)
+- Обратите внимание на связи позиций через `POSEX` и `POSROOT` для понимания перезаказов
+
+**Контакты для вопросов:**
+
+- Документация: <https://docs.armtek.ru/ws-api>
+- Техподдержка: <support@armtek.ru>
