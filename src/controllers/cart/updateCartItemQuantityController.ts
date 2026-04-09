@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { USER_ROLE } from '../../constants/userRoles.js';
 import { CartItem } from '../../models/CartItem.js';
 import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 import { parseAvailability } from '../../utils/parseAvailability.js';
 
 /**
  * Изменение количества по позиции виртуальной корзины.
- * Доступно только владельцу позиции при статусе draft.
+ * Владелец — только свои позиции в статусе draft; администратор — любые позиции в статусе draft.
  */
 export const updateCartItemQuantityController = async (
   req: Request,
@@ -42,9 +43,16 @@ export const updateCartItemQuantityController = async (
     });
   }
 
-  const { username } = req.user!;
+  const { username, role } = req.user!;
 
-  if (item.username !== username || item.status !== 'draft') {
+  if (item.status !== 'draft') {
+    return res.status(403).json({
+      success: false,
+      message: 'Можно менять количество только у позиций в статусе черновик (draft).',
+    });
+  }
+
+  if (role !== USER_ROLE.ADMIN && item.username !== username) {
     return res.status(403).json({
       success: false,
       message: 'Можно менять количество только у своих позиций в статусе draft.',
