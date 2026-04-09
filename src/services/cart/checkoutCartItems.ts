@@ -230,6 +230,17 @@ export const checkoutCartItems = async (
         return;
       }
 
+      /** Единая точка: что вернул адаптер и почему мог не заполниться externalOrderId. */
+      userLogger.info(`[Checkout] Снимок ответа поставщика «${supplier}»`, {
+        supplier,
+        cartItemCount: ids.length,
+        cartItemIds: ids,
+        externalOrderIds: checkoutResult.externalOrderIds ?? [],
+        hasExternalIds: (checkoutResult.externalOrderIds?.length ?? 0) > 0,
+        note: checkoutResult.note,
+        providerResponseSnapshot: checkoutResult.providerResponseSnapshot,
+      });
+
       // --- Успех: обновляем CartItem и создаём Order-документы ---
 
       await CartItem.updateMany(

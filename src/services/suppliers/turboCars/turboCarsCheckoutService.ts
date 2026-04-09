@@ -52,7 +52,12 @@ export const turboCarsCheckoutHandler: CheckoutHandler = async (
   const cartItemIds = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'turboCars', reason: 'empty_items' },
+    };
   }
 
   const positions: TurboCarsOrderCreatePosition[] = [];
@@ -119,6 +124,12 @@ export const turboCarsCheckoutHandler: CheckoutHandler = async (
         cartItemIds,
         externalOrderIds: [response.order_number],
         error: `Отклонённые позиции: ${badDescriptions}`,
+        providerResponseSnapshot: {
+          adapter: 'turboCars',
+          order_number: response.order_number,
+          is_test: response.is_test,
+          bad_offers: badOffers,
+        },
       };
     }
 
@@ -127,7 +138,17 @@ export const turboCarsCheckoutHandler: CheckoutHandler = async (
       isTest: response.is_test,
     });
 
-    return { success: true, cartItemIds, externalOrderIds: [response.order_number] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [response.order_number],
+      providerResponseSnapshot: {
+        adapter: 'turboCars',
+        order_number: response.order_number,
+        is_test: response.is_test,
+        bad_offers: response.bad_offers ?? [],
+      },
+    };
   } catch (error: unknown) {
     const message =
       error instanceof Error

@@ -230,7 +230,12 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
   const cartItemIds = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'armtek', reason: 'empty_items' },
+    };
   }
 
   const KUNRG =
@@ -331,7 +336,21 @@ export const armtekCheckoutHandler: CheckoutHandler = async (
       extractedVbelnCount: externalOrderIds.length,
     });
 
-    return { success: true, cartItemIds, externalOrderIds };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds,
+      providerResponseSnapshot: {
+        adapter: 'armtek',
+        STATUS: data.STATUS,
+        respIsNull: data.RESP == null,
+        messagesPreview:
+          data.MESSAGES?.slice(0, 8).map((m) => `${m.TYPE}:${String(m.TEXT ?? '').slice(0, 160)}`) ??
+          [],
+        respItemsLen: data.RESP?.ITEMS?.length ?? 0,
+        vbelnExtracted: externalOrderIds.length,
+      },
+    };
   } catch (error: unknown) {
     const message =
       error instanceof AxiosError

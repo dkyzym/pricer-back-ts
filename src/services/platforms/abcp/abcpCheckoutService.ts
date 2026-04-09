@@ -305,7 +305,12 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
     const cartItemIds = items.map((i) => String(i._id));
 
     if (items.length === 0) {
-      return { success: true, cartItemIds, externalOrderIds: [] };
+      return {
+        success: true,
+        cartItemIds,
+        externalOrderIds: [],
+        providerResponseSnapshot: { adapter: 'abcp', alias: supplierAlias, reason: 'empty_items' },
+      };
     }
 
     const axiosInstance = await getAxiosInstance(supplierAlias as SupplierName);
@@ -376,7 +381,20 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
             ' (ABCP_ENABLE_REAL_ORDERS !== "true")',
           { addedCount, totalPositions: positions.length },
         );
-        return { success: true, cartItemIds, externalOrderIds: [`dryrun-${Date.now()}`] };
+        const syntheticId = `dryrun-${Date.now()}`;
+        return {
+          success: true,
+          cartItemIds,
+          externalOrderIds: [syntheticId],
+          providerResponseSnapshot: {
+            adapter: 'abcp',
+            alias: supplierAlias,
+            abcpDryRun: true,
+            safetyLock: true,
+            addedToBasketCount: addedCount,
+            syntheticExternalOrderId: syntheticId,
+          },
+        };
       }
 
       // ── 4. Оформление заказа ────────────────────────────────────────────
@@ -397,7 +415,22 @@ export const createAbcpCheckoutHandler = (supplierAlias: string): CheckoutHandle
 
       userLogger.info(`[AbcpCheckout:${supplierAlias}] Заказ оформлен`, { externalOrderIds });
 
-      return { success: true, cartItemIds, externalOrderIds };
+      return {
+        success: true,
+        cartItemIds,
+        externalOrderIds,
+        providerResponseSnapshot: {
+          adapter: 'abcp',
+          alias: supplierAlias,
+          basketAddStatus: addResult.status,
+          basketAddPositionsReported: (addResult.positions ?? []).length,
+          basketOrderStatus: orderResult.status,
+          basketOrderErrorMessage: orderResult.errorMessage,
+          ordersNormalizedCount: ordersList.length,
+          ordersRawShape: Array.isArray(orderResult.orders) ? 'array' : 'record_or_absent',
+          externalOrderIds,
+        },
+      };
     } catch (error: unknown) {
       const message =
         error instanceof AxiosError

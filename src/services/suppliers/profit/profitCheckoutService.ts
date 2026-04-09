@@ -188,7 +188,12 @@ export const profitCheckoutHandler: CheckoutHandler = async (
   const cartItemIds = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'profit', reason: 'empty_items' },
+    };
   }
 
   const apiKey = process.env.PROFIT_API_KEY;
@@ -253,6 +258,13 @@ export const profitCheckoutHandler: CheckoutHandler = async (
         success: true,
         cartItemIds,
         note: `Dry-run: ${succeeded.length}/${items.length} позиций добавлено в корзину, заказ не оформлен`,
+        providerResponseSnapshot: {
+          adapter: 'profit',
+          profitDryRun: true,
+          safetyLock: true,
+          addedCount: succeeded.length,
+          totalItems: items.length,
+        },
       };
     }
 
@@ -281,6 +293,13 @@ export const profitCheckoutHandler: CheckoutHandler = async (
       cartItemIds,
       externalOrderIds: orderResult.orders,
       ...(failNote && { error: failNote }),
+      providerResponseSnapshot: {
+        adapter: 'profit',
+        cartOrderStatus: orderResult.status,
+        cartOrderErr: orderResult.err,
+        ordersFromVendor: orderResult.orders,
+        failedAddsCount: failed.length,
+      },
     };
   } catch (error: unknown) {
     const message =

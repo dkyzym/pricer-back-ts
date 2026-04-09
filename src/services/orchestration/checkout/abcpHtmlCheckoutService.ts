@@ -48,7 +48,12 @@ export const abcpHtmlCheckoutHandler: CheckoutHandler = async (
   const ids = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds: ids, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds: ids,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'abcpHtml', reason: 'empty_items' },
+    };
   }
 
   const bySupplier = new Map<string, ICartItemDocument[]>();
@@ -149,5 +154,11 @@ export const abcpHtmlCheckoutHandler: CheckoutHandler = async (
     cartItemIds: ids,
     externalOrderIds,
     ...(needsManualNote ? { note: NOTE_MANUAL } : {}),
+    providerResponseSnapshot: {
+      adapter: 'abcpHtml',
+      externalOrderIds,
+      needsManualNote,
+      supplierGroups: [...bySupplier.keys()],
+    },
   };
 };

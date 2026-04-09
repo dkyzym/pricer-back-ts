@@ -271,7 +271,12 @@ export const avtoPartnerCheckoutHandler: CheckoutHandler = async (
   const cartItemIds = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'avtoPartner', reason: 'empty_items' },
+    };
   }
 
   try {
@@ -367,6 +372,12 @@ export const avtoPartnerCheckoutHandler: CheckoutHandler = async (
         cartItemIds,
         externalOrderIds: [],
         note: `Safety lock active. ${items.length} позиций в корзине (ORDER_ID: ${orderId}). Установите AVTOPARTNER_ENABLE_REAL_ORDERS=true для реального оформления.`,
+        providerResponseSnapshot: {
+          adapter: 'avtoPartner',
+          safetyLock: true,
+          drupalCartOrderId: orderId,
+          positionsInCart: items.length,
+        },
       };
     }
 
@@ -492,6 +503,11 @@ export const avtoPartnerCheckoutHandler: CheckoutHandler = async (
       success: true,
       cartItemIds,
       externalOrderIds: [confirmedId],
+      providerResponseSnapshot: {
+        adapter: 'avtoPartner',
+        drupalCheckoutOrderId: orderId,
+        thankYouPageOrderId: confirmedId,
+      },
     };
   } catch (error: unknown) {
     const message =

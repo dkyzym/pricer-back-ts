@@ -157,6 +157,50 @@ const parseOrderCreateResult = (
   return { ok: true, orderIds: ids.map(String) };
 };
 
+/**
+ * Приводит список id из order/create к виду, ожидаемому `buildOrderDocs`:
+ * при нескольких позициях в корзине Autosputnik обычно возвращает один номер заказа;
+ * в `data` иногда приходит несколько строк (дубли id или смешение с листингом) — тогда
+ * длина массива id не совпадает с числом позиций и без нормализации срабатывает ветка
+ * ambiguousBulk (без поля externalOrderId на Order).
+ */
+const normalizeAutosputnikExternalOrderIds = (
+  rawOrderIds: string[],
+  cartPositionCount: number,
+  supplier: AutosputnikAlias,
+  userLogger: Logger,
+): string[] => {
+  const raw = rawOrderIds.map(String);
+  const uniq = [...new Set(raw)];
+
+  if (uniq.length === 0) {
+    return raw;
+  }
+
+  if (uniq.length === 1) {
+    return [uniq[0]];
+  }
+
+  // Несколько различных номеров: если их ровно столько же, сколько позиций — 1:1 по индексу.
+  if (uniq.length === cartPositionCount) {
+    return uniq;
+  }
+
+  userLogger.warn(
+    '[AutosputnikCheckout] Число различных id заказа не совпадает с числом позиций — ' +
+      'для отображения и Order используем первый id (типичный случай: один номер на весь заказ)',
+    {
+      supplier,
+      cartPositionCount,
+      rawOrderIds: raw,
+      uniqOrderIds: uniq,
+      chosenExternalOrderId: uniq[0],
+    },
+  );
+
+  return [uniq[0]];
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  HTTP-обёртка с авто-перевыпуском токена при 401
 // ─────────────────────────────────────────────────────────────────────────────
@@ -221,17 +265,18 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
   const cartItemIds = items.map((i) => String(i._id));
 
   if (items.length === 0) {
-    return { success: true, cartItemIds, externalOrderIds: [] };
+    return {
+      success: true,
+      cartItemIds,
+      externalOrderIds: [],
+      providerResponseSnapshot: { adapter: 'autosputnik', reason: 'empty_items' },
+    };
   }
 
   const supplier = items[0].supplier as AutosputnikAlias;
 
   try {
     // ── 1. Очистка корзины ──────────────────────────────────────────────
-    userLogger.info(`[AutosputnikCheckout] Очистка корзины (${supplier})`, {
-      itemCount: items.length,
-    });
-
     const clearResult = await authedPost<AutosputnikBasketResponse>(
       '/basket/clear',
       supplier,
@@ -276,23 +321,11 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
           id_shop_prices: fields.id_shop_prices,
         };
 
-        userLogger.info('[Autosputnik] POST /basket/add — тело запроса (аудит)', {
-          cartItemId,
-          article: item.article,
-          payloadJson: JSON.stringify(payload),
-        });
-
         const addResult = await authedPost<AutosputnikBasketResponse>(
           '/basket/add',
           supplier,
           payload,
         );
-
-        userLogger.info('[Autosputnik] POST /basket/add — сырой JSON ответа (аудит)', {
-          cartItemId,
-          article: item.article,
-          responseJson: JSON.stringify(addResult),
-        });
 
         const addErr = normalizeAutosputnikError(addResult.error);
         const basketDataOk = Array.isArray(addResult.data);
@@ -310,10 +343,6 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
           });
         } else {
           latestBasket = addResult.data;
-          userLogger.info('[AutosputnikCheckout] Позиция добавлена в корзину', {
-            cartItemId,
-            article: item.article,
-          });
         }
       } catch (err: unknown) {
         const errorDetails = formatAutosputnikHttpErrorDetails(err);
@@ -389,15 +418,17 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
         cartItemIds,
         externalOrderIds: [],
         note: 'Safety lock active. Order is in vendor basket.',
+        providerResponseSnapshot: {
+          adapter: 'autosputnik',
+          supplier,
+          safetyLock: true,
+          basketLinesAfterAdd: latestBasket.length,
+        },
       };
     }
 
     // ── 4. POST /order/create — финальное оформление ─────────────────────
     const createBody = buildCreateOrderPayload();
-    userLogger.info('[Autosputnik] POST /order/create — тело запроса (аудит)', {
-      supplier,
-      payloadJson: JSON.stringify(createBody),
-    });
 
     let createRaw: AutosputnikOrderCreateResponse;
     try {
@@ -420,11 +451,6 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       };
     }
 
-    userLogger.info('[Autosputnik] POST /order/create — сырой JSON ответа (аудит)', {
-      supplier,
-      responseJson: JSON.stringify(createRaw),
-    });
-
     const parsedCreate = parseOrderCreateResult(createRaw);
     if (!parsedCreate.ok) {
       return {
@@ -434,10 +460,26 @@ export const autosputnikCheckoutHandler: CheckoutHandler = async (
       };
     }
 
+    const externalOrderIds = normalizeAutosputnikExternalOrderIds(
+      parsedCreate.orderIds,
+      items.length,
+      supplier,
+      userLogger,
+    );
+
     return {
       success: true,
       cartItemIds,
-      externalOrderIds: parsedCreate.orderIds,
+      externalOrderIds,
+      providerResponseSnapshot: {
+        adapter: 'autosputnik',
+        supplier,
+        orderCreateError: createRaw.error,
+        countorders: createRaw.countorders,
+        dataRows: Array.isArray(createRaw.data) ? createRaw.data.length : 0,
+        orderIdsRaw: [...parsedCreate.orderIds],
+        externalOrderIdsNormalized: [...externalOrderIds],
+      },
     };
   } catch (error: unknown) {
     const errorDetails = formatAutosputnikHttpErrorDetails(error);

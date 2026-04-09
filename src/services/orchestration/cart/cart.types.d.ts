@@ -81,6 +81,11 @@ export interface CheckoutResult {
   externalOrderIds?: string[];
   error?: string;
   note?: string;
+  /**
+   * Снимок ответа/состояния интеграции для отладки пустого externalOrderId.
+   * Адаптеры кладут сюда структурированные поля без секретов и персональных данных.
+   */
+  providerResponseSnapshot?: Record<string, unknown>;
 }
 
 /** Форма оплаты Patriot: безнал — PATRIOT_PAYMENT_METHOD_ID_BN, наличные — PATRIOT_PAYMENT_METHOD_ID */
