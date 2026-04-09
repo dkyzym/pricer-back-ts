@@ -1,11 +1,15 @@
 import axios from 'axios';
 import mongoose from 'mongoose';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import { logger } from '../../../config/logger/index.js';
 import { Order } from '../../../models/Order.js';
 import type { UnifiedOrderItem } from '../../../services/orchestration/orders/orders.types.js';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const MAX_MESSAGE_LENGTH = 4096;
+
+const PROXY_URL = process.env.TELEGRAM_PROXY_URL;
+const httpsAgent = PROXY_URL ? new SocksProxyAgent(PROXY_URL) : undefined;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -139,7 +143,6 @@ export async function sendRefusedOrdersNotification(): Promise<void> {
   if (refused.length === 0) return;
 
   const groups = groupByOrder(refused as RefusedDoc[]);
-  const url = `${TELEGRAM_API}/bot${token}/sendMessage`;
   const now = new Date();
   let sentCount = 0;
 
@@ -150,26 +153,45 @@ export async function sendRefusedOrdersNotification(): Promise<void> {
 
     let isDeliveredToAtLeastOne = false;
 
-    for (const chunk of chunks) {
-      for (const chatId of chatIds) {
+    for (const chatId of chatIds) {
+      let isChatDelivered = false;
+
+      for (const chunk of chunks) {
         try {
-          await axios.post(url, {
-            chat_id: chatId,
-            text: chunk,
-            disable_web_page_preview: true,
-          });
+          await axios.post(
+            `${TELEGRAM_API}/bot${token}/sendMessage`,
+            {
+              chat_id: chatId,
+              text: chunk,
+              disable_web_page_preview: true,
+            },
+            {
+              httpsAgent,
+              timeout: 10000,
+            }
+          );
+          
+          isChatDelivered = true;
           isDeliveredToAtLeastOne = true;
-        } catch (err) {
+          
+          await delay(1200); 
+        } catch (err: any) {
           logger.error('[telegram] Ошибка отправки уведомления об отказе юзеру', {
             chatId,
             orderId: group[0].orderId,
-            supplier: group[0].supplier,
-            error: err instanceof Error ? err.message : String(err),
+            error: err.isAxiosError 
+              ? `Axios Error [${err.response?.status}]: ${err.message}` 
+              : err instanceof Error ? err.message : String(err)
           });
-        } finally {
-          // Гарантированная пауза даже при ошибке, чтобы не нарваться на бан от API
-          await delay(100);
+
+          if (err.response?.status === 403 || err.response?.status === 429) {
+            break;
+          }
         }
+      }
+
+      if (isChatDelivered) {
+        await delay(100);
       }
     }
 
