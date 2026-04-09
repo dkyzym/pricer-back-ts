@@ -1,8 +1,9 @@
-import chalk from 'chalk';
+﻿import chalk from 'chalk';
 import { CLIENT_URL } from 'config/index.js';
 import { attachSocketTransport, logger } from 'config/logger/index.js';
 import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { USER_ROLE } from '../constants/userRoles.js';
 import { SOCKET_EVENTS } from '../constants/socketEvents.js';
 import { verifyToken } from '../services/auth/auth.js';
 import { createBrandClarificationHandler } from './handlers/brandClarificationHandler.js';
@@ -47,7 +48,7 @@ export const initializeSocket = (server: HTTPServer) => {
     });
     userLogger.info(chalk.cyan(`New client connected`));
 
-    if (socket.data.user.role === 'admin') {
+    if (String(socket.data.user.role).toLowerCase() === USER_ROLE.ADMIN) {
       socket.join('admin');
       userLogger.info(`Joined room "admin"`);
     }
