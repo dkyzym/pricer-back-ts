@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CartItem } from '../../models/CartItem.js';
 import { UnifiedCartRequest } from '../../services/orchestration/cart/cart.types.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 /**
  * Виртуальная корзина: сохраняет позицию в MongoDB без вызова поставщика.
@@ -62,6 +63,8 @@ export const addToVirtualCartController = async (req: Request, res: Response) =>
     initialPrice,
     rawItemData,
   });
+
+  notifyAdminsVirtualCartChanged({ reason: 'virtual_cart_add' });
 
   return res.status(201).json({
     success: true,

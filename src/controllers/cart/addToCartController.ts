@@ -4,6 +4,7 @@ import {
   UnifiedCartRequest,
 } from '../../services/orchestration/cart/cart.types.js';
 import { cartSupplierHandlers } from '../../services/orchestration/cart/cartHandlers.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 export const addToCartController = async (req: Request, res: Response) => {
   const { supplier } = req.body as UnifiedCartRequest;
@@ -19,6 +20,8 @@ export const addToCartController = async (req: Request, res: Response) => {
 
   try {
     const result = await handler(req.body as UnifiedCartRequest);
+
+    notifyAdminsVirtualCartChanged({ reason: 'cart_add' });
 
     return res.status(200).json(result);
   } catch (error) {

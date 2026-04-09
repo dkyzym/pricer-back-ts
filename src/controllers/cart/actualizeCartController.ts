@@ -4,6 +4,7 @@ import { USER_ROLE } from '../../constants/userRoles.js';
 import { logger } from '../../config/logger/index.js';
 import { CartItem } from '../../models/CartItem.js';
 import { actualizeCartItems } from '../../services/cart/actualizeCartItems.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 /**
  * Актуализация позиций виртуальной корзины: проверка цен и наличия у поставщиков.
@@ -61,6 +62,8 @@ export const actualizeCartController = async (req: Request, res: Response) => {
   });
 
   const report = await actualizeCartItems(uniqueIds, userLogger);
+
+  notifyAdminsVirtualCartChanged({ reason: 'actualize' });
 
   return res.status(200).json({
     success: true,

@@ -7,6 +7,7 @@ import { SOCKET_EVENTS } from '../constants/socketEvents.js';
 import { verifyToken } from '../services/auth/auth.js';
 import { createBrandClarificationHandler } from './handlers/brandClarificationHandler.js';
 import { createItemResultsHandler } from './handlers/itemResultsHandler.js';
+import { setSocketIo } from './socketServerRegistry.js';
 
 let transportAttached = false;
 
@@ -18,6 +19,8 @@ export const initializeSocket = (server: HTTPServer) => {
       methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     },
   });
+
+  setSocketIo(io);
 
   if (!transportAttached) {
     attachSocketTransport(io);

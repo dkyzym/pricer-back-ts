@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { CartItem, CartItemStatus } from '../../models/CartItem.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 /** Статусы, которые администратор может выставить через PATCH (без ordered — отдельный бизнес-процесс). */
 const ADMIN_PATCHABLE_STATUSES = ['approved', 'draft', 'cancelled'] as const;
@@ -55,6 +56,8 @@ export const updateCartItemStatusController = async (
       message: 'Позиция не найдена.',
     });
   }
+
+  notifyAdminsVirtualCartChanged({ reason: 'status' });
 
   return res.status(200).json({
     success: true,

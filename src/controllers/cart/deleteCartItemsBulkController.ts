@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { CartItem } from '../../models/CartItem.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 /**
  * Массовое удаление позиций виртуальной корзины.
@@ -55,6 +56,8 @@ export const deleteCartItemsBulkController = async (req: Request, res: Response)
   }
 
   await CartItem.deleteMany({ _id: { $in: uniqueIds } });
+
+  notifyAdminsVirtualCartChanged({ reason: 'bulk_delete' });
 
   const deletedIds = uniqueIds.map((id) => String(id));
 

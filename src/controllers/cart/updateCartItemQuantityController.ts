@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { CartItem } from '../../models/CartItem.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 import { parseAvailability } from '../../utils/parseAvailability.js';
 
 /**
@@ -64,6 +65,8 @@ export const updateCartItemQuantityController = async (
 
   item.quantity = quantity;
   await item.save();
+
+  notifyAdminsVirtualCartChanged({ reason: 'quantity' });
 
   return res.status(200).json({
     success: true,

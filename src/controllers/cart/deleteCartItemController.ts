@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { CartItem } from '../../models/CartItem.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 
 /**
  * Удаление позиции виртуальной корзины.
@@ -36,6 +37,8 @@ export const deleteCartItemController = async (req: Request, res: Response) => {
   }
 
   await CartItem.findByIdAndDelete(id);
+
+  notifyAdminsVirtualCartChanged({ reason: 'delete' });
 
   return res.status(200).json({
     success: true,

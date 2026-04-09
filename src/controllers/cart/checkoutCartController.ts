@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { logger } from '../../config/logger/index.js';
 import { checkoutCartItems } from '../../services/cart/checkoutCartItems.js';
+import { notifyAdminsVirtualCartChanged } from '../../sockets/notifyAdminVirtualCart.js';
 import type {
   CartCheckoutOptions,
   PatriotPaymentForm,
@@ -63,6 +64,8 @@ export const checkoutCartController = async (req: Request, res: Response) => {
     userLogger,
     checkoutOptions,
   );
+
+  notifyAdminsVirtualCartChanged({ reason: 'checkout' });
 
   return res.status(200).json({
     success: true,
