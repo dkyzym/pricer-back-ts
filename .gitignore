@@ -17,3 +17,4 @@ temp.*
 *.code-workspace
 .cursor/ 
 my-report.json
+testTg.ts
