@@ -29,7 +29,7 @@ export interface AbcpClientConfig {
 }
 
 /** Единый таймаут HTTP для ABCP HTML: оформление заказа и актуализация корзины у парсируемых поставщиков. */
-const ABCP_HTML_HTTP_TIMEOUT_MS = 25_000;
+const ABCP_HTML_HTTP_TIMEOUT_MS = 15_000;
 
 // Фабричная функция для создания клиента
 export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
