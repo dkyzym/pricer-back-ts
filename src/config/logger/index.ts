@@ -78,6 +78,9 @@ const fileJsonFormat = combine(
   json() // Все поля (timestamp, level, message, user, role и т.д.) будут в JSON
 );
 
+/** Срок хранения ротированных лог-файлов (формат `maxFiles` winston-daily-rotate-file). */
+const LOG_RETENTION_MAX_FILES = '30d';
+
 /**
  * Настраиваем logger с различными DailyRotateFile-транспортами
  * и одним Console-транспортом (с цветом).
@@ -91,12 +94,12 @@ export const logger = createLogger({
       format: consoleFormat,
     }),
 
-    // ========= Общий файл (ежедневно новый, хранение 90 дней) =========
+    // ========= Общий файл (ежедневно новый) =========
     new DailyRotateFile({
       dirname: path.join('logs/combined'),
       filename: 'combined-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'debug',
       format: fileJsonFormat,
@@ -106,7 +109,7 @@ export const logger = createLogger({
       dirname: path.join('logs/error'),
       filename: 'error-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'error',
       format: combine(filterOnly('error'), fileJsonFormat),
@@ -115,7 +118,7 @@ export const logger = createLogger({
       dirname: path.join('logs/warn'),
       filename: 'warn-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'warn',
       format: combine(filterOnly('warn'), fileJsonFormat),
@@ -124,7 +127,7 @@ export const logger = createLogger({
       dirname: path.join('logs/info'),
       filename: 'info-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'info',
       format: combine(filterOnly('info'), fileJsonFormat),
@@ -133,7 +136,7 @@ export const logger = createLogger({
       dirname: path.join('logs/http'),
       filename: 'http-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'http', // <--
       format: combine(filterOnly('http'), fileJsonFormat),
@@ -142,7 +145,7 @@ export const logger = createLogger({
       dirname: path.join('logs/debug'),
       filename: 'debug-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
+      maxFiles: LOG_RETENTION_MAX_FILES,
       maxSize: '20m',
       level: 'debug',
       format: combine(filterOnly('debug'), fileJsonFormat),
