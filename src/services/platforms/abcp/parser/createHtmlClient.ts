@@ -28,6 +28,9 @@ export interface AbcpClientConfig {
   loggedInIndicator: string;
 }
 
+/** Единый таймаут HTTP для ABCP HTML: оформление заказа и актуализация корзины у парсируемых поставщиков. */
+const ABCP_HTML_HTTP_TIMEOUT_MS = 25_000;
+
 // Фабричная функция для создания клиента
 export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
   if (
@@ -56,12 +59,12 @@ export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
     keepAliveMsecs: 1000,
     maxSockets: 10,
     maxFreeSockets: 5,
-    timeout: 10_000,
+    timeout: ABCP_HTML_HTTP_TIMEOUT_MS,
   });
 
   const client: AxiosInstance = axios.create({
     httpsAgent,
-    timeout: 15_000,
+    timeout: ABCP_HTML_HTTP_TIMEOUT_MS,
   });
 
   axiosRetry(client, {
