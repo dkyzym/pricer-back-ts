@@ -74,7 +74,8 @@ const groupBySupplier = (
  *   - 1 externalOrderId → все строки: одинаковые orderId и externalOrderId.
  *   - N externalOrderIds === N позиций → сопоставление по индексу.
  *   - Несколько ID, но не 1:1 с позициями → orderId = первый ID (как раньше);
- *     externalOrderId не задаём (неоднозначно), полный список — в rawProviderData.externalOrderIds.
+ *     externalOrderId = перечисление всех номеров (как в UI при неоднозначном bulk),
+ *     полный список дублируется в rawProviderData.externalOrderIds.
  *   - Нет ID от поставщика → orderId = cart-{timestamp}, без externalOrderId.
  */
 const buildOrderDocs = (
@@ -86,6 +87,9 @@ const buildOrderDocs = (
   const ambiguousBulk =
     extIds.length > 1 && extIds.length !== items.length;
   const fallbackOrderId = extIds[0] ?? `cart-${Date.now()}`;
+  const ambiguousDisplayId = ambiguousBulk
+    ? extIds.map(String).join(', ')
+    : undefined;
 
   return items.map((item, idx) => {
     const orderId = oneToOne
@@ -95,7 +99,7 @@ const buildOrderDocs = (
         : fallbackOrderId;
 
     const externalOrderId = ambiguousBulk
-      ? undefined
+      ? ambiguousDisplayId
       : oneToOne
         ? extIds[idx]
         : extIds[0];

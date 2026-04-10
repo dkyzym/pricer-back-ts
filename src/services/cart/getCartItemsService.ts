@@ -58,7 +58,7 @@ const loadExternalOrderDisplayByCartItemId = async (
 
   const orderDocIds = orderDocIdsForOrderedCartItems(orderedCartItemIds);
   const orders = await Order.find({ id: { $in: orderDocIds } })
-    .select({ id: 1, externalOrderId: 1, rawProviderData: 1 })
+    .select({ id: 1, orderId: 1, externalOrderId: 1, rawProviderData: 1 })
     .lean();
 
   return new Map(
