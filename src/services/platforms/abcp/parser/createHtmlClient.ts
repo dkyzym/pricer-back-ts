@@ -4,10 +4,12 @@ import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import { HttpsCookieAgent } from 'http-cookie-agent/http';
 import { CookieJar } from 'tough-cookie';
+import { v4 as uuidv4 } from 'uuid';
 
 import { logger } from '../../../../config/logger/index.js';
 import { abcpHeaders } from '../../../../constants/headers.js';
 import {
+    ItemAutocompleteRow,
     ParallelSearchParams,
     SearchResultsParsed,
 } from '../../../../types/search.types.js';
@@ -302,9 +304,43 @@ export const createHtmlClient = (rawConfig: AbcpClientConfig) => {
     return response;
   };
 
+  /**
+   * Парсит таблицу globalCase (ABCP «список брендов по артикулу»).
+   * Каждая строка .startSearching содержит бренд, код детали и описание.
+   */
+  const parseBrandsFromHtml = (html: string): ItemAutocompleteRow[] => {
+    const $ = cheerio.load(html);
+    const rows = $('table.globalCase tr.startSearching');
+    const result: ItemAutocompleteRow[] = [];
+
+    rows.each((_i, el) => {
+      const $row = $(el);
+      const brand = $row.find('td.caseBrand a.brandInfoLink').text().trim();
+      const number = $row.find('td.casePartCode').text().trim();
+      const descr = $row.find('td.caseDescription').text().trim();
+
+      if (brand && number) {
+        result.push({ brand, number, descr, url: '', id: uuidv4() });
+      }
+    });
+
+    return result;
+  };
+
+  /**
+   * Получает список брендов по артикулу через HTML-поиск ABCP.
+   * Использует тот же механизм авторизации (ensureLoggedIn), что и searchItem.
+   */
+  const searchBrands = async (article: string): Promise<ItemAutocompleteRow[]> => {
+    const searchUrl = `${config.baseUrl}/search?pcode=${encodeURIComponent(article)}`;
+    const response = await makeRequest(searchUrl, { headers: abcpHeaders });
+    return parseBrandsFromHtml(response.data);
+  };
+
   return {
     config,
     searchItem,
+    searchBrands,
     makeRequest,
     makePostRequest,
   };

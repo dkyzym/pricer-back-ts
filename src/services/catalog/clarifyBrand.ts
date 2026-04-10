@@ -7,6 +7,8 @@ import { ItemAutocompleteRow } from '../../types/search.types.js';
 import { getAxiosInstance } from '../../infrastructure/http/apiClient.js';
 import { assortmentSearchArmtek } from '../suppliers/armtek/assortmentSearchArmtek.js';
 import { getItemsListByArticleService } from '../suppliers/profit/getItemsListByArticleService.js';
+import { mikanoClient } from '../suppliers/mikano/client.js';
+import { autoImpulseClient } from '../suppliers/autoImpulse/client.js';
 
 /** Ответ ABCP Public API GET /search/brands/?number=… (UG, NPN, Patriot и др.) */
 interface AbcpBrandByArticleRow {
@@ -113,14 +115,29 @@ export const clarifyBrand = async (
     }));
   };
 
-  const [ugResult, npnResult, patriotResult, profitResult, armtekResult] =
-    await Promise.allSettled([
-      fetchUgBrands(),
-      fetchNpnBrands(),
-      fetchPatriotBrands(),
-      fetchProfitItems(),
-      fetchArmtekBrands(),
-    ]);
+  const fetchMikanoBrands = async (): Promise<ItemAutocompleteRow[]> =>
+    mikanoClient.searchBrands(query);
+
+  const fetchAutoImpulseBrands = async (): Promise<ItemAutocompleteRow[]> =>
+    autoImpulseClient.searchBrands(query);
+
+  const [
+    ugResult,
+    npnResult,
+    patriotResult,
+    profitResult,
+    armtekResult,
+    mikanoResult,
+    autoImpulseResult,
+  ] = await Promise.allSettled([
+    fetchUgBrands(),
+    fetchNpnBrands(),
+    fetchPatriotBrands(),
+    fetchProfitItems(),
+    fetchArmtekBrands(),
+    fetchMikanoBrands(),
+    fetchAutoImpulseBrands(),
+  ]);
 
   const finalBrands: ItemAutocompleteRow[] = [];
   const messages: string[] = [];
@@ -132,6 +149,8 @@ export const clarifyBrand = async (
     { name: 'patriot', result: patriotResult },
     { name: 'profit', result: profitResult },
     { name: 'armtek', result: armtekResult },
+    { name: 'mikano', result: mikanoResult },
+    { name: 'autoImpulse', result: autoImpulseResult },
   ] as const;
 
   let successful = 0;

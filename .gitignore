@@ -22,3 +22,4 @@ temp.*
 .cursor/ 
 my-report.json
 testTg.ts
+temp*
