@@ -1,24 +1,11 @@
 import * as cheerio from 'cheerio';
 
 import { logger } from '../../../../../config/logger/index.js';
-import { abcpHeaders } from '../../../../../constants/headers.js';
+import { abcpHeaders, abcpNavigationHeaders } from '../../../../../constants/headers.js';
 import type { AbcpClient } from '../createHtmlClient.js';
 import { parseExternalOrderIdFromHtml } from '../utils/parseOrderId.js';
 import { parseAbcpAgreementId } from './MikanoCartStrategy.js';
 import type { CartPosition, IAbcpCartStrategy } from './abcpStrategy.types.js';
-
-/**
- * Браузерные хедеры для MAS-формы: AutoImpulse делает обычные POST-навигации (sec-fetch-dest: document),
- * при AJAX-хедерах (X-Requested-With) сервер может вернуть другой контент.
- */
-const BROWSER_FORM_HEADERS = {
-  'User-Agent': abcpHeaders['User-Agent'],
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Encoding': abcpHeaders['Accept-Encoding'],
-  'Accept-Language': abcpHeaders['Accept-Language'],
-  'Content-Type': 'application/x-www-form-urlencoded',
-};
 
 /**
  * Извлекает все поля формы оформления заказа из промежуточной страницы «Оформление заказа».
@@ -170,7 +157,8 @@ export class AutoImpulseCartStrategy implements IAbcpCartStrategy {
         step1Payload.toString(),
         {
           headers: {
-            ...BROWSER_FORM_HEADERS,
+            ...abcpNavigationHeaders,
+            'Content-Type': 'application/x-www-form-urlencoded',
             Origin: baseUrl,
             Referer: `${baseUrl}/cart`,
           },
@@ -236,7 +224,8 @@ export class AutoImpulseCartStrategy implements IAbcpCartStrategy {
         step2Payload.toString(),
         {
           headers: {
-            ...BROWSER_FORM_HEADERS,
+            ...abcpNavigationHeaders,
+            'Content-Type': 'application/x-www-form-urlencoded',
             Origin: baseUrl,
             Referer: `${baseUrl}/cart/?acceptorder`,
           },

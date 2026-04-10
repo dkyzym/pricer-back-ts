@@ -1,22 +1,10 @@
 import * as cheerio from 'cheerio';
 
 import { logger } from '../../../../../config/logger/index.js';
-import { abcpHeaders } from '../../../../../constants/headers.js';
+import { abcpHeaders, abcpNavigationHeaders } from '../../../../../constants/headers.js';
 import type { AbcpClient } from '../createHtmlClient.js';
 import { parseExternalOrderIdFromHtml } from '../utils/parseOrderId.js';
 import type { CartPosition, IAbcpCartStrategy } from './abcpStrategy.types.js';
-
-/**
- * Браузерные хедеры для финального шага подтверждения: сервер Mikano отдаёт HTML
- * только при обычной навигации (Accept: text/html), а не при AJAX (X-Requested-With).
- */
-const BROWSER_NAV_HEADERS = {
-  'User-Agent': abcpHeaders['User-Agent'],
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Encoding': abcpHeaders['Accept-Encoding'],
-  'Accept-Language': abcpHeaders['Accept-Language'],
-};
 
 /** Стандартные строки корзины ABCP (сетка / упрощённая вёрстка), без темы MAS (cartItem). */
 const DEFAULT_CART_ROW_SELECTOR = 'div.cartGridTable__row[data-id], div.cartTr[data-id]';
@@ -363,7 +351,7 @@ export class MikanoCartStrategy implements IAbcpCartStrategy {
 
       for (const url of uniqueUrls) {
         const finalRes = await client.makeRequest(url, {
-          headers: { ...BROWSER_NAV_HEADERS, Referer: cartUrl },
+          headers: { ...abcpNavigationHeaders, Referer: cartUrl },
         });
         const finalHtml = String(finalRes.data ?? '');
 
