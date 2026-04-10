@@ -2,6 +2,7 @@ import { Router } from 'express';
 import os from 'os';
 import { performance, monitorEventLoopDelay } from 'node:perf_hooks';
 import { HEALTH_METRICS_TOKEN } from 'config/index.js';
+import { probeUgAutocomplete } from '../services/catalog/probeUgAutocomplete.js';
 
 /**
  * Мониторинг задержки event loop: фиксирует max/min за интервал между запросами к /detailed.
@@ -48,6 +49,26 @@ router.get('/health/detailed', (req, res) => {
     },
     hrTimeMs: Math.round(performance.now()),
   });
+});
+
+/**
+ * Проверка доступности цепочки автокомплита UG (внешний сайт). Тот же токен, что у /health/detailed.
+ * Не дергать агрессивно — каждый вызов бьёт по ugautopart.ru.
+ */
+router.get('/health/autocomplete-ug', async (req, res) => {
+  const token = req.get('x-metrics-token');
+  if (!HEALTH_METRICS_TOKEN || token !== HEALTH_METRICS_TOKEN) {
+    res.status(404).json({ success: false, message: 'Not found' });
+    return;
+  }
+
+  try {
+    const probe = await probeUgAutocomplete();
+    res.json({ success: true, probe });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ success: false, message });
+  }
 });
 
 export default router;

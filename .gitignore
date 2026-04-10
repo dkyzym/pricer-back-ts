@@ -1,6 +1,10 @@
 node_modules
 dist
 .env
+
+# Локальный cookie jar автокомплита UG (tough-cookie JSON)
+data/*
+!data/.gitkeep
 .vscode
 some*
 todo*

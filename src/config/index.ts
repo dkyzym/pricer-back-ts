@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -6,6 +7,15 @@ export const PORT = process.env.PORT || 3000;
 
 /** Токен для GET /api/health/detailed (заголовок X-Metrics-Token). Без переменной — детальные метрики отключены. */
 export const HEALTH_METRICS_TOKEN = process.env.HEALTH_METRICS_TOKEN?.trim() || undefined;
+
+/**
+ * JSON-файл с сериализованным CookieJar для автокомплита UG (tough-cookie).
+ * По умолчанию — `data/ug-autocomplete-cookies.json` в рабочей директории процесса.
+ */
+export const UG_AUTOCOMPLETE_COOKIE_FILE =
+  process.env.UG_AUTOCOMPLETE_COOKIE_FILE?.trim() ||
+  path.join(process.cwd(), 'data', 'ug-autocomplete-cookies.json');
+
 export const CLIENT_BUILD_PATH = process.env.CLIENT_BUILD_PATH || '../pricer-front/dist';
 const rawClientUrls = [
   process.env.CLIENT_URL,

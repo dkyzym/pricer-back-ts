@@ -25,10 +25,17 @@ export const autocompleteUgController = async (req: Request, res: Response) => {
     return;
   }
 
-  const data = await getAutocomplete(trimmedTerm);
+  const raw = await getAutocomplete(trimmedTerm);
+
+  if (!Array.isArray(raw)) {
+    res.status(502).json({ success: false, message: 'Unexpected upstream response' });
+    return;
+  }
+
+  const data = raw as ItemAutocompleteRow[];
 
   const filteredData: ItemAutocompleteRow[] = data.filter(
-    (item: ItemAutocompleteRow) => item.brand !== 'Найти по описанию'
+    (item) => item.brand !== 'Найти по описанию'
   );
 
   const dataWithId: ItemAutocompleteRow[] = filteredData.map(
